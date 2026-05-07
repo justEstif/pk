@@ -21,7 +21,7 @@
     </div>
   </nav>
 
-  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <!-- ── Page ──────────────────────────────────────────────── -->
   <div class="grid-area">
     <div class="inner">
 
@@ -32,15 +32,23 @@
         Your agent organizes it. The more you put in, the more useful it gets.
       </p>
 
+      <!-- Install -->
+      <div class="install-block" id="install-block" title="Click to copy">
+        <span class="dim">$</span>
+        <span class="amber"> npm install -g @justestif/pk</span>
+      </div>
+      <div id="install-toast" class="copy-toast" aria-live="polite"></div>
+
       <!-- Harnesses -->
       <div class="harnesses">
-        <button class="harness" data-cmd="pk init myproject --harness claude-desktop" title="Copy init command">Claude Desktop</button>
-        <button class="harness" data-cmd="pk init myproject --harness claude"         title="Copy init command">Claude Code</button>
-        <button class="harness" data-cmd="pk init myproject --harness cursor"         title="Copy init command">Cursor</button>
-        <button class="harness" data-cmd="pk init myproject --harness codex"          title="Copy init command">Codex</button>
-        <button class="harness" data-cmd="pk init myproject --harness omp"            title="Copy init command">OMP</button>
-        <button class="harness" data-cmd="pk init myproject --harness opencode"       title="Copy init command">OpenCode</button>
+        <button class="harness" data-cmd="pk init myproject --harness claude-desktop" title="Click to copy">Claude Desktop</button>
+        <button class="harness" data-cmd="pk init myproject --harness claude"         title="Click to copy">Claude Code</button>
+        <button class="harness" data-cmd="pk init myproject --harness cursor"         title="Click to copy">Cursor</button>
+        <button class="harness" data-cmd="pk init myproject --harness codex"          title="Click to copy">Codex</button>
+        <button class="harness" data-cmd="pk init myproject --harness omp"            title="Click to copy">OMP</button>
+        <button class="harness" data-cmd="pk init myproject --harness opencode"       title="Click to copy">OpenCode</button>
       </div>
+      <div id="harness-toast" class="copy-toast" aria-live="polite"></div>
       <div class="harness-divider"></div>
 
       <!-- Tabbed terminal demo -->
@@ -49,7 +57,6 @@
         <button class="demo-tab"        data-tab="eng"  role="tab" aria-selected="false">Engineering</button>
         <button class="demo-tab"        data-tab="hire" role="tab" aria-selected="false">New hire</button>
       </div>
-      <div id="harness-toast" class="harness-toast" aria-live="polite"></div>
 
       <div class="terminal">
         <div class="terminal-bar">
@@ -59,50 +66,6 @@
           <span class="win-label">Claude Code · ~/projects/acme</span>
         </div>
         <div class="terminal-body" id="demo-body" role="log" aria-live="polite"></div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ── Setup ─────────────────────────────────────────────── -->
-  <div class="setup-area">
-    <div class="inner">
-
-      <div class="install-block" id="install-block" title="Copy to clipboard">
-        <span class="dim">$</span>
-        <span class="amber"> npm install -g @justestif/pk</span>
-      </div>
-      <div id="install-toast" class="harness-toast" aria-live="polite"></div>
-
-      <div class="steps">
-        <div class="step">
-          <span class="step-n">1</span>
-          <div>
-            <p class="step-title">Init for your AI tool</p>
-            <code class="step-cmd">pk init myproject --harness claude-desktop</code>
-            <p class="step-note">
-              Writes the MCP config. pk appears in your agent's tool list automatically.
-              Supports Claude Desktop, Claude Code, Cursor, Codex, OMP, and OpenCode.
-            </p>
-          </div>
-        </div>
-
-        <div class="step">
-          <span class="step-n">2</span>
-          <div>
-            <p class="step-title">Feed it. It organizes. Repeat.</p>
-            <p class="step-note">
-              Paste a Slack thread, a doc, a decision you just made — tell your agent to save it.
-              It writes a structured note. Search it from any tool, any session.
-              The knowledge base grows every time you use it.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="cta-links">
-        <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="btn-primary">View on GitHub</a>
-        <a href="https://www.npmjs.com/package/@justestif/pk" target="_blank" rel="noopener" class="btn-ghost">npm ↗</a>
       </div>
 
     </div>
@@ -122,37 +85,27 @@
 
   <script src="js/terminal.js"></script>
   <script>
-    // Install block click-to-copy
-    const installBlock = document.getElementById('install-block');
-    const installToast = document.getElementById('install-toast');
-    let installTimer;
-    installBlock.addEventListener('click', () => {
-      navigator.clipboard.writeText('npm install -g @justestif/pk').then(() => {
-        installBlock.classList.add('copied');
-        installToast.textContent = 'Copied!';
-        clearTimeout(installTimer);
-        installTimer = setTimeout(() => {
-          installBlock.classList.remove('copied');
-          installToast.textContent = '';
+    function copyWithToast(text, toastEl, sourceEl) {
+      navigator.clipboard.writeText(text).then(() => {
+        sourceEl.classList.add('copied');
+        toastEl.textContent = 'Copied!';
+        setTimeout(() => {
+          sourceEl.classList.remove('copied');
+          toastEl.textContent = '';
         }, 2000);
       });
+    }
+
+    document.getElementById('install-block').addEventListener('click', function () {
+      copyWithToast('npm install -g @justestif/pk', document.getElementById('install-toast'), this);
     });
 
-    // Harness click-to-copy
-    let toastTimer;
     document.querySelectorAll('.harness').forEach(btn => {
       btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(btn.dataset.cmd).then(() => {
-          document.querySelectorAll('.harness').forEach(b => b.classList.remove('copied'));
-          btn.classList.add('copied');
-          const toast = document.getElementById('harness-toast');
-          toast.textContent = 'Copied: ' + btn.dataset.cmd;
-          clearTimeout(toastTimer);
-          toastTimer = setTimeout(() => {
-            btn.classList.remove('copied');
-            toast.textContent = '';
-          }, 2000);
-        });
+        document.querySelectorAll('.harness').forEach(b => b.classList.remove('copied'));
+        const toast = document.getElementById('harness-toast');
+        toast.textContent = '';
+        copyWithToast(btn.dataset.cmd, toast, btn);
       });
     });
   </script>
