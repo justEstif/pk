@@ -38,13 +38,13 @@ Expect ~6 2FA prompts across these steps.
 
 ## Knowledge Capture
 
-If `knowledge/` exists in this repo:
+If `knowledge/` exists in this repo, use the pk MCP tools:
 
-- Before any investigation: `pk search <topic>` — don't re-derive what's already known
-- After reading 3+ files to answer a question or build a proposal: persist findings (`pk new source` or `pk new note`)
-- After producing a recommendation or architectural decision: `pk new decision`
-- When hitting genuine uncertainty that blocks work: `pk new question`
-- Run `pk lint` before yielding if you wrote any knowledge files
+- Before any investigation: `pk_search` — don't re-derive what's already known
+- After reading 3+ files to answer a question or build a proposal: `pk_new source` or `pk_new note`
+- After producing a recommendation or architectural decision: `pk_new decision`
+- When hitting genuine uncertainty that blocks work: `pk_new question`
+- Call `pk_lint` before yielding if you wrote any knowledge files
 
 ## Rules
 
