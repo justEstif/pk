@@ -343,6 +343,19 @@ h1 {
 }
 
 .install-block {
+   cursor: pointer;
+   transition: border-color 0.15s;
+}
+
+.install-block:hover {
+   border-color: var(--border-hi);
+}
+
+.install-block.copied {
+   border-left-color: var(--green);
+}
+
+.install-block {
    font-family: 'JetBrains Mono', monospace;
    font-size: 14px;
    background: var(--bg-2);

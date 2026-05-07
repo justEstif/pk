@@ -68,10 +68,11 @@
   <div class="setup-area">
     <div class="inner">
 
-      <div class="install-block">
+      <div class="install-block" id="install-block" title="Copy to clipboard">
         <span class="dim">$</span>
         <span class="amber"> npm install -g @justestif/pk</span>
       </div>
+      <div id="install-toast" class="harness-toast" aria-live="polite"></div>
 
       <div class="steps">
         <div class="step">
@@ -121,6 +122,22 @@
 
   <script src="js/terminal.js"></script>
   <script>
+    // Install block click-to-copy
+    const installBlock = document.getElementById('install-block');
+    const installToast = document.getElementById('install-toast');
+    let installTimer;
+    installBlock.addEventListener('click', () => {
+      navigator.clipboard.writeText('npm install -g @justestif/pk').then(() => {
+        installBlock.classList.add('copied');
+        installToast.textContent = 'Copied!';
+        clearTimeout(installTimer);
+        installTimer = setTimeout(() => {
+          installBlock.classList.remove('copied');
+          installToast.textContent = '';
+        }, 2000);
+      });
+    });
+
     // Harness click-to-copy
     let toastTimer;
     document.querySelectorAll('.harness').forEach(btn => {
