@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pk — project knowledge CLI</title>
+  <meta name="description" content="Structured knowledge base for every project. Search it. Synthesize it. Feed it to your agents. Never lose context when you switch projects again.">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="noise-overlay" aria-hidden="true"></div>
+
+  <!-- ── Nav ──────────────────────────────────────────────────── -->
+  <nav class="site-nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo" aria-label="pk home">pk</a>
+      <ul class="nav-links">
+        <li class="hide-sm"><a href="#features">features</a></li>
+        <li class="hide-sm"><a href="#install">install</a></li>
+        <li>
+          <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="nav-gh">
+            GitHub ↗
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────────── -->
+  <section class="grid-bg" style="position: relative; overflow: hidden; padding-top: 56px; min-height: 100vh; display: flex; align-items: center;">
+    <div class="ghost-text" aria-hidden="true" style="position: absolute; right: -2%; bottom: -4%; line-height: 0.75;">
+      PK
+    </div>
+
+    <div class="inner" style="position: relative; z-index: 1; padding-top: 64px; padding-bottom: 64px;">
+      <div style="max-width: 680px;">
+        <p class="sec-label reveal d-100">project knowledge CLI</p>
+        <div class="tick reveal d-100"></div>
+
+        <h1 class="f-display reveal d-200" style="font-size: clamp(2.6rem, 6.5vw, 5rem); font-weight: 900; line-height: 1.02; letter-spacing: -0.02em; margin-top: 24px;">
+          You'll forget.<br>
+          <span style="color: var(--amber);">pk</span> won't.
+        </h1>
+
+        <p class="reveal d-300" style="margin-top: 22px; font-size: 17px; line-height: 1.65; color: var(--text-mid); max-width: 480px;">
+          Persistent memory for every project. Ask Claude to search it, summarize it, or capture something new. Never lose context switching between projects again.
+        </p>
+
+        <div class="reveal d-400" style="margin-top: 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="install-cmd">
+            <span style="color: var(--text-dim);">$</span>
+            <span style="color: var(--amber);"> npm install -g @justestif/pk</span>
+          </div>
+        </div>
+        <p class="f-mono reveal d-500" style="margin-top: 10px; font-size: 11px; color: var(--text-dim);">
+          Requires Bun · MIT License
+        </p>
+      </div>
+
+      <!-- Terminal demo -->
+      <div class="terminal reveal d-600" style="margin-top: 52px; max-width: 620px;">
+        <div class="terminal-bar">
+          <span class="dot dot-red"  aria-hidden="true"></span>
+          <span class="dot dot-yellow" aria-hidden="true"></span>
+          <span class="dot dot-green"  aria-hidden="true"></span>
+          <span class="win-label">~/projects/acme — zsh</span>
+        </div>
+        <div class="terminal-body" role="log" aria-label="Terminal demo">
+          <span class="tl tl-1"><span style="color: var(--text-dim);">$</span> <span style="color: var(--amber);">pk search</span> <span style="color: var(--text);">"why did we drop postgres"</span></span>
+          <span class="tl tl-2" style="color: var(--mint);">✓  decision/drop-postgres.md  <span style="color: var(--text-dim);">score 0.94</span></span>
+          <span class="tl tl-3" style="color: var(--text-dim); padding-left: 19px;">"SQLite removes ops burden for single-server workloads…"</span>
+          <span class="tl tl-4"> </span>
+          <span class="tl tl-5"><span style="color: var(--text-dim);">$</span> <span style="color: var(--amber);">pk synthesize</span> <span style="color: var(--text);">"current auth approach"</span></span>
+          <span class="tl tl-6" style="color: var(--mint);">✓  Synthesized 4 notes · 312 tokens</span>
+          <span class="tl tl-7 cursor-blink"><span style="color: var(--text-dim);">$</span> </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Problem ───────────────────────────────────────────────── -->
+  <section class="section">
+    <div class="inner">
+      <p class="sec-label">the problem</p>
+      <div class="tick" style="margin-bottom: 40px;"></div>
+
+      <div class="prob-grid">
+        <div class="prob-cell">
+          <div class="prob-num" aria-hidden="true">01</div>
+          <h2 class="prob-title">Context collapse</h2>
+          <p class="prob-body">You were deep in project B last week. Back on A now and the key decisions from three months ago are gone — you'll re-derive them from scratch.</p>
+        </div>
+        <div class="prob-cell">
+          <div class="prob-num" aria-hidden="true">02</div>
+          <h2 class="prob-title">Scattered sources</h2>
+          <p class="prob-body">The answer is in a Slack thread, a Notion doc, a GitHub comment, or a conversation from six weeks ago. You know it exists. You just can't find it.</p>
+        </div>
+        <div class="prob-cell">
+          <div class="prob-num" aria-hidden="true">03</div>
+          <h2 class="prob-title">Claude starts fresh every time</h2>
+          <p class="prob-body">Every conversation starts from zero. Claude has no memory of your last session — you re-explain the same background, the same decisions, the same constraints. Every. Single. Time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MCP ecosystem ──────────────────────────────────────── -->
+  <section class="section">
+    <div class="inner">
+      <p class="sec-label">works with your other tools</p>
+      <div class="tick" style="margin-bottom: 20px;"></div>
+      <h2 class="f-display" style="font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; margin-bottom: 12px;">
+        Claude bridges your sources.<br><span style="color: var(--amber);">pk</span> saves what matters.
+      </h2>
+      <p style="color: var(--text-mid); font-size: 15px; margin-bottom: 20px; max-width: 580px; line-height: 1.65;">
+        If you've connected Slack, Confluence, Granola, or other tools to Claude alongside pk,
+        you can ask Claude to pull relevant context from them and save it to pk in one conversation.
+      </p>
+      <p style="color: var(--text-mid); font-size: 15px; margin-bottom: 52px; max-width: 580px; line-height: 1.65;">
+        pk doesn't orchestrate any of this automatically 
+        — Claude does the coordination when you ask it to.
+        pk is just where the knowledge lands and persists across every future session.
+      </p>
+
+      <!-- Flow diagram -->
+      <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; max-width: 880px;">
+
+        <!-- Sources -->
+        <div>
+          <p class="f-mono" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px;">live sources · fetched per session</p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 4px;">
+              <span class="f-mono" style="font-size: 11px; color: var(--text-dim); min-width: 14px;">↗</span>
+              <span class="f-mono" style="font-size: 12px; color: var(--text);">Slack MCP</span>
+              <span style="font-size: 12px; color: var(--text-dim); margin-left: auto;">threads, decisions</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 4px;">
+              <span class="f-mono" style="font-size: 11px; color: var(--text-dim); min-width: 14px;">↗</span>
+              <span class="f-mono" style="font-size: 12px; color: var(--text);">Confluence MCP</span>
+              <span style="font-size: 12px; color: var(--text-dim); margin-left: auto;">specs, runbooks</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 4px;">
+              <span class="f-mono" style="font-size: 11px; color: var(--text-dim); min-width: 14px;">↗</span>
+              <span class="f-mono" style="font-size: 12px; color: var(--text);">Granola MCP</span>
+              <span style="font-size: 12px; color: var(--text-dim); margin-left: auto;">meeting notes</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 4px;">
+              <span class="f-mono" style="font-size: 11px; color: var(--text-dim); min-width: 14px;">↗</span>
+              <span class="f-mono" style="font-size: 12px; color: var(--text);">Linear MCP</span>
+              <span style="font-size: 12px; color: var(--text-dim); margin-left: auto;">issues, context</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-2); border: 1px dashed var(--border); border-radius: 4px;">
+              <span class="f-mono" style="font-size: 11px; color: var(--text-dim); min-width: 14px;">↗</span>
+              <span class="f-mono" style="font-size: 12px; color: var(--text-dim);">any MCP…</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 8px;">
+          <div style="width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, var(--border));"></div>
+          <div style="text-align: center;">
+            <div class="f-mono" style="font-size: 10px; color: var(--text-dim); white-space: nowrap; margin-bottom: 4px;">agent</div>
+            <div style="font-size: 20px; color: var(--amber);">→</div>
+            <div class="f-mono" style="font-size: 9px; color: var(--text-dim); white-space: nowrap; margin-top: 4px;">pk_new source</div>
+          </div>
+          <div style="width: 1px; height: 40px; background: linear-gradient(to top, transparent, var(--border));"></div>
+        </div>
+
+        <!-- pk output -->
+        <div>
+          <p class="f-mono" style="font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 12px;">pk · persisted forever</p>
+          <div class="terminal">
+            <div class="terminal-bar">
+              <span class="dot dot-red" aria-hidden="true"></span>
+              <span class="dot dot-yellow" aria-hidden="true"></span>
+              <span class="dot dot-green" aria-hidden="true"></span>
+              <span class="win-label">~/.pk/acme/</span>
+            </div>
+            <div class="terminal-body" style="font-size: 12px; line-height: 1.7;">
+              <div style="color: var(--text-dim);">sources/</div>
+              <div style="color: var(--mint); padding-left: 14px;">slack-auth-thread.md</div>
+              <div style="color: var(--mint); padding-left: 14px;">confluence-api-spec.md</div>
+              <div style="color: var(--mint); padding-left: 14px;">granola-q3-planning.md</div>
+              <div style="color: var(--text-dim); margin-top: 6px;">decisions/</div>
+              <div style="color: var(--mint); padding-left: 14px;">drop-postgres.md</div>
+              <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 11px;">
+                searchable · synthesizable<br>available in every future session
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Callout -->
+      <div style="margin-top: 40px; padding: 20px 24px; background: var(--bg-2); border: 1px solid var(--border); border-left: 3px solid var(--amber); border-radius: 4px; max-width: 680px;">
+        <p style="font-size: 14px; line-height: 1.65; color: var(--text-mid); margin: 0;">
+          <span style="color: var(--text); font-weight: 500;">You ask. Claude fetches, distills, and writes to pk.</span>
+          You don't copy-paste from Slack or Confluence manually — just tell Claude what you need captured.
+          The knowledge is then available in every future session, across every project and tool.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features / MCP tools ──────────────────────────────────── -->
+  <section class="section" id="features" style="background: var(--bg-2);">
+    <div class="inner">
+      <p class="sec-label">mcp tools</p>
+      <div class="tick" style="margin-bottom: 20px;"></div>
+      <h2 class="f-display" style="font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; margin-bottom: 12px;">
+        One knowledge base.<br>Works wherever you use AI.
+      </h2>
+      <p style="color: var(--text-mid); font-size: 15px; margin-bottom: 48px; max-width: 480px;">
+        Connect pk to Claude Desktop, Cursor, or any AI tool that supports MCP. Then just ask — Claude searches your notes, summarizes what you know, or captures something new.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+        <div class="tool-card">
+          <p class="tool-name" style="color: var(--amber);">pk_search</p>
+          <h3 class="f-display" style="font-size: 18px; font-weight: 700; margin-bottom: 10px;">Ask and retrieve</h3>
+          <p style="font-size: 14px; color: var(--text-mid); line-height: 1.6;">Full-text search across everything you've captured. Ask Claude "what did I decide about the database?" and get ranked results with context.</p>
+          <div class="tool-cmd">pk search "postgres" --type decision</div>
+        </div>
+
+        <div class="tool-card">
+          <p class="tool-name" style="color: var(--mint);">pk_synthesize</p>
+          <h3 class="f-display" style="font-size: 18px; font-weight: 700; margin-bottom: 10px;">Catch me up</h3>
+          <p style="font-size: 14px; color: var(--text-mid); line-height: 1.6;">Summarise everything you know about a topic, or the whole project at once. Start a new session with full context instead of starting blank.</p>
+          <div class="tool-cmd">pk synthesize "auth decisions" --all</div>
+        </div>
+
+        <div class="tool-card">
+          <p class="tool-name" style="color: var(--amber);">pk_new</p>
+          <h3 class="f-display" style="font-size: 18px; font-weight: 700; margin-bottom: 10px;">Capture as you go</h3>
+          <p style="font-size: 14px; color: var(--text-mid); line-height: 1.6;">Tell Claude to save a decision, a question, or a note. It writes it in a structured format so you — and future Claude sessions — can find it later.</p>
+          <div class="tool-cmd">pk new decision "Drop Redis" --tags arch</div>
+        </div>
+
+        <div class="tool-card">
+          <p class="tool-name" style="color: var(--mint);">pk_lint</p>
+          <h3 class="f-display" style="font-size: 18px; font-weight: 700; margin-bottom: 10px;">Keep it clean</h3>
+          <p style="font-size: 14px; color: var(--text-mid); line-height: 1.6;">Validates every note for completeness. Flags stale questions, decisions missing rationale, and anything that's drifted out of shape.</p>
+          <div class="tool-cmd">pk lint  <span style="opacity: 0.5;"># validates schema + quality</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Knowledge model ───────────────────────────────────────── -->
+  <section class="section">
+    <div class="inner">
+      <p class="sec-label">knowledge model</p>
+      <div class="tick" style="margin-bottom: 20px;"></div>
+      <h2 class="f-display" style="font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; margin-bottom: 12px;">
+        Five note types.<br>Not a flat dump.
+      </h2>
+      <p style="color: var(--text-mid); font-size: 15px; margin-bottom: 40px; max-width: 500px;">
+        A typed schema lets agents query with precision. Notes live in <code class="f-mono" style="color: var(--text); font-size: 13px;">~/.pk/</code> as plain markdown — readable without any tool.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+        <div class="note-type">
+          <p class="nt-label" style="color: var(--amber);">note</p>
+          <p style="font-size: 13px; color: var(--text-mid); line-height: 1.55;">Durable project knowledge — facts, patterns, context worth keeping.</p>
+        </div>
+        <div class="note-type">
+          <p class="nt-label" style="color: var(--amber);">decision</p>
+          <p style="font-size: 13px; color: var(--text-mid); line-height: 1.55;">Chosen direction with rationale and consequences. Answers "why did we do this?"</p>
+        </div>
+        <div class="note-type">
+          <p class="nt-label" style="color: var(--amber);">question</p>
+          <p style="font-size: 13px; color: var(--text-mid); line-height: 1.55;">Unresolved uncertainty blocking or informing the next move.</p>
+        </div>
+        <div class="note-type">
+          <p class="nt-label" style="color: var(--amber);">source</p>
+          <p style="font-size: 13px; color: var(--text-mid); line-height: 1.55;">Raw input with provenance — the meeting notes, the Slack thread, the doc.</p>
+        </div>
+        <div class="note-type">
+          <p class="nt-label" style="color: var(--mint);">index</p>
+          <p style="font-size: 13px; color: var(--text-mid); line-height: 1.55;">Navigation map over a topic. Generated by <code class="f-mono" style="font-size: 12px; color: var(--text);">pk rebuild</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Agent integration ─────────────────────────────────────── -->
+  <section class="section" style="background: var(--bg-2);">
+    <div class="inner">
+      <p class="sec-label">setup</p>
+      <div class="tick" style="margin-bottom: 20px;"></div>
+      <h2 class="f-display" style="font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; margin-bottom: 48px;">
+        Set up once.<br>Works in every session.
+      </h2>
+
+      <div class="integration-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;">
+        <div>
+          <div style="display: flex; flex-direction: column; gap: 28px;">
+            <div style="display: flex; gap: 16px;">
+              <span class="step-num">1</span>
+              <div>
+                <p style="font-weight: 500; margin-bottom: 6px;">Install &amp; init</p>
+                <p style="font-size: 14px; color: var(--text-mid); line-height: 1.6;">
+                  Run <code class="f-mono" style="color: var(--text); font-size: 12px;">pk init myproject --harness claude</code>. Creates a knowledge home for your project and registers pk with Claude Desktop automatically.
+                </p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 16px;">
+              <span class="step-num">2</span>
+              <div>
+                <p style="font-weight: 500; margin-bottom: 6px;">Agent discovers tools</p>
+                <p style="font-size: 14px; color: var(--text-mid); line-height: 1.6;">
+                  Open Claude Desktop and pk is already available. No extra steps. Just start a conversation and Claude can read and write your knowledge base.
+                </p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 16px;">
+              <span class="step-num">3</span>
+              <div>
+                <p style="font-weight: 500; margin-bottom: 6px;">Knowledge accumulates</p>
+                <p style="font-size: 14px; color: var(--text-mid); line-height: 1.6;">
+                  Agents write decisions and sources while they work. Plain markdown. Git-diffable. Readable without any tool.
+                </p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 16px;">
+              <span class="step-num">4</span>
+              <div>
+                <p style="font-weight: 500; margin-bottom: 6px;">Switch projects in seconds</p>
+                <p style="font-size: 14px; color: var(--text-mid); line-height: 1.6;">
+                  New project, new session. The agent searches the right base. Context loads in a tool call, not 20 minutes of re-explaining.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="terminal" style="align-self: stretch;">
+          <div class="terminal-bar">
+            <span class="dot dot-red" aria-hidden="true"></span>
+            <span class="dot dot-yellow" aria-hidden="true"></span>
+            <span class="dot dot-green" aria-hidden="true"></span>
+            <span class="win-label">.mcp.json (auto-generated)</span>
+          </div>
+          <pre class="f-mono" style="font-size: 13px; line-height: 1.85; padding: 22px; margin: 0; overflow-x: auto; color: var(--text-mid);"><span style="color: var(--text);">{</span>
+  <span style="color: var(--mint);">"mcpServers"</span><span style="color: var(--text);">: {</span>
+    <span style="color: var(--mint);">"pk"</span><span style="color: var(--text);">: {</span>
+      <span style="color: var(--mint);">"command"</span><span style="color: var(--text);">:</span> <span style="color: var(--amber);">"pk"</span><span style="color: var(--text);">,</span>
+      <span style="color: var(--mint);">"args"</span><span style="color: var(--text);">:</span> <span style="color: var(--text);">[</span><span style="color: var(--amber);">"mcp"</span><span style="color: var(--text);">]</span>
+    <span style="color: var(--text);">}</span>
+  <span style="color: var(--text);">}</span>
+<span style="color: var(--text);">}</span>
+</pre>
+          <div style="border-top: 1px solid var(--border); padding: 14px 22px; background: var(--bg-3);">
+            <p class="f-mono" style="font-size: 11px; color: var(--text-dim); margin: 0;">
+              Supports: claude · claude-desktop · omp · cursor · opencode · codex
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Install CTA ───────────────────────────────────────────── -->
+  <section class="section" id="install">
+    <div class="inner" style="text-align: left;">
+      <p class="sec-label">get started</p>
+      <div class="tick" style="margin-bottom: 24px;"></div>
+
+      <h2 class="f-display" style="font-size: clamp(2rem, 5vw, 3.6rem); font-weight: 900; margin-bottom: 16px; max-width: 560px; line-height: 1.05;">
+        Stop re-explaining.<br>Start <span style="color: var(--amber);">building.</span>
+      </h2>
+      <p style="color: var(--text-mid); font-size: 16px; margin-bottom: 40px; max-width: 400px;">
+        Three commands. Never lose project context again.
+      </p>
+
+      <div class="terminal" style="max-width: 560px; margin-bottom: 32px;">
+        <div class="terminal-bar">
+          <span class="dot dot-red" aria-hidden="true"></span>
+          <span class="dot dot-yellow" aria-hidden="true"></span>
+          <span class="dot dot-green" aria-hidden="true"></span>
+        </div>
+        <div class="terminal-body">
+          <div><span style="color: var(--text-dim);">$</span> <span style="color: var(--amber);">npm install -g @justestif/pk</span></div>
+          <div><span style="color: var(--text-dim);">$</span> <span style="color: var(--amber);">pk init</span> <span style="color: var(--text);">myproject --harness claude</span></div>
+          <div><span style="color: var(--text-dim);">$</span> <span style="color: var(--amber);">pk new</span> <span style="color: var(--text);">decision "Use SQLite" --tags arch</span></div>
+          <div style="margin-top: 6px; color: var(--mint);">✓  Knowledge base ready.</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="btn-primary">
+          View on GitHub
+        </a>
+        <a href="https://www.npmjs.com/package/@justestif/pk" target="_blank" rel="noopener" class="btn-ghost">
+          npm package ↗
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ────────────────────────────────────────────────── -->
+  <footer class="section" style="background: var(--bg-2);">
+    <div class="inner-sm" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <span class="f-display" style="font-size: 18px; font-weight: 900; color: var(--amber);">pk</span>
+        <span class="f-mono" style="font-size: 12px; color: var(--text-dim);">project-knowledge CLI</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <span class="f-mono" style="font-size: 11px; color: var(--text-dim);">MIT License</span>
+        <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="f-mono" style="font-size: 11px; color: var(--text-dim); text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-dim)'">GitHub ↗</a>
+        <a href="https://www.npmjs.com/package/@justestif/pk" target="_blank" rel="noopener" class="f-mono" style="font-size: 11px; color: var(--text-dim); text-decoration: none; transition: color 0.15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-dim)'">npm ↗</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
