@@ -36,6 +36,16 @@ Expect ~6 2FA prompts across these steps.
 2. `git push origin main --tags`
 3. Create GitHub release from the tag — triggers publish.yml automatically
 
+## Knowledge Capture
+
+If `knowledge/` exists in this repo:
+
+- Before any investigation: `pk search <topic>` — don't re-derive what's already known
+- After reading 3+ files to answer a question or build a proposal: persist findings (`pk new source` or `pk new note`)
+- After producing a recommendation or architectural decision: `pk new decision`
+- When hitting genuine uncertainty that blocks work: `pk new question`
+- Run `pk lint` before yielding if you wrote any knowledge files
+
 ## Rules
 
 - No direct commits to main
