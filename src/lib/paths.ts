@@ -1,29 +1,25 @@
-import {existsSync} from 'node:fs';
+import {existsSync, readdirSync, statSync} from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
-const KNOWLEDGE_DIR = 'knowledge';
+/** Returns the ~/.pk home directory for all pk knowledge bases. */
+export function pkHome(): string {
+	return path.join(process.env.HOME ?? os.homedir(), '.pk');
+}
 
-/** Walk upward from cwd to find knowledge/ directory. */
-export function findKnowledgeDir(cwd: string = process.cwd()): string {
-	const envOverride = process.env.PK_KNOWLEDGE_DIR;
-	if (envOverride) {
-		return path.resolve(envOverride);
+/** Returns the directory for a named project: ~/.pk/<name> */
+export function projectDir(name: string): string {
+	return path.join(pkHome(), name);
+}
+
+/** Returns sorted list of existing project names under ~/.pk/ */
+export function listExistingProjects(): string[] {
+	const home = pkHome();
+	if (!existsSync(home)) {
+		return [];
 	}
 
-	let current = path.resolve(cwd);
-	while (true) {
-		const candidate = path.join(current, KNOWLEDGE_DIR);
-		if (existsSync(candidate)) {
-			return candidate;
-		}
-
-		const parent = path.dirname(current);
-		if (parent === current) {
-			break;
-		}
-
-		current = parent;
-	}
-
-	return path.join(path.resolve(cwd), KNOWLEDGE_DIR);
+	return readdirSync(home)
+		.filter(entry => statSync(path.join(home, entry)).isDirectory())
+		.toSorted();
 }

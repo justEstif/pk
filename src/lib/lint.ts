@@ -28,24 +28,21 @@ function coerceDate(val: unknown): unknown {
 }
 
 const frontmatterSchema = z.object({
-	id: z.string({required_error: missing('id'), invalid_type_error: missing('id')})
+	id: z.string({error: missing('id')})
 		.min(1, missing('id')),
-	type: z.string({required_error: missing('type'), invalid_type_error: missing('type')})
+	type: z.string({error: missing('type')})
 		.min(1, missing('type')),
-	title: z.string({required_error: missing('title'), invalid_type_error: missing('title')})
+	title: z.string({error: missing('title')})
 		.min(1, missing('title')),
-	created: z.preprocess(coerceDate, z.string({required_error: missing('created'), invalid_type_error: missing('created')}).min(1, missing('created'))),
-	updated: z.preprocess(coerceDate, z.string({required_error: missing('updated'), invalid_type_error: missing('updated')}).min(1, missing('updated'))),
-	status: z.string({required_error: missing('status'), invalid_type_error: missing('status')})
+	created: z.preprocess(coerceDate, z.string({error: missing('created')}).min(1, missing('created'))),
+	updated: z.preprocess(coerceDate, z.string({error: missing('updated')}).min(1, missing('updated'))),
+	status: z.string({error: missing('status')})
 		.min(1, missing('status')),
-	tags: z.array(z.string(), {
-		required_error: 'tags must be a flat list',
-		invalid_type_error: 'tags must be a flat list',
-	}),
-}).passthrough().superRefine((data, ctx) => {
+	tags: z.array(z.string(), {error: 'tags must be a flat list'}),
+}).loose().superRefine((data, ctx) => {
 	if (data.type && !TYPE_DIRS[data.type]) {
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: 'custom',
 			path: ['type'],
 			message: `invalid type: ${data.type}`,
 		});
@@ -53,7 +50,7 @@ const frontmatterSchema = z.object({
 
 	if (data.type && STATUSES[data.type] && !STATUSES[data.type]!.includes(data.status)) {
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: 'custom',
 			path: ['status'],
 			message: `invalid status '${data.status}' for type ${data.type}`,
 		});

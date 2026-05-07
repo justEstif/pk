@@ -1,10 +1,19 @@
 import {existsSync, mkdirSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import type {Command} from 'commander';
-import {findKnowledgeDir} from '../lib/paths.ts';
 import {renderTemplate} from '../lib/templates.ts';
 import {TYPE_DIRS} from '../lib/schema.ts';
 import {slugify} from '../lib/notes.ts';
+
+function knowledgeDir(): string {
+	const dir = process.env.PK_KNOWLEDGE_DIR;
+	if (!dir) {
+		console.error('PK_KNOWLEDGE_DIR is not set. Run: pk init <name> --harness <harness>');
+		process.exit(1);
+	}
+
+	return dir;
+}
 
 export function registerNew(program: Command): void {
 	program
@@ -17,7 +26,7 @@ export function registerNew(program: Command): void {
 				process.exit(1);
 			}
 
-			const knowledgeDir = findKnowledgeDir();
+			const dir = knowledgeDir();
 			const today = new Date().toISOString().slice(0, 10);
 			const slug = slugify(title);
 			const tags = opts.tags
@@ -29,10 +38,10 @@ export function registerNew(program: Command): void {
 			const content = renderTemplate(type, {
 				date: today, slug, tags, title,
 			});
-			const dir = path.join(knowledgeDir, TYPE_DIRS[type]);
-			mkdirSync(dir, {recursive: true});
+			const noteDir = path.join(dir, TYPE_DIRS[type]);
+			mkdirSync(noteDir, {recursive: true});
 
-			const outPath = path.join(dir, `${today}-${slug}.md`);
+			const outPath = path.join(noteDir, `${today}-${slug}.md`);
 			if (existsSync(outPath)) {
 				console.error(`Already exists: ${outPath}`);
 				process.exit(1);

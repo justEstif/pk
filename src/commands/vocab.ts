@@ -1,6 +1,15 @@
 import type {Command} from 'commander';
 import {vocab} from '../lib/db.ts';
-import {findKnowledgeDir} from '../lib/paths.ts';
+
+function knowledgeDir(): string {
+	const dir = process.env.PK_KNOWLEDGE_DIR;
+	if (!dir) {
+		console.error('PK_KNOWLEDGE_DIR is not set. Run: pk init <name> --harness <harness>');
+		process.exit(1);
+	}
+
+	return dir;
+}
 
 export function registerVocab(program: Command): void {
 	program
@@ -8,10 +17,10 @@ export function registerVocab(program: Command): void {
 		.description('List tags in the knowledge base by frequency')
 		.option('--json', 'JSON output')
 		.action((opts: {json: boolean}) => {
-			const knowledgeDir = findKnowledgeDir();
+			const dir = knowledgeDir();
 			let tags;
 			try {
-				tags = vocab(knowledgeDir);
+				tags = vocab(dir);
 			} catch (error) {
 				console.error(String(error));
 				process.exit(1);

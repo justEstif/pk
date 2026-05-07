@@ -8,6 +8,7 @@ import {registerConfig} from './commands/config-cmd.ts';
 import {registerInit} from './commands/init.ts';
 import {registerInstructions} from './commands/instructions.ts';
 import {registerVocab} from './commands/vocab.ts';
+import {registerMcp} from './commands/mcp.ts';
 
 const program = new Command()
 	.name('pk')
@@ -23,5 +24,6 @@ registerConfig(program);
 registerInit(program);
 registerInstructions(program);
 registerVocab(program);
+registerMcp(program);
 
 program.parse();

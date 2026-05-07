@@ -6,7 +6,8 @@ const GUIDES: Record<string, string> = {
 	synthesize: 'pk synthesize [query] [--all] [--session-start] [--limit]\nProduces ranked context block. --session-start injects open questions + accepted decisions + active notes.',
 	index: 'pk index\nRebuilds FTS5 index (knowledge/.index.db) and markdown index files (knowledge/indexes/). Run after any note change.',
 	lint: 'pk lint\nValidates frontmatter, required sections, file location, ID uniqueness, tag format, length limits.',
-	init: 'pk init [--harness claude]\nCreates knowledge/ dirs, installs Claude Code hook at .claude/hooks/pk-user-prompt-submit.ts, updates .claude/settings.json.',
+	// eslint-disable-next-line @stylistic/max-len
+	init: 'pk init [<name>] [--harness <harness>]\nInteractive when args omitted. Creates ~/.pk/<name>/ knowledge base, writes MCP config, installs skill.\nDetects existing projects and connects without recreating.\nHarnesses: claude, claude-desktop, cursor, omp, opencode, codex.',
 	config: 'pk config [--auto-commit bool] [--embedding model]\nShows or updates pk configuration.',
 };
 export function registerInstructions(program: Command): void {
