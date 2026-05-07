@@ -15,7 +15,8 @@ Requires [Bun](https://bun.sh).
 ```bash
 cd your-project
 pk init                        # Claude Code (default)
-pk init --harness pi           # Pi / Oh My Pi
+pk init --harness pi           # Pi
+pk init --harness omp          # Oh My Pi
 pk init --harness opencode     # OpenCode
 pk init --harness cursor       # Cursor
 pk init --harness codex        # Codex CLI
@@ -29,6 +30,7 @@ recent decisions, active notes) automatically into every session.
 |---|---|---|
 | `claude` | `UserPromptSubmit` hook | `.claude/hooks/pk-*.ts` + `settings.json` |
 | `pi` | `before_agent_start` extension | `.pi/extensions/pk.ts` |
+| `omp` | `before_agent_start` hook | `.omp/extensions/pk.ts` |
 | `opencode` | `experimental.chat.system.transform` | `.opencode/plugins/pk.ts` |
 | `cursor` | Agent rule | `.cursor/rules/pk.mdc` |
 | `codex` | `AGENTS.md` block | `AGENTS.md` |
