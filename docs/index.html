@@ -34,19 +34,14 @@
 
       <!-- Harnesses -->
       <div class="harnesses">
-        <div class="harness-featured">
-          <span class="harness-featured-name">Claude Desktop</span>
-          <span class="harness-badge">no terminal needed</span>
-        </div>
-        <div class="harness-rest">
-          <span>Claude Code</span>
-          <span>Cursor</span>
-          <span>Codex</span>
-          <span>OMP</span>
-          <span>OpenCode</span>
-        </div>
-        <div class="harness-divider"></div>
+        <button class="harness" data-cmd="pk init myproject --harness claude-desktop" title="Copy init command">Claude Desktop</button>
+        <button class="harness" data-cmd="pk init myproject --harness claude"         title="Copy init command">Claude Code</button>
+        <button class="harness" data-cmd="pk init myproject --harness cursor"         title="Copy init command">Cursor</button>
+        <button class="harness" data-cmd="pk init myproject --harness codex"          title="Copy init command">Codex</button>
+        <button class="harness" data-cmd="pk init myproject --harness omp"            title="Copy init command">OMP</button>
+        <button class="harness" data-cmd="pk init myproject --harness opencode"       title="Copy init command">OpenCode</button>
       </div>
+      <div class="harness-divider"></div>
 
       <!-- Tabbed terminal demo -->
       <div class="demo-tabs" role="tablist">
@@ -54,6 +49,7 @@
         <button class="demo-tab"        data-tab="eng"  role="tab" aria-selected="false">Engineering</button>
         <button class="demo-tab"        data-tab="hire" role="tab" aria-selected="false">New hire</button>
       </div>
+      <div id="harness-toast" class="harness-toast" aria-live="polite"></div>
 
       <div class="terminal">
         <div class="terminal-bar">
@@ -124,6 +120,25 @@
   </footer>
 
   <script src="js/terminal.js"></script>
+  <script>
+    // Harness click-to-copy
+    let toastTimer;
+    document.querySelectorAll('.harness').forEach(btn => {
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(btn.dataset.cmd).then(() => {
+          document.querySelectorAll('.harness').forEach(b => b.classList.remove('copied'));
+          btn.classList.add('copied');
+          const toast = document.getElementById('harness-toast');
+          toast.textContent = 'Copied: ' + btn.dataset.cmd;
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => {
+            btn.classList.remove('copied');
+            toast.textContent = '';
+          }, 2000);
+        });
+      });
+    });
+  </script>
 
 </body>
 </html>

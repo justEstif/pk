@@ -149,40 +149,40 @@ h1 {
 /* ── Harnesses ───────────────────────────────────────────── */
 
 .harnesses {
-   margin-bottom: 28px;
-}
-
-.harness-featured {
-   display: inline-flex;
-   align-items: center;
-   gap: 8px;
-   margin-bottom: 10px;
-}
-
-.harness-featured-name {
-   font-family: 'JetBrains Mono', monospace;
-   font-size: 12px;
-   color: var(--text);
-   padding: 4px 10px;
-   border: 1px solid var(--amber);
-   border-radius: 3px;
-}
-
-.harness-badge {
-   font-family: 'JetBrains Mono', monospace;
-   font-size: 10px;
-   color: var(--amber);
-   letter-spacing: 0.04em;
-}
-
-.harness-rest {
-   font-family: 'JetBrains Mono', monospace;
-   font-size: 12px;
-   color: var(--text-dim);
    display: flex;
    flex-wrap: wrap;
-   gap: 6px 16px;
-   margin-bottom: 20px;
+   gap: 6px;
+   margin-bottom: 12px;
+}
+
+.harness {
+   font-family: 'JetBrains Mono', monospace;
+   font-size: 12px;
+   padding: 5px 12px;
+   border: 1px solid var(--border);
+   border-radius: 3px;
+   color: var(--text-dim);
+   background: var(--bg-2);
+   cursor: pointer;
+   transition: color 0.15s, border-color 0.15s;
+}
+
+.harness:hover {
+   color: var(--text);
+   border-color: var(--border-hi);
+}
+
+.harness.copied {
+   color: var(--green);
+   border-color: var(--green);
+}
+
+.harness-toast {
+   font-family: 'JetBrains Mono', monospace;
+   font-size: 11px;
+   color: var(--green);
+   height: 18px;
+   margin-bottom: 10px;
 }
 
 .harness-divider {
@@ -193,7 +193,8 @@ h1 {
 /* ── Demo tabs ───────────────────────────────────────────── */
 
 .demo-tabs {
-   display: flex;
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
    gap: 2px;
    margin-top: 24px;
 }
@@ -201,7 +202,8 @@ h1 {
 .demo-tab {
    font-family: 'JetBrains Mono', monospace;
    font-size: 12px;
-   padding: 6px 14px;
+   padding: 8px 0;
+   text-align: center;
    background: var(--bg-2);
    border: 1px solid var(--border);
    border-bottom: none;
