@@ -20,9 +20,7 @@ jobs:
           bun-version: latest
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - name: upgrade npm (OIDC trusted publishing requires >=11.5.1)
-        run: npm install -g npm@latest
+          node-version: 24   # ships with npm 11, required for OIDC trusted publishing
       - run: bun install --frozen-lockfile
       - run: make build
       - name: version check
