@@ -14,11 +14,24 @@ Requires [Bun](https://bun.sh).
 
 ```bash
 cd your-project
-pk init
+pk init                        # Claude Code (default)
+pk init --harness pi           # Pi / Oh My Pi
+pk init --harness opencode     # OpenCode
+pk init --harness cursor       # Cursor
+pk init --harness codex        # Codex CLI
 ```
 
-Creates `knowledge/`, installs a Claude Code hook that injects open questions,
-recent decisions, and active notes into every prompt automatically.
+Creates `knowledge/`, copies the skill to `.agents/skills/pk/`, and installs
+the harness adapter. Each harness injects current project context (open questions,
+recent decisions, active notes) automatically into every session.
+
+| Harness | Mechanism | Files generated |
+|---|---|---|
+| `claude` | `UserPromptSubmit` hook | `.claude/hooks/pk-*.ts` + `settings.json` |
+| `pi` | `before_agent_start` extension | `.pi/extensions/pk.ts` |
+| `opencode` | `experimental.chat.system.transform` | `.opencode/plugins/pk.ts` |
+| `cursor` | Agent rule | `.cursor/rules/pk.mdc` |
+| `codex` | `AGENTS.md` block | `AGENTS.md` |
 
 ## Commands
 
