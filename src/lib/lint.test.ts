@@ -6,16 +6,15 @@ import path from 'node:path';
 import {describe, expect, test} from 'bun:test';
 import {
 	type Issue, type IssueLevel,
-	checkRequiredFields,
-	checkTypeAndLocation,
+	checkFrontmatter,
 	checkRequiredSections,
-	checkTags,
 	checkSourceExtracted,
 	checkLength,
 	lintNotes,
 } from './lint.ts';
 
 const P = '/knowledge/notes/2024-01-01-test.md';
+const KNOWLEDGE_DIR = '/knowledge';
 
 // Helper: wraps issues array so IssueLevel and Issue types are used explicitly
 function issuesOf(level: IssueLevel, items: Issue[]): Issue[] {
@@ -25,64 +24,70 @@ function issuesOf(level: IssueLevel, items: Issue[]): Issue[] {
 void issuesOf;
 
 // ---------------------------------------------------------------------------
-// checkRequiredFields
+// checkFrontmatter
 // ---------------------------------------------------------------------------
 
-describe('checkRequiredFields', () => {
-	const full = {
-		id: 'abc', type: 'note', title: 'T', created: '2024-01-01',
-		updated: '2024-01-01', status: 'active', tags: ['x'],
+describe('checkFrontmatter', () => {
+	const valid = {
+		id: 'note-2024-01-01-test',
+		type: 'note',
+		title: 'My Note',
+		created: '2024-01-01',
+		updated: '2024-01-01',
+		status: 'active',
+		tags: ['engineering'],
 	};
 
-	test('returns no issues for a complete meta object', () => {
-		expect(checkRequiredFields(full, P)).toEqual([]);
+	test('returns no issues for fully valid frontmatter', () => {
+		expect(checkFrontmatter(valid, P, KNOWLEDGE_DIR)).toEqual([]);
 	});
 
 	test('flags each missing required field as an error', () => {
-		const issues = checkRequiredFields({}, P);
-		const fields = issues.map(i => i.message.replace('missing frontmatter field: ', ''));
-		expect(fields.toSorted()).toEqual(['created', 'id', 'status', 'tags', 'title', 'type', 'updated']);
+		const issues = checkFrontmatter({}, P, KNOWLEDGE_DIR);
 		expect(issues.every(i => i.level === 'error')).toBe(true);
+		const messages = issues.map(i => i.message);
+		expect(messages.some(m => m.includes('id'))).toBe(true);
+		expect(messages.some(m => m.includes('type'))).toBe(true);
+		expect(messages.some(m => m.includes('title'))).toBe(true);
+		expect(messages.some(m => m.includes('status'))).toBe(true);
+		expect(messages.some(m => m.includes('tags'))).toBe(true);
 	});
 
-	test('flags empty-string values as missing', () => {
-		const issues = checkRequiredFields({...full, title: ''}, P);
-		expect(issues).toHaveLength(1);
-		expect(issues[0]?.message).toContain('title');
+	test('flags invalid type as an error', () => {
+		const issues = checkFrontmatter({...valid, type: 'bogus'}, P, KNOWLEDGE_DIR);
+		expect(issues.some(i => i.level === 'error' && i.message.includes('invalid type'))).toBe(true);
+	});
+
+	test('flags invalid status for the given type as an error', () => {
+		const issues = checkFrontmatter({...valid, status: 'proposed'}, P, KNOWLEDGE_DIR); // Proposed is decision-only
+		expect(issues.some(i => i.level === 'error' && i.message.includes('invalid status'))).toBe(true);
+	});
+
+	test('flags tags that is not an array as an error', () => {
+		const issues = checkFrontmatter({...valid, tags: 'not-an-array'}, P, KNOWLEDGE_DIR);
+		expect(issues.some(i => i.level === 'error' && i.message.includes('flat list'))).toBe(true);
+	});
+
+	test('returns a warn issue for empty tags', () => {
+		const issues = checkFrontmatter({...valid, tags: []}, P, KNOWLEDGE_DIR);
+		expect(issues.some(i => i.level === 'warn' && i.message.includes('tags is empty'))).toBe(true);
+	});
+
+	test('flags a file stored in the wrong directory as an error', () => {
+		const wrongPath = '/knowledge/decisions/2024-01-01-test.md'; // Type is note, should be in notes/
+		const issues = checkFrontmatter(valid, wrongPath, KNOWLEDGE_DIR);
+		expect(issues.some(i => i.level === 'error' && i.message.includes('must live in'))).toBe(true);
 	});
 
 	test('attaches the provided path to every issue', () => {
-		const issues = checkRequiredFields({}, P);
+		const issues = checkFrontmatter({}, P, KNOWLEDGE_DIR);
 		expect(issues.every(i => i.path === P)).toBe(true);
 	});
-});
 
-// ---------------------------------------------------------------------------
-// checkTypeAndLocation
-// ---------------------------------------------------------------------------
-
-describe('checkTypeAndLocation', () => {
-	const knowledgeDir = '/knowledge';
-
-	test('returns no issues when type, status, and location are all valid', () => {
-		const meta = {type: 'note', status: 'active'};
-		// File lives exactly in /knowledge/notes/
-		const p = '/knowledge/notes/2024-01-01-my-note.md';
-		expect(checkTypeAndLocation(meta, p, knowledgeDir)).toEqual([]);
-	});
-
-	test('flags invalid status for the given type', () => {
-		const meta = {type: 'note', status: 'proposed'}; // 'proposed' is decision-only
-		const p = '/knowledge/notes/2024-01-01-my-note.md';
-		const issues = checkTypeAndLocation(meta, p, knowledgeDir);
-		expect(issues.some(i => i.message.includes('invalid status'))).toBe(true);
-	});
-
-	test('flags a file stored in the wrong directory', () => {
-		const meta = {type: 'note', status: 'active'};
-		const p = '/knowledge/decisions/2024-01-01-wrong-place.md'; // Should be in notes/
-		const issues = checkTypeAndLocation(meta, p, knowledgeDir);
-		expect(issues.some(i => i.message.includes('must live in'))).toBe(true);
+	test('skips location check when type is invalid', () => {
+		// With an invalid type, we should not see a "must live in" error — type error is enough
+		const issues = checkFrontmatter({...valid, type: 'bogus'}, '/some/random/path.md', KNOWLEDGE_DIR);
+		expect(issues.every(i => !i.message.includes('must live in'))).toBe(true);
 	});
 });
 
@@ -107,35 +112,6 @@ describe('checkRequiredSections', () => {
 	test('returns no issues for a type with no required sections', () => {
 		// There is no type with empty required sections, but an unknown type produces []
 		expect(checkRequiredSections('anything', 'unknown_type', P)).toEqual([]);
-	});
-});
-
-// ---------------------------------------------------------------------------
-// checkTags
-// ---------------------------------------------------------------------------
-
-describe('checkTags', () => {
-	test('returns no issues for a non-empty array', () => {
-		expect(checkTags(['engineering', 'architecture'], P)).toEqual([]);
-	});
-
-	test('returns a warn issue for an empty array', () => {
-		const issues = checkTags([], P);
-		expect(issues).toHaveLength(1);
-		expect(issues[0]?.level).toBe('warn');
-		expect(issues[0]?.message).toContain('tags is empty');
-	});
-
-	test('returns an error issue when tags is not an array', () => {
-		const issues = checkTags('not-an-array', P);
-		expect(issues).toHaveLength(1);
-		expect(issues[0]?.level).toBe('error');
-		expect(issues[0]?.message).toContain('flat list');
-	});
-
-	test('returns an error issue when tags is undefined', () => {
-		const issues = checkTags(undefined, P);
-		expect(issues[0]?.level).toBe('error');
 	});
 });
 

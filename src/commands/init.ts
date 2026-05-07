@@ -3,7 +3,7 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import type {Command} from 'commander';
-import {TYPE_DIRS} from '../lib/notes.ts';
+import {TYPE_DIRS} from '../lib/schema.ts';
 
 const KNOWLEDGE_DIR = 'knowledge';
 const AGENTS_SKILLS_DIR = '.agents/skills/pk';
