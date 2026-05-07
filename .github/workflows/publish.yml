@@ -2,12 +2,15 @@ name: publish
 on:
   release:
     types: [published]
-permissions:
-  contents: read
-  id-token: write
+  workflow_dispatch:
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment: npm
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -19,11 +22,10 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: bun install --frozen-lockfile
       - run: make build
-      - run: |
+      - name: version check
+        run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           [ "$PKG_VERSION" != "$TAG_VERSION" ] && echo "VERSION MISMATCH: package=$PKG_VERSION tag=$TAG_VERSION" && exit 1
-          echo "Version check passed: $PKG_VERSION"
-      - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          echo "version ok: $PKG_VERSION"
+      - run: npm publish --provenance --access public

@@ -2,8 +2,13 @@
   "name": "@justestif/pk",
   "version": "0.1.0",
   "description": "Project knowledge — structured intake, search, and recall",
-  "bin": { "pk": "./dist/index.js" },
-  "files": ["dist/", "README.md"],
+  "bin": {
+    "pk": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
   "scripts": {
     "build": "bun build src/index.ts --outfile dist/index.js --target bun && printf '#!/usr/bin/env bun\n' | cat - dist/index.js > dist/tmp.js && mv dist/tmp.js dist/index.js && chmod +x dist/index.js",
     "check": "bun run typecheck && bun run lint && bun test",
@@ -15,6 +20,10 @@
   "dependencies": {
     "commander": "^14.0.0",
     "markdownlint": "^0.40.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justEstif/pk.git"
   },
   "devDependencies": {
     "@types/bun": "latest",
