@@ -1,9 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import type { Command } from 'commander'
 import { TYPE_DIRS } from '../lib/notes.ts'
 
 const KNOWLEDGE_DIR = 'knowledge'
+const AGENTS_SKILLS_DIR = '.agents/skills/pk'
 
 export function registerInit(program: Command): void {
   program
@@ -11,31 +12,81 @@ export function registerInit(program: Command): void {
     .description('Initialize knowledge base and install agent hook')
     .option('--harness <harness>', 'Agent harness: claude (default)', 'claude')
     .action((opts: { harness: string }) => {
+      // 1. Create knowledge/ directories
       for (const dir of Object.values(TYPE_DIRS)) {
         mkdirSync(path.join(KNOWLEDGE_DIR, dir), { recursive: true })
       }
       console.log('created knowledge/ directories')
+
+      // 2. knowledge/.gitignore
       const gi = path.join(KNOWLEDGE_DIR, '.gitignore')
       if (!existsSync(gi)) {
         writeFileSync(gi, '.index.db\n')
         console.log('created knowledge/.gitignore')
       }
-      if (opts.harness === 'claude') installClaudeHook()
-      else console.log(`Unsupported harness: ${opts.harness}. Only claude supported.`)
-      console.log('\npk init complete. Run pk index after adding notes.')
+
+      // 3. Copy skill into .agents/skills/pk/
+      installSkill()
+
+      // 4. Agent hook
+      if (opts.harness === 'claude') {
+        installClaudeHook()
+      } else {
+        console.log(`Unsupported harness: ${opts.harness}. Only claude supported.`)
+      }
+
+      console.log(`
+pk init complete.
+
+Next steps:
+  pk index          rebuild search index after adding notes
+  pk new note ...   create your first note
+
+Customize note templates at:
+  ${AGENTS_SKILLS_DIR}/assets/templates/
+
+To reset templates to defaults, delete ${AGENTS_SKILLS_DIR} and re-run pk init.
+`)
     })
+}
+
+function skillSourceDir(): string {
+  // Resolve skill/ relative to the compiled binary location
+  // dist/index.js → ../skill/
+  return path.resolve(import.meta.dir, '..', 'skill')
+}
+
+function installSkill(): void {
+  const dest = AGENTS_SKILLS_DIR
+
+  if (existsSync(dest)) {
+    console.log(`skill already present at ${dest} — skipping (delete to reset)`)
+    return
+  }
+
+  const src = skillSourceDir()
+  if (!existsSync(src)) {
+    console.log(`skill source not found at ${src} — skipping`)
+    return
+  }
+
+  cpSync(src, dest, { recursive: true })
+  console.log(`installed skill to ${dest}`)
 }
 
 function installClaudeHook(): void {
   mkdirSync(path.join('.claude', 'hooks'), { recursive: true })
+
   const hookFile = path.join('.claude', 'hooks', 'pk-user-prompt-submit.ts')
   writeFileSync(hookFile, HOOK_TEMPLATE)
   console.log(`wrote ${hookFile}`)
+
   const settingsFile = path.join('.claude', 'settings.json')
   let settings: Record<string, unknown> = {}
   if (existsSync(settingsFile)) {
     try { settings = JSON.parse(readFileSync(settingsFile, 'utf8')) as Record<string, unknown> } catch {}
   }
+
   const hooks = (settings['hooks'] as Record<string, string[]> | undefined) ?? {}
   const existing: string[] = (hooks['UserPromptSubmit'] as string[] | undefined) ?? []
   const cmd = `bun ${hookFile} user-prompt-submit`
