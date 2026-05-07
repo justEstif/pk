@@ -1,6 +1,9 @@
 /** @type {import('xo').FlatXoConfig} */
 const xoConfig = [
 	{
+		ignores: ['docs/**'],
+	},
+	{
 		rules: {
 			'unicorn/no-process-exit': 'off',
 			'unicorn/prevent-abbreviations': 'off',

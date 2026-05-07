@@ -21,6 +21,48 @@ const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
 
 const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
 
+const HARNESS_ACTIVATION: Record<Harness, string> = {
+	claude: 'start a new Claude Code session in this project',
+	'claude-desktop': 'quit and restart Claude Desktop',
+	codex: 'restart the Codex CLI',
+	cursor: 'reload the Cursor window (Cmd+Shift+P → Reload Window)',
+	omp: 'restart your Oh My Pi session',
+	opencode: 'restart opencode',
+};
+
+/**
+ * Build the post-init summary lines shared by interactive and non-interactive paths.
+ */
+function buildOutro(
+	created: boolean,
+	knowledgeDir: string,
+	harnesses: Harness[],
+	skillPaths: string[],
+): string[] {
+	const lines: string[] = [
+		created ? `Created project: ${knowledgeDir}` : `Connected to existing project: ${knowledgeDir}`,
+	];
+
+	for (const h of harnesses) {
+		lines.push(`  ${h}: MCP config written → ${HARNESS_ACTIVATION[h]}`);
+	}
+
+	for (const sp of skillPaths) {
+		lines.push(`  skill installed to ${sp}`);
+	}
+
+	lines.push(
+		'',
+		'MCP is ready — no env export needed.',
+		'To verify: ask your agent to list its tools — pk_search should appear.',
+		'',
+		'For CLI commands (pk search, pk new, pk lint, …):',
+		`  export PK_KNOWLEDGE_DIR="${knowledgeDir}"`,
+	);
+
+	return lines;
+}
+
 /** Parse a comma-separated harness string into a validated Harness[]. */
 function parseHarnesses(raw: string): Harness[] | string {
 	const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
@@ -299,16 +341,7 @@ export function registerInit(program: Command): void {
 					home, knowledgeDir, name: nameArg, projectRoot,
 				};
 				const skillPaths = applyHarnesses(flagHarnesses, ctx);
-				console.log(created ? `created ${knowledgeDir}` : `connecting to existing project ${knowledgeDir}`);
-				for (const h of flagHarnesses) {
-					console.log(`  ${h}: MCP config written`);
-				}
-
-				for (const sp of skillPaths) {
-					console.log(`  skill installed to ${sp}`);
-				}
-
-				console.log(`\nDone. Set: export PK_KNOWLEDGE_DIR="${knowledgeDir}"`);
+				console.log(buildOutro(created, knowledgeDir, flagHarnesses, skillPaths).join('\n'));
 				return;
 			}
 
@@ -381,12 +414,6 @@ export function registerInit(program: Command): void {
 			};
 			const skillPaths = applyHarnesses(harnesses, ctx);
 
-			p.outro([
-				created ? `Created project: ${knowledgeDir}` : `Connected to existing project: ${knowledgeDir}`,
-				...harnesses.map(h => `  ${h}: MCP config written`),
-				...skillPaths.map(sp => `  skill installed to ${sp}`),
-				'',
-				`Next: export PK_KNOWLEDGE_DIR="${knowledgeDir}"`,
-			].join('\n'));
+			p.outro(buildOutro(created, knowledgeDir, harnesses, skillPaths).join('\n'));
 		});
 }

@@ -1,4 +1,5 @@
 import {Command} from 'commander';
+import pkg from '../package.json' with {type: 'json'};
 import {registerNew} from './commands/new.ts';
 import {registerSearch} from './commands/search.ts';
 import {registerSynthesize} from './commands/synthesize.ts';
@@ -13,7 +14,7 @@ import {registerMcp} from './commands/mcp.ts';
 const program = new Command()
 	.name('pk')
 	.description('Project knowledge — structured intake, search, and recall')
-	.version('0.1.0');
+	.version(pkg.version);
 
 registerNew(program);
 registerSearch(program);
