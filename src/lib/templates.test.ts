@@ -45,6 +45,16 @@ describe('renderTemplate', () => {
       expect(result).toContain('## Extracted Items')
    })
 
+   test('renders an index template with correct status and sections', () => {
+      const result = renderTemplate('index', VARS)
+      expect(result).toContain('status: active')
+      expect(result).toContain('id: index-2024-01-01-my-note')
+      expect(result).toContain('## Purpose')
+      expect(result).toContain('## Key Links')
+      expect(result).toContain('## Open Questions')
+      expect(result).toContain('## Recent Changes')
+   })
+
    test('throws for an unknown type', () => {
       expect(() => renderTemplate('unknown_type', {})).toThrow('Unknown note type')
    })

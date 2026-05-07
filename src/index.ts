@@ -7,11 +7,12 @@ import { registerLint } from './commands/lint.ts'
 import { registerConfig } from './commands/config-cmd.ts'
 import { registerInit } from './commands/init.ts'
 import { registerInstructions } from './commands/instructions.ts'
+import { registerVocab } from './commands/vocab.ts'
 
 const program = new Command()
-  .name('pk')
-  .description('Project knowledge — structured intake, search, and recall')
-  .version('0.1.0')
+   .name('pk')
+   .description('Project knowledge — structured intake, search, and recall')
+   .version('0.1.0')
 
 registerNew(program)
 registerSearch(program)
@@ -21,5 +22,6 @@ registerLint(program)
 registerConfig(program)
 registerInit(program)
 registerInstructions(program)
+registerVocab(program)
 
 program.parse()

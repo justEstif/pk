@@ -9,6 +9,7 @@ type Row = {
    id: string
    path: string
    score: number
+   snippet: string
    status: string
    tags: string
    title: string
@@ -60,6 +61,7 @@ interface SearchResult {
    id: string
    path: string
    score: number
+   snippet: string
    status: string
    tags: string[]
    title: string
@@ -74,12 +76,13 @@ export function search(
    const { filterStatus, filterTag, filterType, limit } = opts
 
    if (!existsSync(dbPath(knowledgeDir))) {
-      throw new Error('Search index not found — run: pk index')
+      throw new Error('Search index not found — run: pk rebuild')
    }
 
    const db = openDb(knowledgeDir)
    const args: string[] = [ftsQuery(query)]
-   let sql = `SELECT path,id,type,status,title,tags,bm25(notes_fts) as score
+   let sql = `SELECT path,id,type,status,title,tags,bm25(notes_fts) as score,
+              snippet(notes_fts, 6, '**', '**', '...', 15) as snippet
              FROM notes_fts WHERE notes_fts MATCH ?`
 
    if (filterType) { sql += ' AND type = ?'; args.push(filterType) }
@@ -95,8 +98,29 @@ export function search(
       .filter((r) => !filterTag || r.tags.includes(filterTag))
 }
 
+export function vocab(knowledgeDir: string): { tag: string; count: number }[] {
+   if (!existsSync(dbPath(knowledgeDir))) {
+      throw new Error('Search index not found — run: pk rebuild')
+   }
+   const db = openDb(knowledgeDir)
+   const rows = db.query<{ tags: string }, []>(
+      "SELECT tags FROM notes_fts WHERE tags != ''"
+   ).all()
+   db.close()
+
+   const counts = new Map<string, number>()
+   for (const row of rows) {
+      for (const tag of row.tags.split(' ').filter(Boolean)) {
+         counts.set(tag, (counts.get(tag) ?? 0) + 1)
+      }
+   }
+   return [...counts.entries()]
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+}
+
 function ftsQuery(q: string): string {
    const terms = q.trim().toLowerCase().split(/\s+/).filter(Boolean)
    if (terms.length === 0) return '"*"'
-   return terms.map((t) => `"${t.replace(/"/g, '""')}"`).join(' AND ')
+   return terms.map((t) => `"${t.replace(/"/g, '""')}"*`).join(' AND ')
 }

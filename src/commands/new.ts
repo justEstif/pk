@@ -12,7 +12,7 @@ export function registerNew(program: Command): void {
       .option('--tags <tags>', 'Comma-separated tags', '')
       .action((type: string, title: string, opts: { tags: string }) => {
          if (!TYPE_DIRS[type]) {
-            console.error(`Unknown type: ${type}. Valid: ${Object.keys(TYPE_DIRS).filter(t => t !== 'index').join(', ')}`)
+            console.error(`Unknown type: ${type}. Valid: ${Object.keys(TYPE_DIRS).join(', ')}`)
             process.exit(1)
          }
 

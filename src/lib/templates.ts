@@ -84,6 +84,33 @@ What is known so far.
 Leave blank until answered.
 `,
 
+   index: `---
+id: index-{{date}}-{{slug}}
+type: index
+title: {{title}}
+created: {{date}}
+updated: {{date}}
+status: active
+tags: [{{tags}}]
+---
+
+## Purpose
+
+What topic or area this index covers.
+
+## Key Links
+
+- [[id]] — why this note matters here.
+
+## Open Questions
+
+Open questions in this topic area.
+
+## Recent Changes
+
+What has been added or changed recently.
+`,
+
    source: `---
 id: source-{{date}}-{{slug}}
 type: source
