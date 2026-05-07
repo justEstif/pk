@@ -24,127 +24,39 @@
 
   <!-- ── What is pk ───────────────────────────────────────── -->
   <section class="first-section grid-bg">
-    <div class="inner">
-      <h1>Structured bookkeeping<br>for every project.</h1>
-      <p class="hero-sub">
-        Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't answered yet.
-        Your agent organizes it. The more you put in, the more useful it gets.
-      </p>
+    <div class="inner first-inner">
 
-      <div class="install-block">
-        <span class="dim">$</span>
-        <span class="cmd"> npm install -g @justestif/pk</span>
-      </div>
-      <p class="req">Requires Bun · MIT License</p>
-
-      <div class="demo-tabs" role="tablist">
-        <button class="demo-tab active" data-tab="pm"   role="tab" aria-selected="true">Product</button>
-        <button class="demo-tab"        data-tab="eng"  role="tab" aria-selected="false">Engineering</button>
-        <button class="demo-tab"        data-tab="hire" role="tab" aria-selected="false">New hire</button>
-      </div>
-
-      <div class="terminal">
-        <div class="terminal-bar">
-          <span class="dot dot-red"    aria-hidden="true"></span>
-          <span class="dot dot-yellow" aria-hidden="true"></span>
-          <span class="dot dot-green"  aria-hidden="true"></span>
-          <span class="win-label">Claude Code · ~/projects/acme</span>
+      <div class="first-left">
+        <h1>Structured bookkeeping<br>for every project.</h1>
+        <p class="hero-sub">
+          Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't answered yet.
+          Your agent organizes it. The more you put in, the more useful it gets.
+        </p>
+        <div class="install-block">
+          <span class="dim">$</span>
+          <span class="cmd"> npm install -g @justestif/pk</span>
         </div>
-        <div class="terminal-body" id="demo-body" role="log" aria-live="polite"></div>
+        <p class="req">Requires Bun · MIT License</p>
       </div>
 
-      <script>
-        const scenarios = {
-          pm: [
-            { type: 'you',    text: 'You: why did we push the v2 launch back?' },
-            { type: 'gap' },
-            { type: 'agent',  text: 'Claude: Let me check your knowledge base.' },
-            { type: 'gap' },
-            { type: 'tool',   cmd: 'pk_search', args: '{"query": "v2 launch delay", "type": "decision"}' },
-            { type: 'result', path: 'decisions/v2-launch-delay.md', score: '0.91' },
-            { type: 'snippet',text: '"Delayed 6 weeks — enterprise SSO was a hard blocker…"' },
-            { type: 'gap' },
-            { type: 'agent',  text: 'Claude: You pushed v2 back 6 weeks to ship enterprise SSO' },
-            { type: 'agent2', text: 'first — confirmed blocker from 3 customer calls in mid-October.' },
-          ],
-          eng: [
-            { type: 'you',    text: 'You: what did we decide about rate limiting?' },
-            { type: 'gap' },
-            { type: 'agent',  text: 'Claude: Let me check your knowledge base.' },
-            { type: 'gap' },
-            { type: 'tool',   cmd: 'pk_search', args: '{"query": "rate limiting", "type": "decision"}' },
-            { type: 'result', path: 'decisions/api-rate-limiting.md', score: '0.88' },
-            { type: 'snippet',text: '"Token bucket, 1000 req/min per key — revisit at 10k users…"' },
-            { type: 'gap' },
-            { type: 'agent',  text: 'Claude: Token bucket at 1000 req/min per API key. You flagged' },
-            { type: 'agent2', text: 'to revisit the limit once you hit 10k active users.' },
-          ],
-          hire: [
-            { type: 'you',    text: 'You: what should I know before my first week?' },
-            { type: 'gap' },
-            { type: 'agent',  text: 'Claude: Let me pull together your project context.' },
-            { type: 'gap' },
-            { type: 'tool',   cmd: 'pk_synthesize', args: '{"session_start": true, "limit": 5}' },
-            { type: 'result', path: 'Synthesized 5 notes', score: null },
-            { type: 'snippet',text: '"open questions · key decisions · active context"' },
-            { type: 'gap' },
-            { type: 'agent',  text: 'Claude: Mid-way through a pricing model change, 2 open questions' },
-            { type: 'agent2', text: 'on the enterprise tier, and v2 ships in 6 weeks.' },
-          ],
-        };
+      <div class="first-right">
+        <div class="demo-tabs" role="tablist">
+          <button class="demo-tab active" data-tab="pm"   role="tab" aria-selected="true">Product</button>
+          <button class="demo-tab"        data-tab="eng"  role="tab" aria-selected="false">Engineering</button>
+          <button class="demo-tab"        data-tab="hire" role="tab" aria-selected="false">New hire</button>
+        </div>
 
-        function render(tab) {
-          const body = document.getElementById('demo-body');
-          body.innerHTML = '';
-          for (const line of scenarios[tab]) {
-            if (line.type === 'gap') {
-              const d = document.createElement('div');
-              d.className = 'gap';
-              body.appendChild(d);
-              continue;
-            }
-            const d = document.createElement('div');
-            if (line.type === 'you') {
-              d.className = 'you-line';
-              d.textContent = line.text;
-            } else if (line.type === 'agent') {
-              d.style.color = 'var(--text-mid)';
-              d.textContent = line.text;
-            } else if (line.type === 'agent2') {
-              d.style.color = 'var(--text-mid)';
-              d.style.paddingLeft = '50px';
-              d.innerHTML = line.text + ' <span style="color:var(--amber)">▌</span>';
-            } else if (line.type === 'tool') {
-              d.innerHTML = `<span class="ok">⏺</span> <span class="cmd">${line.cmd}</span> <span class="dim">${line.args}</span>`;
-            } else if (line.type === 'result') {
-              d.style.paddingLeft = '16px';
-              d.style.color = 'var(--text)';
-              d.innerHTML = line.score
-                ? `${line.path} <span class="dim">· score ${line.score}</span>`
-                : `<span class="dim">${line.path}</span>`;
-            } else if (line.type === 'snippet') {
-              d.style.paddingLeft = '16px';
-              d.className = 'dim';
-              d.textContent = line.text;
-            }
-            body.appendChild(d);
-          }
-        }
+        <div class="terminal">
+          <div class="terminal-bar">
+            <span class="dot dot-red"    aria-hidden="true"></span>
+            <span class="dot dot-yellow" aria-hidden="true"></span>
+            <span class="dot dot-green"  aria-hidden="true"></span>
+            <span class="win-label">Claude Code · ~/projects/acme</span>
+          </div>
+          <div class="terminal-body terminal-scroll" id="demo-body" role="log" aria-live="polite"></div>
+        </div>
+      </div>
 
-        document.querySelectorAll('.demo-tab').forEach(btn => {
-          btn.addEventListener('click', () => {
-            document.querySelectorAll('.demo-tab').forEach(b => {
-              b.classList.remove('active');
-              b.setAttribute('aria-selected', 'false');
-            });
-            btn.classList.add('active');
-            btn.setAttribute('aria-selected', 'true');
-            render(btn.dataset.tab);
-          });
-        });
-
-        render('pm');
-      </script>
     </div>
   </section>
 
@@ -247,5 +159,6 @@
     </div>
   </footer>
 
+  <script src="js/terminal.js"></script>
 </body>
 </html>
