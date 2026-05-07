@@ -1,0 +1,16 @@
+First publish (one-time, before OIDC can be configured):
+
+  npm login
+  make build
+  npm publish --access public
+
+After the package exists on npm, set up OIDC:
+  1. npmjs.com → @justestif/pk → Settings → Trusted Publisher → Add GitHub Actions
+     Owner: justEstif  Repo: pk  Workflow: publish.yml
+  2. Toggle 'Require OIDC' (small radio button — easy to miss)
+  3. Delete the temp token
+
+Subsequent releases:
+  npm version patch|minor|major
+  git push origin main --tags
+  Create GitHub release from the tag → triggers publish.yml automatically
