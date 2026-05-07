@@ -3,7 +3,8 @@ import path from 'node:path';
 import type {Command} from 'commander';
 import {findKnowledgeDir} from '../lib/paths.ts';
 import {renderTemplate} from '../lib/templates.ts';
-import {TYPE_DIRS, slugify} from '../lib/notes.ts';
+import {TYPE_DIRS} from '../lib/schema.ts';
+import {slugify} from '../lib/notes.ts';
 
 export function registerNew(program: Command): void {
 	program

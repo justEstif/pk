@@ -3,38 +3,14 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
+import type {Note, NoteMeta} from './schema.ts';
 
-export const TYPE_DIRS: Record<string, string> = {
-	decision: 'decisions',
-	index: 'indexes',
-	note: 'notes',
-	question: 'questions',
-	source: 'sources',
-};
-
-export const STATUSES: Record<string, string[]> = {
-	decision: ['proposed', 'accepted', 'superseded'],
-	index: ['active', 'archived'],
-	note: ['active', 'superseded', 'archived'],
-	question: ['open', 'answered', 'obsolete'],
-	source: ['unprocessed', 'processed', 'archived'],
-};
-
-export const REQUIRED_SECTIONS: Record<string, string[]> = {
-	decision: ['Decision', 'Context', 'Rationale', 'Consequences', 'Related'],
-	index: ['Purpose', 'Key Links', 'Open Questions', 'Recent Changes'],
-	note: ['Summary', 'Details', 'Evidence', 'Related'],
-	question: ['Question', 'Why It Matters', 'Current Understanding', 'Resolution'],
-	source: ['Source', 'Raw Material', 'Extracted Items'],
-};
-
-export const LENGTH_WARN: Record<string, number> = {
-	decision: 120,
-	index: 200,
-	note: 150,
-	question: 80,
-	source: 400,
-};
+// Re-export schema so callers that previously imported everything from
+// notes.ts keep working without modification.
+export type {Note, NoteMeta} from './schema.ts';
+export {
+	LENGTH_WARN, REQUIRED_SECTIONS, STATUSES, TYPE_DIRS,
+} from './schema.ts';
 
 const PRIMARY_SECTION: Record<string, string> = {
 	decision: 'Decision',
@@ -42,24 +18,6 @@ const PRIMARY_SECTION: Record<string, string> = {
 	note: 'Summary',
 	question: 'Question',
 	source: 'Source',
-};
-
-export type NoteMeta = {
-	[key: string]: string | string[] | undefined;
-	created?: string;
-	id?: string;
-	status?: string;
-	tags?: string[];
-	title?: string;
-	type?: string;
-	updated?: string;
-};
-
-export type Note = {
-	body: string;
-	err?: string;
-	meta: NoteMeta;
-	path: string;
 };
 
 function walkMd(dir: string): string[] {
