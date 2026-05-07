@@ -1,0 +1,25 @@
+{
+  "name": "@justestif/pk",
+  "version": "0.1.0",
+  "description": "Project knowledge — structured intake, search, and recall",
+  "bin": { "pk": "./dist/index.js" },
+  "files": ["dist/", "README.md"],
+  "scripts": {
+    "build": "bun build src/index.ts --outfile dist/index.js --target bun && sed -i '' '1s/^/\\#!/usr\\/bin\\/env bun\\n/' dist/index.js && chmod +x dist/index.js",
+    "check": "bun run typecheck && bun run lint && bun test",
+    "typecheck": "bunx tsc --noEmit",
+    "lint": "bunx eslint src/",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "markdownlint": "^0.40.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "latest",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}
