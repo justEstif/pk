@@ -75,7 +75,7 @@ export function search(
 	const {filterStatus, filterTag, filterType, limit} = opts;
 
 	if (!existsSync(dbPath(knowledgeDir))) {
-		throw new Error('Search index not found — run: pk rebuild');
+		throw new Error('Search index not found — run: pk index');
 	}
 
 	const db = openDb(knowledgeDir);
@@ -109,7 +109,7 @@ export function search(
 
 export function vocab(knowledgeDir: string): Array<{tag: string; count: number}> {
 	if (!existsSync(dbPath(knowledgeDir))) {
-		throw new Error('Search index not found — run: pk rebuild');
+		throw new Error('Search index not found — run: pk index');
 	}
 
 	const db = openDb(knowledgeDir);

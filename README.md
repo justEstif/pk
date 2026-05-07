@@ -39,7 +39,8 @@ recent decisions, active notes) automatically into every session.
 
 ```bash
 pk new <type> <title> [--tags tag1,tag2]
-pk search <query> [--context] [--limit 5]
+pk search <query> [--context] [--limit 5] [--type] [--status] [--tag]
+pk vocab [--json]
 pk synthesize [query] [--all] [--session-start]
 pk index
 pk lint
@@ -54,6 +55,7 @@ pk instructions <command>
 | `decision` | Chosen direction with rationale and consequences |
 | `question` | Unresolved uncertainty that blocks or informs work |
 | `source` | Raw input preserved for provenance |
+| `index` | Navigation/map-of-content over a topic or tag |
 
 ### Example
 
@@ -81,7 +83,12 @@ knowledge/
 ```
 
 Search is powered by SQLite FTS5 with BM25 ranking and porter stemming.
+Partial word matching works — `pk search migr` matches "migration", "migrate", etc.
+Matching body context is shown under each result.
 The index is a derived artifact — delete it and run `pk index` to rebuild.
+
+`pk vocab` lists all tags in the knowledge base by frequency. Useful for orienting
+an agent before searching, without loading full note content.
 
 ## Agent hook
 
