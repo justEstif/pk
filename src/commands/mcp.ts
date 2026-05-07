@@ -57,7 +57,7 @@ export function createPkMcpServer(): McpServer {
 		},
 		async ({query, all, sessionStart, type, tag, limit}) => {
 			const dir = requireKnowledgeDir();
-			const notes = selectNotes(dir, query, {
+			const notes = await selectNotes(dir, query, {
 				all,
 				limit,
 				sessionStart,
@@ -88,7 +88,7 @@ export function createPkMcpServer(): McpServer {
 		async ({type, title, tags}) => {
 			const dir = requireKnowledgeDir();
 			try {
-				const outPath = createNote(dir, type, title, tags ?? '');
+				const outPath = await createNote(dir, type, title, tags ?? '');
 				return {content: [{type: 'text', text: outPath}]};
 			} catch (error) {
 				return {
@@ -108,7 +108,7 @@ export function createPkMcpServer(): McpServer {
 		},
 		async () => {
 			const dir = requireKnowledgeDir();
-			const {issues, noteCount} = lintNotes(dir);
+			const {issues, noteCount} = await lintNotes(dir);
 			const errors = issues.filter(i => i.level === 'error');
 			const warnings = issues.filter(i => i.level === 'warn');
 			const lines: string[] = [

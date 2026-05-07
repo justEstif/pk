@@ -1,4 +1,4 @@
-import {readFileSync} from 'node:fs';
+// Node:fs used only for path operations; file reads use Bun.file()
 import path from 'node:path';
 import {z} from 'zod';
 import {
@@ -99,9 +99,10 @@ function checkRequiredSections(body: string, type: string, p: string): Issue[] {
 		sections.has(req) ? [] : [issue('error', `missing section: ## ${req}`, p)]);
 }
 
-function checkLength(p: string, type: string): Issue[] {
+async function checkLength(p: string, type: string): Promise<Issue[]> {
 	const out: Issue[] = [];
-	const lineCount = readFileSync(p, 'utf8').split('\n').length;
+	const text = await Bun.file(p).text();
+	const lineCount = text.split('\n').length;
 	const warnT = LENGTH_WARN[type];
 	if (warnT && lineCount > warnT) {
 		out.push(issue('warn', `${lineCount} lines exceeds ${type} threshold (${warnT})`, p));
@@ -154,35 +155,35 @@ function checkUniqueIds(notes: Note[]): Issue[] {
 // lintNotes — full lint pass
 // ---------------------------------------------------------------------------
 
-export function lintNotes(knowledgeDir: string): {issues: Issue[]; noteCount: number} {
-	const notes = allNotes(knowledgeDir);
-	const issues: Issue[] = [];
+export async function lintNotes(knowledgeDir: string): Promise<{issues: Issue[]; noteCount: number}> {
+	const notes = await allNotes(knowledgeDir);
 
-	for (const n of notes) {
+	const perNoteIssues = await Promise.all(notes.map(async n => {
 		const p = n.path;
 		if (n.err) {
-			issues.push(issue('error', `parse error: ${n.err}`, p));
-			continue;
+			return [issue('error', `parse error: ${n.err}`, p)];
 		}
 
-		const frontmatterIssues = checkFrontmatter(n.meta, p, knowledgeDir);
-		issues.push(...frontmatterIssues);
+		const result: Issue[] = [...checkFrontmatter(n.meta, p, knowledgeDir)];
 
 		// If type is unknown skip structural checks that depend on it
-		const type = (n.meta.type ?? '');
+		const type = n.meta.type ?? '';
 		if (!TYPE_DIRS[type]) {
-			continue;
+			return result;
 		}
 
-		issues.push(
+		return [
+			...result,
 			...checkRequiredSections(n.body, type, p),
-			...checkLength(p, type),
+			...await checkLength(p, type),
 			...checkSourceExtracted(n.body, n.meta, p),
-		);
-	}
+		];
+	}));
 
-	// Cross-note checks run after the per-note loop
-	issues.push(...checkUniqueIds(notes.filter(n => !n.err)));
+	const issues: Issue[] = [
+		...perNoteIssues.flat(),
+		...checkUniqueIds(notes.filter(n => !n.err)),
+	];
 
 	return {issues, noteCount: notes.length};
 }

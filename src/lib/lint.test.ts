@@ -45,14 +45,14 @@ No evidence.
 None.
 `;
 
-	test('returns no issues for a valid note', () => {
+	test('returns no issues for a valid note', async () => {
 		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-test.md', content: VALID_NOTE}]);
-		const {issues} = lintNotes(root);
+		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues).toEqual([]);
 	});
 
-	test('flags a note with missing required fields', () => {
+	test('flags a note with missing required fields', async () => {
 		const content = `---
 id: note-2024-01-01-x
 type: note
@@ -78,69 +78,69 @@ e.
 r.
 `;
 		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
-		const {issues} = lintNotes(root);
+		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('status'))).toBe(true);
 		expect(issues.some(i => i.message.includes('tags'))).toBe(true);
 	});
 
-	test('flags a note stored in the wrong directory', () => {
+	test('flags a note stored in the wrong directory', async () => {
 		const root = makeKnowledgeDir([
 			{subdir: 'decisions', name: '2024-01-01-misplaced.md', content: VALID_NOTE},
 		]);
-		const {issues} = lintNotes(root);
+		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('must live in'))).toBe(true);
 	});
 
-	test('reports noteCount matching number of files scanned', () => {
+	test('reports noteCount matching number of files scanned', async () => {
 		const root = makeKnowledgeDir([
 			{subdir: 'notes', name: '2024-01-01-a.md', content: VALID_NOTE},
 			{subdir: 'notes', name: '2024-01-01-b.md', content: VALID_NOTE},
 		]);
-		const {noteCount} = lintNotes(root);
+		const {noteCount} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(noteCount).toBe(2);
 	});
 
-	test('flags a note with an invalid type', () => {
+	test('flags a note with an invalid type', async () => {
 		const content = VALID_NOTE.replace('type: note', 'type: bogus');
 		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
-		const {issues} = lintNotes(root);
+		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('invalid type'))).toBe(true);
 	});
 
-	test('flags a note with an invalid status for its type', () => {
+	test('flags a note with an invalid status for its type', async () => {
 		const content = VALID_NOTE.replace('status: active', 'status: proposed');
 		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
-		const {issues} = lintNotes(root);
+		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('invalid status'))).toBe(true);
 	});
 
-	test('flags a note where tags is not an array', () => {
+	test('flags a note where tags is not an array', async () => {
 		const content = VALID_NOTE.replace('tags: [testing]', 'tags: not-a-list');
 		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
-		const {issues} = lintNotes(root);
+		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('tags'))).toBe(true);
 	});
 
-	test('flags a note missing a required section', () => {
+	test('flags a note missing a required section', async () => {
 		const content = VALID_NOTE.replace('## Summary\n\nA short summary.', '');
 		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
-		const {issues} = lintNotes(root);
+		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('Summary'))).toBe(true);
 	});
 
-	test('flags a duplicate id', () => {
+	test('flags a duplicate id', async () => {
 		const root = makeKnowledgeDir([
 			{subdir: 'notes', name: '2024-01-01-a.md', content: VALID_NOTE},
 			{subdir: 'notes', name: '2024-01-01-b.md', content: VALID_NOTE},
 		]);
-		const {issues} = lintNotes(root);
+		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.startsWith('duplicate id'))).toBe(true);
 	});

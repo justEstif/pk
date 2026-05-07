@@ -1,6 +1,4 @@
-import {
-	existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync,
-} from 'node:fs';
+import {mkdirSync, readdirSync, statSync} from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 import {type Note, type NoteMeta, TYPE_DIRS} from './schema.ts';
@@ -22,7 +20,11 @@ const PRIMARY_SECTION: Record<string, string> = {
 };
 
 function walkMd(dir: string): string[] {
-	if (!existsSync(dir)) {
+	try {
+		if (!statSync(dir).isDirectory()) {
+			return [];
+		}
+	} catch {
 		return [];
 	}
 
@@ -39,9 +41,10 @@ function walkMd(dir: string): string[] {
 	return results.toSorted();
 }
 
-export function allNotes(knowledgeDir: string): Note[] {
-	return walkMd(knowledgeDir).map(p => {
-		const text = readFileSync(p, 'utf8');
+export async function allNotes(knowledgeDir: string): Promise<Note[]> {
+	const files = walkMd(knowledgeDir);
+	return Promise.all(files.map(async p => {
+		const text = await Bun.file(p).text();
 		try {
 			const {data, content} = matter(text);
 			return {body: content, meta: data, path: p};
@@ -53,11 +56,12 @@ export function allNotes(knowledgeDir: string): Note[] {
 				path: p,
 			};
 		}
-	});
+	}));
 }
 
-export function validNotes(knowledgeDir: string, excludeTypes: string[] = []): Note[] {
-	return allNotes(knowledgeDir).filter(n => !n.err && !excludeTypes.includes(n.meta.type ?? ''));
+export async function validNotes(knowledgeDir: string, excludeTypes: string[] = []): Promise<Note[]> {
+	const notes = await allNotes(knowledgeDir);
+	return notes.filter(n => !n.err && !excludeTypes.includes(n.meta.type ?? ''));
 }
 
 export function excerpt(note: Note, maxChars = 140): string {
@@ -86,14 +90,14 @@ export function excerpt(note: Note, maxChars = 140): string {
 
 /**
  * Creates a new knowledge note. Returns the path to the written file.
- * Throws if the type is unknown or the file already exists.
+ * Rejects if the type is unknown or the file already exists.
  */
-export function createNote(
+export async function createNote(
 	knowledgeDir: string,
 	type: string,
 	title: string,
 	tags: string,
-): string {
+): Promise<string> {
 	if (!TYPE_DIRS[type]) {
 		throw new Error(`Unknown type: ${type}. Valid: ${Object.keys(TYPE_DIRS).join(', ')}`);
 	}
@@ -113,11 +117,12 @@ export function createNote(
 	mkdirSync(noteDir, {recursive: true});
 
 	const outPath = path.join(noteDir, `${today}-${slug}.md`);
-	if (existsSync(outPath)) {
+	const outFile = Bun.file(outPath);
+	if (await outFile.exists()) {
 		throw new Error(`Already exists: ${outPath}`);
 	}
 
-	writeFileSync(outPath, content);
+	await Bun.write(outPath, content);
 	return outPath;
 }
 

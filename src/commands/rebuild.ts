@@ -6,7 +6,7 @@ export function registerRebuild(program: Command): void {
 	program
 		.command('index')
 		.description('Rebuild FTS5 search index and markdown index files')
-		.action(() => {
+		.action(async () => {
 			let dir: string;
 			try {
 				dir = requireKnowledgeDir();
@@ -15,7 +15,7 @@ export function registerRebuild(program: Command): void {
 				process.exit(1);
 			}
 
-			const {ftsCount, indexDir} = buildIndexFiles(dir);
+			const {ftsCount, indexDir} = await buildIndexFiles(dir);
 			console.log(`indexed ${ftsCount} notes`);
 			console.log(`wrote indexes to ${indexDir}`);
 		});

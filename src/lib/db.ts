@@ -35,11 +35,11 @@ function openDb(knowledgeDir: string): Database {
 	return db;
 }
 
-export function rebuild(knowledgeDir: string): number {
+export async function rebuild(knowledgeDir: string): Promise<number> {
 	const db = openDb(knowledgeDir);
 	db.run('DELETE FROM notes_fts');
 	const insert = db.prepare('INSERT INTO notes_fts(id,path,type,status,title,tags,body) VALUES(?,?,?,?,?,?,?)');
-	const notes = validNotes(knowledgeDir, ['index']);
+	const notes = await validNotes(knowledgeDir, ['index']);
 	for (const n of notes) {
 		insert.run(
 			n.meta.id ?? '',
