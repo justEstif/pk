@@ -33,8 +33,8 @@ const scenarios = {
          { type: 'result', path: 'Synthesized 5 notes', score: null },
          { type: 'snippet', text: '"2 open questions · 3 decisions · 1 active note"' },
          { type: 'gap' },
-         { type: 'agent', text: 'Claude: Nova is a research tool for clinical trials. You're mid- way' },
-      { type: 'cont', text: 'through the data ingestion pipeline. Two open questions: the export' },
+         { type: 'agent', text: "Claude: Nova is a research tool for clinical trials. You're mid-way" },
+         { type: 'cont', text: 'through the data ingestion pipeline. Two open questions: the export' },
          { type: 'cont', text: 'format for regulators and whether to self-host the LLM.' },
          { type: 'divider' },
          { type: 'you', text: 'You: what did we decide about the LLM?' },
@@ -44,9 +44,10 @@ const scenarios = {
          { type: 'snippet', text: '"Self-host on-prem — patient data cannot leave the hospital network…"' },
          { type: 'gap' },
          {
-            type: 'agent', text: 'Claude: Decided to self-host. Patient data can't leave the hospital' },
-      { type: 'cont', text: 'network — regulatory requirement, non-negotiable.', cursor: true },
-    ],
+            type: 'agent', text: "Claude: Decided to self-host. Patient data can't leave the hospital"
+         },
+         { type: 'cont', text: 'network — regulatory requirement, non-negotiable.', cursor: true },
+      ],
    },
 
    atlas: {
@@ -59,9 +60,10 @@ const scenarios = {
          { type: 'snippet', text: '"3 open questions · 4 decisions · 2 sources"' },
          { type: 'gap' },
          {
-            type: 'agent', text: 'Claude: Atlas is a logistics platform. Key things: they're migrating' },
-      { type: 'cont', text: 'from a monolith to services, Postgres is the source of truth, and' },
-      { type: 'cont', text: 'the mobile app is owned by a separate vendor team.' },
+            type: 'agent', text: "Claude: Atlas is a logistics platform. Key things: they're migrating"
+         },
+         { type: 'cont', text: 'from a monolith to services, Postgres is the source of truth, and' },
+         { type: 'cont', text: 'the mobile app is owned by a separate vendor team.' },
          { type: 'divider' },
          { type: 'you', text: 'You: why did they pick Postgres over MongoDB?' },
          { type: 'gap' },
