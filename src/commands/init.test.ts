@@ -10,6 +10,7 @@ import {
 	applyHarnesses,
 	ensureProject,
 	installSkill,
+	resolvePkCommand,
 	writeClaudeConfig,
 	writeClaudeDesktopConfig,
 	writeCodexConfig,
@@ -141,7 +142,7 @@ describe('writeClaudeConfig', () => {
 		writeClaudeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
 		const cfg = readMcpConfig(path.join(tmpDir, '.mcp.json'));
 
-		expect(cfg.mcpServers.pk!.command).toBe('pk');
+		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
 
 		expect(cfg.mcpServers.pk!.args).toEqual(['mcp']);
 
@@ -156,7 +157,7 @@ describe('writeClaudeConfig', () => {
 
 		expect(cfg.mcpServers.other!.command).toBe('other');
 
-		expect(cfg.mcpServers.pk!.command).toBe('pk');
+		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
 	});
 });
 
@@ -168,7 +169,7 @@ describe('writeClaudeDesktopConfig', () => {
 		const cfgPath = path.join(fakeHome, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
 		const cfg = readMcpConfig(cfgPath);
 
-		expect(cfg.mcpServers['pk-myproject']!.command).toBe('pk');
+		expect(cfg.mcpServers['pk-myproject']!.command).toBe(resolvePkCommand());
 
 		expect(cfg.mcpServers['pk-myproject']!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
 	});
@@ -196,7 +197,7 @@ describe('writeCursorConfig', () => {
 		writeCursorConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
 		const cfg = readMcpConfig(path.join(tmpDir, '.cursor', 'mcp.json'));
 
-		expect(cfg.mcpServers.pk!.command).toBe('pk');
+		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
 
 		expect(cfg.mcpServers.pk!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
 	});
@@ -209,7 +210,7 @@ describe('writeOmpConfig', () => {
 		writeOmpConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
 		const cfg = readMcpConfig(path.join(tmpDir, '.omp', 'mcp.json'));
 
-		expect(cfg.mcpServers.pk!.command).toBe('pk');
+		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
 
 		expect(cfg.mcpServers.pk!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
 	});
@@ -222,7 +223,7 @@ describe('writeOpenCodeConfig', () => {
 		writeOpenCodeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
 		const cfg = readOpenCodeConfig(path.join(tmpDir, 'opencode.json'));
 
-		expect(cfg.mcp.pk!.command).toBe('pk');
+		expect(cfg.mcp.pk!.command).toBe(resolvePkCommand());
 
 		expect(cfg.mcp.pk!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
 	});
@@ -235,7 +236,7 @@ describe('writeCodexConfig', () => {
 		writeCodexConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
 		const toml = readFileSync(path.join(tmpDir, '.codex', 'config.toml'), 'utf8');
 		expect(toml).toContain('[mcp_servers.pk]');
-		expect(toml).toContain('command = "pk"');
+		expect(toml).toContain(`command = "${resolvePkCommand()}"`);
 		expect(toml).toContain('args = ["mcp"]');
 		expect(toml).toContain('[mcp_servers.pk.env]');
 		expect(toml).toContain(`PK_KNOWLEDGE_DIR = "${KNOWLEDGE_DIR}"`);

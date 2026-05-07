@@ -82,10 +82,14 @@ type McpEntry = {
 	env: Record<string, string>;
 };
 
+export function resolvePkCommand(): string {
+	return Bun.which('pk') ?? 'pk';
+}
+
 function pkMcpEntry(knowledgeDir: string): McpEntry {
 	return {
 		args: ['mcp'],
-		command: 'pk',
+		command: resolvePkCommand(),
 		env: {PK_KNOWLEDGE_DIR: knowledgeDir},
 	};
 }
@@ -158,7 +162,7 @@ export function writeCodexConfig(projectRoot: string, _name: string, knowledgeDi
 	const cfgPath = path.join(projectRoot, '.codex', 'config.toml');
 	const toml = [
 		'[mcp_servers.pk]',
-		'command = "pk"',
+		`command = "${resolvePkCommand()}"`,
 		'args = ["mcp"]',
 		'',
 		'[mcp_servers.pk.env]',
