@@ -4,7 +4,9 @@ import path from 'node:path';
 import {
 	afterEach, beforeEach, describe, expect, test,
 } from 'bun:test';
-import {listExistingProjects, pkHome, projectDir} from './paths.ts';
+import {
+	listExistingProjects, pkHome, projectDir, requireKnowledgeDir,
+} from './paths.ts';
 
 describe('pkHome', () => {
 	test('returns ~/.pk', () => {
@@ -46,6 +48,32 @@ describe('listExistingProjects', () => {
 		mkdirSync(path.join(fakeHome, '.pk', 'myproject'), {recursive: true});
 		writeFileSync(path.join(fakeHome, '.pk', 'notadir.txt'), '');
 		expect(listExistingProjects()).toEqual(['myproject']);
+	});
+});
+
+describe('requireKnowledgeDir', () => {
+	let orig: string | undefined;
+
+	beforeEach(() => {
+		orig = process.env.PK_KNOWLEDGE_DIR;
+		delete process.env.PK_KNOWLEDGE_DIR;
+	});
+
+	afterEach(() => {
+		if (orig === undefined) {
+			delete process.env.PK_KNOWLEDGE_DIR;
+		} else {
+			process.env.PK_KNOWLEDGE_DIR = orig;
+		}
+	});
+
+	test('returns PK_KNOWLEDGE_DIR when set', () => {
+		process.env.PK_KNOWLEDGE_DIR = '/tmp/myproject';
+		expect(requireKnowledgeDir()).toBe('/tmp/myproject');
+	});
+
+	test('throws when PK_KNOWLEDGE_DIR is unset', () => {
+		expect(() => requireKnowledgeDir()).toThrow('PK_KNOWLEDGE_DIR is not set');
 	});
 });
 

@@ -1,16 +1,7 @@
 import {readFileSync} from 'node:fs';
 import type {Command} from 'commander';
 import {search} from '../lib/db.ts';
-
-function knowledgeDir(): string {
-	const dir = process.env.PK_KNOWLEDGE_DIR;
-	if (!dir) {
-		console.error('PK_KNOWLEDGE_DIR is not set. Run: pk init <name> --harness <harness>');
-		process.exit(1);
-	}
-
-	return dir;
-}
+import {requireKnowledgeDir} from '../lib/paths.ts';
 
 export function registerSearch(program: Command): void {
 	program
@@ -23,7 +14,14 @@ export function registerSearch(program: Command): void {
 		.option('--context', 'Include full note body in output')
 		.option('--json', 'JSON output')
 		.action((query: string, opts: {status: string; tag: string; type: string; limit: string; json: boolean; context: boolean}) => {
-			const dir = knowledgeDir();
+			let dir: string;
+			try {
+				dir = requireKnowledgeDir();
+			} catch (error) {
+				console.error(String(error));
+				process.exit(1);
+			}
+
 			let results;
 			try {
 				results = search(dir, query, {
