@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import type {Command} from 'commander';
+import {z} from 'zod';
 import {
 	allNotes, REQUIRED_SECTIONS, STATUSES, TYPE_DIRS, LENGTH_WARN,
 } from '../lib/notes.ts';
@@ -13,48 +14,97 @@ function issue(level: IssueLevel, message: string, p: string): Issue {
 	return {level, message, path: p};
 }
 
-export function checkRequiredFields(meta: Record<string, unknown>, p: string): Issue[] {
-	return ['id', 'type', 'title', 'created', 'updated', 'status', 'tags'].flatMap(f =>
-		meta[f] === undefined || meta[f] === ''
-			? [issue('error', `missing frontmatter field: ${f}`, p)]
-			: []);
+// ---------------------------------------------------------------------------
+// Frontmatter schema (shape + status-per-type validation)
+// ---------------------------------------------------------------------------
+
+function missing(field: string): string {
+	return `missing frontmatter field: ${field}`;
 }
 
-export function checkTypeAndLocation(
+// Gray-matter/js-yaml parses ISO date values (e.g. 2024-01-01) as Date objects.
+// Coerce them to ISO strings so z.string() validators work correctly.
+function coerceDate(val: unknown): unknown {
+	return val instanceof Date ? val.toISOString().slice(0, 10) : val;
+}
+
+const frontmatterSchema = z.object({
+	id: z.string({required_error: missing('id'), invalid_type_error: missing('id')})
+		.min(1, missing('id')),
+	type: z.string({required_error: missing('type'), invalid_type_error: missing('type')})
+		.min(1, missing('type')),
+	title: z.string({required_error: missing('title'), invalid_type_error: missing('title')})
+		.min(1, missing('title')),
+	created: z.preprocess(coerceDate, z.string({required_error: missing('created'), invalid_type_error: missing('created')}).min(1, missing('created'))),
+	updated: z.preprocess(coerceDate, z.string({required_error: missing('updated'), invalid_type_error: missing('updated')}).min(1, missing('updated'))),
+	status: z.string({required_error: missing('status'), invalid_type_error: missing('status')})
+		.min(1, missing('status')),
+	tags: z.array(z.string(), {
+		required_error: 'tags must be a flat list',
+		invalid_type_error: 'tags must be a flat list',
+	}),
+}).passthrough().superRefine((data, ctx) => {
+	if (data.type && !TYPE_DIRS[data.type]) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['type'],
+			message: `invalid type: ${data.type}`,
+		});
+	}
+
+	if (data.type && STATUSES[data.type] && !STATUSES[data.type]!.includes(data.status)) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['status'],
+			message: `invalid status '${data.status}' for type ${data.type}`,
+		});
+	}
+});
+
+// ---------------------------------------------------------------------------
+// checkFrontmatter — replaces checkRequiredFields + checkTags + checkTypeAndLocation
+// ---------------------------------------------------------------------------
+
+export function checkFrontmatter(
 	meta: Record<string, unknown>,
 	p: string,
 	knowledgeDir: string,
 ): Issue[] {
-	const type = meta.type as string;
-	const out: Issue[] = [];
-	if (!STATUSES[type]?.includes((meta.status ?? '') as string)) {
-		out.push(issue('error', `invalid status '${String(meta.status)}' for type ${type}`, p));
+	const result = frontmatterSchema.safeParse(meta);
+	const issues: Issue[] = [];
+
+	if (!result.success) {
+		for (const zi of result.error.issues) {
+			issues.push(issue('error', zi.message, p));
+		}
+
+		// If type is unknown we can't validate location — bail early
+		return issues;
 	}
 
+	// Empty tags: valid shape but worth a warning
+	if (result.data.tags.length === 0) {
+		issues.push(issue('warn', 'tags is empty', p));
+	}
+
+	// Location check: type is guaranteed valid here
+	const {type} = result.data;
 	const expected = path.resolve(knowledgeDir, TYPE_DIRS[type]!);
 	if (path.resolve(path.dirname(p)) !== expected) {
-		out.push(issue('error', `${type} must live in ${expected}/`, p));
+		issues.push(issue('error', `${type} must live in ${expected}/`, p));
 	}
 
-	return out;
+	return issues;
 }
+
+// ---------------------------------------------------------------------------
+// Structural checks (unchanged)
+// ---------------------------------------------------------------------------
 
 export function checkRequiredSections(body: string, type: string, p: string): Issue[] {
 	const sections = new Set([...body.matchAll(/^## (.+?)\s*$/gmv)].map(m => m[1]));
 	return (REQUIRED_SECTIONS[type] ?? []).flatMap(req =>
 		sections.has(req) ? [] : [issue('error', `missing section: ## ${req}`, p)]);
-}
-
-export function checkTags(tags: unknown, p: string): Issue[] {
-	if (!Array.isArray(tags)) {
-		return [issue('error', 'tags must be a flat list', p)];
-	}
-
-	if (tags.length === 0) {
-		return [issue('warn', 'tags is empty', p)];
-	}
-
-	return [];
 }
 
 export function checkLength(p: string, type: string): Issue[] {
@@ -97,15 +147,15 @@ export function lintNotes(knowledgeDir: string): {issues: Issue[]; noteCount: nu
 			continue;
 		}
 
-		issues.push(...checkRequiredFields(n.meta, p));
+		const frontmatterIssues = checkFrontmatter(n.meta, p, knowledgeDir);
+		issues.push(...frontmatterIssues);
 
+		// If frontmatter has errors (not just warnings), type may be unknown
+		// so skip structural checks that depend on a valid type
 		const type = (n.meta.type ?? '');
 		if (!TYPE_DIRS[type]) {
-			issues.push(issue('error', `invalid type: ${type}`, p));
 			continue;
 		}
-
-		issues.push(...checkTypeAndLocation(n.meta, p, knowledgeDir));
 
 		const id = (n.meta.id ?? '');
 		if (id) {
@@ -118,7 +168,6 @@ export function lintNotes(knowledgeDir: string): {issues: Issue[]; noteCount: nu
 
 		issues.push(
 			...checkRequiredSections(n.body, type, p),
-			...checkTags(n.meta.tags, p),
 			...checkLength(p, type),
 			...checkSourceExtracted(n.body, n.meta, p),
 		);

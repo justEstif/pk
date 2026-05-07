@@ -2,6 +2,7 @@ import {
 	existsSync, readdirSync, readFileSync, statSync,
 } from 'node:fs';
 import path from 'node:path';
+import matter from 'gray-matter';
 
 export const TYPE_DIRS: Record<string, string> = {
 	decision: 'decisions',
@@ -61,46 +62,6 @@ export type Note = {
 	path: string;
 };
 
-export function parseFrontmatter(text: string): {body: string; meta: NoteMeta} | {err: string} {
-	if (!text.startsWith('---\n')) {
-		return {err: 'missing opening frontmatter delimiter'};
-	}
-
-	const end = text.indexOf('\n---\n', 4);
-	if (end === -1) {
-		return {err: 'missing closing frontmatter delimiter'};
-	}
-
-	const raw = text.slice(4, end);
-	const body = text.slice(end + 5);
-	const meta: NoteMeta = {};
-
-	for (const line of raw.split('\n')) {
-		const trimmed = line.trimEnd();
-		if (!trimmed.trim()) {
-			continue;
-		}
-
-		const colon = trimmed.indexOf(':');
-		if (colon === -1) {
-			return {err: `invalid frontmatter line: ${JSON.stringify(trimmed)}`};
-		}
-
-		const key = trimmed.slice(0, colon).trim();
-		const val = trimmed.slice(colon + 1).trim();
-		if (val.startsWith('[') && val.endsWith(']')) {
-			const inner = val.slice(1, -1).trim();
-			meta[key] = inner
-				? inner.split(',').map(p => p.trim().replaceAll(/^['"]|['"]$/gv, ''))
-				: [];
-		} else {
-			meta[key] = val.replaceAll(/^['"]|['"]$/gv, '');
-		}
-	}
-
-	return {body, meta};
-}
-
 function walkMd(dir: string): string[] {
 	if (!existsSync(dir)) {
 		return [];
@@ -122,14 +83,17 @@ function walkMd(dir: string): string[] {
 export function allNotes(knowledgeDir: string): Note[] {
 	return walkMd(knowledgeDir).map(p => {
 		const text = readFileSync(p, 'utf8');
-		const result = parseFrontmatter(text);
-		if ('err' in result) {
+		try {
+			const {data, content} = matter(text);
+			return {body: content, meta: data, path: p};
+		} catch (error) {
 			return {
-				body: '', err: result.err, meta: {}, path: p,
+				body: '',
+				err: error instanceof Error ? error.message : String(error),
+				meta: {},
+				path: p,
 			};
 		}
-
-		return {...result, path: p};
 	});
 }
 

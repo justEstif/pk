@@ -21,7 +21,9 @@
    },
    "dependencies": {
       "commander": "^14.0.0",
-      "markdownlint": "^0.40.0"
+      "gray-matter": "^4.0.3",
+      "markdownlint": "^0.40.0",
+      "zod": "3"
    },
    "repository": {
       "type": "git",

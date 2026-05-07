@@ -1,95 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 import {
-	type Note, type NoteMeta, parseFrontmatter, slugify, excerpt, TYPE_DIRS,
+	type Note, slugify, excerpt, TYPE_DIRS,
 } from './notes.ts';
-
-// ---------------------------------------------------------------------------
-// parseFrontmatter
-// ---------------------------------------------------------------------------
-
-describe('parseFrontmatter', () => {
-	test('parses valid frontmatter and body', () => {
-		const input = `---
-id: abc-123
-title: My Note
-type: note
-status: active
-tags: [foo, bar]
-created: 2024-01-01
-updated: 2024-01-02
----
-Body content here.
-`;
-		const result: {body: string; meta: NoteMeta} | {err: string} = parseFrontmatter(input);
-		expect('err' in result).toBe(false);
-		if ('err' in result) {
-			return;
-		}
-
-		expect(result.meta.id).toBe('abc-123');
-		expect(result.meta.title).toBe('My Note');
-		expect(result.meta.type).toBe('note');
-		expect(result.meta.status).toBe('active');
-		expect(result.meta.tags).toEqual(['foo', 'bar']);
-		expect(result.body.trim()).toBe('Body content here.');
-	});
-
-	test('parses empty tags list', () => {
-		const input = `---
-id: x
-title: T
-type: note
-status: active
-tags: []
-created: 2024-01-01
-updated: 2024-01-01
----
-`;
-		const result = parseFrontmatter(input);
-		expect('err' in result).toBe(false);
-		if ('err' in result) {
-			return;
-		}
-
-		expect(result.meta.tags).toEqual([]);
-	});
-
-	test('returns error when opening delimiter is missing', () => {
-		const result = parseFrontmatter('no frontmatter here');
-		expect('err' in result).toBe(true);
-	});
-
-	test('returns error when closing delimiter is missing', () => {
-		const result = parseFrontmatter('---\nid: x\n');
-		expect('err' in result).toBe(true);
-	});
-
-	test('returns error on invalid frontmatter line', () => {
-		const result = parseFrontmatter('---\nbadline\n---\n');
-		expect('err' in result).toBe(true);
-	});
-
-	test('strips surrounding quotes from values', () => {
-		const input = `---
-id: "quoted-id"
-title: 'single-quoted'
-type: note
-status: active
-tags: []
-created: 2024-01-01
-updated: 2024-01-01
----
-`;
-		const result = parseFrontmatter(input);
-		expect('err' in result).toBe(false);
-		if ('err' in result) {
-			return;
-		}
-
-		expect(result.meta.id).toBe('quoted-id');
-		expect(result.meta.title).toBe('single-quoted');
-	});
-});
 
 // ---------------------------------------------------------------------------
 // slugify
@@ -165,3 +77,4 @@ describe('TYPE_DIRS', () => {
 		expect(Object.keys(TYPE_DIRS).toSorted()).toEqual(['decision', 'index', 'note', 'question', 'source']);
 	});
 });
+
