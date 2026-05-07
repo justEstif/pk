@@ -1,6 +1,25 @@
 import {search} from './db.ts';
-import {allNotes, validNotes} from './notes.ts';
+import {allNotes, excerpt, validNotes} from './notes.ts';
 import type {Note} from './schema.ts';
+
+/**
+ * Format notes into a markdown context block suitable for agent injection.
+ * Returns the full string (caller decides whether to print or return via MCP).
+ */
+export function formatSynthesizeOutput(notes: Note[], label: string): string {
+	const today = new Date().toISOString().slice(0, 10);
+	const lines: string[] = [`# Knowledge: ${label} (${notes.length} notes · ${today})`];
+	for (const n of notes) {
+		const tags = (n.meta.tags ?? []).join(', ');
+		lines.push(`\n---\n### [${n.meta.title ?? '(untitled)'}] · ${n.meta.type} · ${n.meta.status}\n\`${n.path}\`${tags ? '\n**tags:** ' + tags : ''}\n`);
+		const ex = excerpt(n);
+		if (ex) {
+			lines.push(ex);
+		}
+	}
+
+	return lines.join('\n');
+}
 
 export type SynthesizeOptions = {
 	all?: boolean;

@@ -1,7 +1,15 @@
 import type {Command} from 'commander';
-import {findKnowledgeDir} from '../lib/paths.ts';
-import {excerpt} from '../lib/notes.ts';
-import {selectNotes} from '../lib/synthesize.ts';
+import {formatSynthesizeOutput, selectNotes} from '../lib/synthesize.ts';
+
+function knowledgeDir(): string {
+	const dir = process.env.PK_KNOWLEDGE_DIR;
+	if (!dir) {
+		console.error('PK_KNOWLEDGE_DIR is not set. Run: pk init <name> --harness <harness>');
+		process.exit(1);
+	}
+
+	return dir;
+}
 
 export function registerSynthesize(program: Command): void {
 	program
@@ -13,12 +21,11 @@ export function registerSynthesize(program: Command): void {
 		.option('--limit <n>', 'Max notes', '10')
 		.option('--session-start', 'Open questions + recent decisions + active notes')
 		.action((query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string}) => {
-			const knowledgeDir = findKnowledgeDir();
-			const today = new Date().toISOString().slice(0, 10);
+			const dir = knowledgeDir();
 
 			let notes;
 			try {
-				notes = selectNotes(knowledgeDir, query, {
+				notes = selectNotes(dir, query, {
 					all: opts.all,
 					limit: Number.parseInt(opts.limit, 10),
 					sessionStart: opts.sessionStart,
@@ -36,14 +43,6 @@ export function registerSynthesize(program: Command): void {
 			}
 
 			const label = opts.sessionStart ? 'session context' : (query ?? 'all');
-			console.log(`# Knowledge: ${label} (${notes.length} notes · ${today})`);
-			for (const n of notes) {
-				const tags = (n.meta.tags ?? []).join(', ');
-				console.log(`\n---\n### [${n.meta.title ?? '(untitled)'}] · ${n.meta.type} · ${n.meta.status}\n\`${n.path}\`${tags ? '\n**tags:** ' + tags : ''}\n`);
-				const ex = excerpt(n);
-				if (ex) {
-					console.log(ex);
-				}
-			}
+			console.log(formatSynthesizeOutput(notes, label));
 		});
 }

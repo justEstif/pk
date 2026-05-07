@@ -1,337 +1,392 @@
 import {
 	cpSync, existsSync, mkdirSync, readFileSync, writeFileSync,
 } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import * as p from '@clack/prompts';
 import type {Command} from 'commander';
 import {TYPE_DIRS} from '../lib/schema.ts';
+import {listExistingProjects, pkHome, projectDir} from '../lib/paths.ts';
 
-const KNOWLEDGE_DIR = 'knowledge';
-const AGENTS_SKILLS_DIR = '.agents/skills/pk';
+export type Harness = 'claude' | 'claude-desktop' | 'codex' | 'cursor' | 'omp' | 'opencode';
 
-type Harness = 'claude' | 'codex' | 'cursor' | 'omp' | 'opencode' | 'pi';
+const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
+	{hint: '.mcp.json in project root', label: 'Claude Code', value: 'claude'},
+	{hint: '~/Library/…/claude_desktop_config.json', label: 'Claude Desktop', value: 'claude-desktop'},
+	{hint: '.cursor/mcp.json in project root', label: 'Cursor', value: 'cursor'},
+	{hint: '.omp/mcp.json in project root', label: 'Oh My Pi', value: 'omp'},
+	{hint: 'opencode.json in project root', label: 'OpenCode', value: 'opencode'},
+	{hint: '.codex/config.toml in project root', label: 'Codex CLI', value: 'codex'},
+];
 
-const HARNESS_DESCRIPTIONS: Record<Harness, string> = {
-	claude: 'Claude Code — UserPromptSubmit hook',
-	codex: 'Codex CLI — AGENTS.md injection',
-	cursor: 'Cursor — .cursor/rules/pk.mdc',
-	omp: 'Oh My Pi — .omp/extensions/pk.ts',
-	opencode: 'OpenCode — experimental.chat.system.transform plugin',
-	pi: 'Pi — .pi/extensions/pk.ts',
+const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
+
+/** Parse a comma-separated harness string into a validated Harness[]. */
+function parseHarnesses(raw: string): Harness[] | string {
+	const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+	const invalid = parts.filter(s => !HARNESS_VALUES.has(s));
+	if (invalid.length > 0) {
+		return `Unknown harness: ${invalid.join(', ')}. Valid: ${[...HARNESS_VALUES].join(', ')}`;
+	}
+
+	return [...new Set(parts)] as Harness[];
+}
+
+// ─── MCP entry builders ───────────────────────────────────────────────────────
+
+type McpEntry = {
+	command: string;
+	args: string[];
+	env: Record<string, string>;
 };
 
-export function registerInit(program: Command): void {
-	program
-		.command('init')
-		.description('Initialize knowledge base and install agent hook')
-		.option(
-			'--harness <harness>',
-			`Agent harness: ${Object.keys(HARNESS_DESCRIPTIONS).join(', ')} (default: claude)`,
-			'claude',
-		)
-		.action((opts: {harness: string}) => {
-			const harness = opts.harness as Harness;
-			if (!HARNESS_DESCRIPTIONS[harness]) {
-				console.error(`Unknown harness: ${harness}. Valid: ${Object.keys(HARNESS_DESCRIPTIONS).join(', ')}`);
-				process.exit(1);
-			}
+function pkMcpEntry(knowledgeDir: string): McpEntry {
+	return {
+		args: ['mcp'],
+		command: 'pk',
+		env: {PK_KNOWLEDGE_DIR: knowledgeDir},
+	};
+}
 
-			// 1. Create knowledge/ directories
-			for (const dir of Object.values(TYPE_DIRS)) {
-				mkdirSync(path.join(KNOWLEDGE_DIR, dir), {recursive: true});
-			}
+function readJson(filePath: string): Record<string, unknown> {
+	if (!existsSync(filePath)) {
+		return {};
+	}
 
-			console.log('created knowledge/ directories');
+	try {
+		return JSON.parse(readFileSync(filePath, 'utf8')) as Record<string, unknown>;
+	} catch {
+		return {};
+	}
+}
 
-			// 2. knowledge/.gitignore
-			const gi = path.join(KNOWLEDGE_DIR, '.gitignore');
-			if (!existsSync(gi)) {
-				writeFileSync(gi, '.index.db\n');
-				console.log('created knowledge/.gitignore');
-			}
+function writeJson(filePath: string, data: unknown): void {
+	mkdirSync(path.dirname(filePath), {recursive: true});
+	writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
+}
 
-			// 3. Copy skill into .agents/skills/pk/
-			installSkill();
+// ─── Per-harness config writers (exported for testing) ───────────────────────
 
-			// 4. Harness adapter
-			const harnessFns: Record<Harness, () => void> = {
-				claude: installClaudeHook,
-				codex: installCodexAgentsMd,
-				cursor: installCursorRule,
-				omp: installOmpExtension,
-				opencode: installOpenCodePlugin,
-				pi: installPiExtension,
-			};
-			harnessFns[harness]();
+export function writeClaudeConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+	const cfgPath = path.join(projectRoot, '.mcp.json');
+	const cfg = readJson(cfgPath);
+	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
+	servers.pk = pkMcpEntry(knowledgeDir);
+	cfg.mcpServers = servers;
+	writeJson(cfgPath, cfg);
+}
 
-			console.log(`
-pk init complete (${HARNESS_DESCRIPTIONS[harness]})
+export function writeClaudeDesktopConfig(homeDir: string, name: string, knowledgeDir: string): void {
+	const cfgPath = path.join(homeDir, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
+	const cfg = readJson(cfgPath);
+	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
+	servers[`pk-${name}`] = pkMcpEntry(knowledgeDir);
+	cfg.mcpServers = servers;
+	writeJson(cfgPath, cfg);
+}
 
-Next steps:
-  pk index          rebuild search index after adding notes
-  pk new note ...   create your first note
+export function writeCursorConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+	const cfgPath = path.join(projectRoot, '.cursor', 'mcp.json');
+	const cfg = readJson(cfgPath);
+	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
+	servers.pk = pkMcpEntry(knowledgeDir);
+	cfg.mcpServers = servers;
+	writeJson(cfgPath, cfg);
+}
 
-Customize note templates at:
-  ${AGENTS_SKILLS_DIR}/assets/templates/
+export function writeOmpConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+	const cfgPath = path.join(projectRoot, '.omp', 'mcp.json');
+	const cfg = readJson(cfgPath);
+	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
+	servers.pk = pkMcpEntry(knowledgeDir);
+	cfg.mcpServers = servers;
+	writeJson(cfgPath, cfg);
+}
 
-To reset templates to defaults, delete ${AGENTS_SKILLS_DIR} and re-run pk init.
-`);
-		});
+export function writeOpenCodeConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+	const cfgPath = path.join(projectRoot, 'opencode.json');
+	const cfg = readJson(cfgPath);
+	const mcp = (cfg.mcp as Record<string, unknown> | undefined) ?? {};
+	mcp.pk = pkMcpEntry(knowledgeDir);
+	cfg.mcp = mcp;
+	writeJson(cfgPath, cfg);
+}
+
+export function writeCodexConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+	const cfgPath = path.join(projectRoot, '.codex', 'config.toml');
+	const toml = [
+		'[mcp_servers.pk]',
+		'command = "pk"',
+		'args = ["mcp"]',
+		'',
+		'[mcp_servers.pk.env]',
+		`PK_KNOWLEDGE_DIR = "${knowledgeDir}"`,
+		'',
+	].join('\n');
+
+	if (existsSync(cfgPath)) {
+		const existing = readFileSync(cfgPath, 'utf8');
+		if (existing.includes('[mcp_servers.pk]')) {
+			return;
+		} // Already present
+
+		mkdirSync(path.dirname(cfgPath), {recursive: true});
+		writeFileSync(cfgPath, existing.trimEnd() + '\n\n' + toml);
+	} else {
+		mkdirSync(path.dirname(cfgPath), {recursive: true});
+		writeFileSync(cfgPath, toml);
+	}
+}
+
+// ─── Skill installation ───────────────────────────────────────────────────────
+
+function skillTargetDir(harness: Harness, projectRoot: string): string {
+	switch (harness) {
+		case 'claude':
+		case 'claude-desktop': {
+			return path.join(os.homedir(), '.claude', 'skills', 'pk');
+		}
+
+		case 'omp': {
+			return path.join(projectRoot, '.agents', 'skills', 'pk');
+		}
+
+		case 'cursor': {
+			return path.join(projectRoot, '.cursor', 'skills', 'pk');
+		}
+
+		case 'opencode':
+		case 'codex': {
+			return '';
+		} // No standard skill dir
+	}
 }
 
 function skillSourceDir(): string {
 	return path.resolve(import.meta.dir, '..', 'skill');
 }
 
-function installSkill(): void {
-	if (existsSync(AGENTS_SKILLS_DIR)) {
-		console.log(`skill already present at ${AGENTS_SKILLS_DIR} — skipping (delete to reset)`);
-		return;
+/** Returns the path installed to, or '' if skipped/unsupported. Idempotent. */
+export function installSkill(harness: Harness, projectRoot: string): string {
+	const target = skillTargetDir(harness, projectRoot);
+	if (!target) {
+		return '';
 	}
 
 	const src = skillSourceDir();
 	if (!existsSync(src)) {
-		console.log(`skill source not found at ${src} — skipping`);
-		return;
+		return '';
 	}
 
-	cpSync(src, AGENTS_SKILLS_DIR, {recursive: true});
-	console.log(`installed skill to ${AGENTS_SKILLS_DIR}`);
+	if (existsSync(target)) {
+		return target;
+	} // Already installed
+
+	cpSync(src, target, {recursive: true});
+	return target;
 }
 
-// ─── Claude Code ─────────────────────────────────────────────────────────────
+// ─── Project creation ─────────────────────────────────────────────────────────
 
-function installClaudeHook(): void {
-	mkdirSync(path.join('.claude', 'hooks'), {recursive: true});
-	const hookFile = path.join('.claude', 'hooks', 'pk-user-prompt-submit.ts');
-	writeFileSync(hookFile, CLAUDE_HOOK);
-	console.log(`wrote ${hookFile}`);
-
-	const settingsFile = path.join('.claude', 'settings.json');
-	let settings: Record<string, unknown> = {};
-	if (existsSync(settingsFile)) {
-		try {
-			settings = JSON.parse(readFileSync(settingsFile, 'utf8')) as Record<string, unknown>;
-		} catch {}
+export function ensureProject(name: string): {created: boolean; knowledgeDir: string} {
+	const kDir = projectDir(name);
+	const alreadyExists = existsSync(kDir);
+	for (const dir of Object.values(TYPE_DIRS)) {
+		mkdirSync(path.join(kDir, dir), {recursive: true});
 	}
 
-	const hooks = (settings.hooks as Record<string, string[]> | undefined) ?? {};
-	const existing: string[] = (hooks.UserPromptSubmit) ?? [];
-	const cmd = `bun ${hookFile} user-prompt-submit`;
-	if (!existing.includes(cmd)) {
-		hooks.UserPromptSubmit = [...existing, cmd];
+	const gi = path.join(kDir, '.gitignore');
+	if (!existsSync(gi)) {
+		writeFileSync(gi, '.index.db\n');
 	}
 
-	settings.hooks = hooks;
-	writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n');
-	console.log('updated .claude/settings.json');
+	return {created: !alreadyExists, knowledgeDir: kDir};
 }
 
-const CLAUDE_HOOK = `// pk hook — auto-generated by pk init
-async function runPk(args: string[]): Promise<string> {
-  const child = Bun.spawn(['pk', ...args], { stdout: 'pipe', stderr: 'pipe' })
-  const [out] = await Promise.all([new Response(child.stdout).text(), child.exited])
-  return out.trim()
+// ─── Harness dispatch ─────────────────────────────────────────────────────────
+
+type HarnessContext = {name: string; knowledgeDir: string; projectRoot: string; home: string};
+
+export function applyHarness(harness: Harness, ctx: HarnessContext): void {
+	const {name, knowledgeDir, projectRoot, home} = ctx;
+	switch (harness) {
+		case 'claude': {
+			writeClaudeConfig(projectRoot, name, knowledgeDir);
+			break;
+		}
+
+		case 'claude-desktop': {
+			writeClaudeDesktopConfig(home, name, knowledgeDir);
+			break;
+		}
+
+		case 'codex': {
+			writeCodexConfig(projectRoot, name, knowledgeDir);
+			break;
+		}
+
+		case 'cursor': {
+			writeCursorConfig(projectRoot, name, knowledgeDir);
+			break;
+		}
+
+		case 'omp': {
+			writeOmpConfig(projectRoot, name, knowledgeDir);
+			break;
+		}
+
+		case 'opencode': {
+			writeOpenCodeConfig(projectRoot, name, knowledgeDir);
+			break;
+		}
+	}
 }
 
-async function handleUserPromptSubmit() {
-  const input = JSON.parse(await Bun.stdin.text()) as { prompt?: string }
-  const query = input.prompt?.trim() ?? ''
-  let context = ''
-  try {
-    const args = ['synthesize', '--session-start', '--limit', '8']
-    if (query) args.push(query)
-    context = await runPk(args)
-  } catch {}
-  console.log(JSON.stringify({
-    hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: context },
-    suppressOutput: true,
-  }))
-}
-
-const event = process.argv[2] ?? ''
-if (event === 'user-prompt-submit') handleUserPromptSubmit().catch(() => process.exit(0))
-else process.exit(0)
-`;
-
-// ─── Pi / Oh My Pi ───────────────────────────────────────────────────────────
-
-function installPiExtension(): void {
-	const dir = path.join('.pi', 'extensions');
-	mkdirSync(dir, {recursive: true});
-	const file = path.join(dir, 'pk.ts');
-	writeFileSync(file, PI_EXTENSION);
-	console.log(`wrote ${file}`);
-}
-
-const PI_EXTENSION = `// pk extension — auto-generated by pk init
-import type { ExtensionAPI } from '@mariozechner/pi-coding-agent'
-
-async function runPk(args: string[]): Promise<string> {
-  const child = Bun.spawn(['pk', ...args], { stdout: 'pipe', stderr: 'pipe' })
-  const [out] = await Promise.all([new Response(child.stdout).text(), child.exited])
-  return out.trim()
-}
-
-export default function (pi: ExtensionAPI) {
-  pi.on('before_agent_start', async (event) => {
-    let context = ''
-    try {
-      context = await runPk(['synthesize', '--session-start', '--limit', '8'])
-    } catch {}
-    if (!context) return
-    return {
-      systemPrompt: \`\${context}\\n\\n\${event.systemPrompt ?? ''}\`,
-    }
-  })
-}
-`;
-
-// ─── Oh My Pi ──────────────────────────────────────────────────────────────
-
-function installOmpExtension(): void {
-	const dir = path.join('.omp', 'extensions');
-	mkdirSync(dir, {recursive: true});
-	const file = path.join(dir, 'pk.ts');
-	writeFileSync(file, OMP_EXTENSION);
-	console.log(`wrote ${file}`);
-}
-
-const OMP_EXTENSION = `// pk hook — auto-generated by pk init
-import type { HookAPI } from '@oh-my-pi/pi-coding-agent/extensibility/hooks'
-
-async function runPk(args: string[]): Promise<string> {
-  const child = Bun.spawn(['pk', ...args], { stdout: 'pipe', stderr: 'pipe' })
-  const [out] = await Promise.all([new Response(child.stdout).text(), child.exited])
-  return out.trim()
-}
-
-export default function (pi: HookAPI) {
-  pi.on('before_agent_start', async (event) => {
-    let context = ''
-    try {
-      context = await runPk(['synthesize', '--session-start', '--limit', '8'])
-    } catch {}
-    if (!context) return
-    return {
-      message: {
-        customType: 'pk-context',
-        content: context,
-        display: 'pk: project context injected',
-        details: context,
-      },
-    }
-  })
-}
-`;
-
-// ─── OpenCode ────────────────────────────────────────────────────────────────
-
-function installOpenCodePlugin(): void {
-	const dir = path.join('.opencode', 'plugins');
-	mkdirSync(dir, {recursive: true});
-	const file = path.join(dir, 'pk.ts');
-	writeFileSync(file, OPENCODE_PLUGIN);
-	console.log(`wrote ${file}`);
-	console.log('Register in .opencode/config.json: { "plugins": [".opencode/plugins/pk.ts"] }');
-}
-
-const OPENCODE_PLUGIN = `// pk plugin — auto-generated by pk init
-import type { Plugin } from '@opencode-ai/plugin'
-
-async function runPk(args: string[]): Promise<string> {
-  const child = Bun.spawn(['pk', ...args], { stdout: 'pipe', stderr: 'pipe' })
-  const [out] = await Promise.all([new Response(child.stdout).text(), child.exited])
-  return out.trim()
-}
-
-export const PkPlugin: Plugin = async () => {
-  return {
-    'experimental.chat.system.transform': async (
-      _input: { sessionID?: string },
-      output: { system: string[] },
-    ) => {
-      try {
-        const context = await runPk(['synthesize', '--session-start', '--limit', '8'])
-        if (context) output.system.push(\`\\n\${context}\`)
-      } catch {}
-    },
-  }
-}
-`;
-
-// ─── Cursor ───────────────────────────────────────────────────────────────────
-
-function installCursorRule(): void {
-	const dir = path.join('.cursor', 'rules');
-	mkdirSync(dir, {recursive: true});
-	const file = path.join(dir, 'pk.mdc');
-	writeFileSync(file, CURSOR_RULE);
-	console.log(`wrote ${file}`);
-}
-
-const CURSOR_RULE = `---
-description: Project knowledge (pk)
-globs: ["**/*"]
-alwaysApply: true
----
-
-# Project Knowledge (pk)
-
-This project uses \`pk\` for structured knowledge management.
-
-## Before creating any note, search first
-
-\`\`\`bash
-pk search <query>
-\`\`\`
-
-## Commands
-
-\`\`\`bash
-pk new note|decision|question|source "Title" --tags tag1,tag2
-pk search <query> [--context] [--limit 5]
-pk synthesize --session-start   # current project context
-pk index                         # rebuild search after adding notes
-pk lint                          # validate note structure
-\`\`\`
-
-## Notes live in \`knowledge/\`
-
-Templates can be customized at \`.agents/skills/pk/assets/templates/\`.
-`;
-
-// ─── Codex CLI ───────────────────────────────────────────────────────────────
-
-function installCodexAgentsMd(): void {
-	const file = 'AGENTS.md';
-	const block = `
-## Project Knowledge (pk)
-
-This project uses \`pk\` for structured knowledge management.
-
-At the start of each session run:
-\`\`\`bash
-pk synthesize --session-start
-\`\`\`
-
-Always run \`pk search <query>\` before creating new notes.
-
-\`\`\`bash
-pk new note|decision|question|source "Title" --tags tag1,tag2
-pk search <query> [--context]
-pk index    # rebuild after adding notes
-pk lint     # validate structure
-\`\`\`
-
-Notes live in \`knowledge/\`. Templates at \`.agents/skills/pk/assets/templates/\`.
-`;
-
-	const existing = existsSync(file) ? readFileSync(file, 'utf8') : '';
-	if (existing.includes('pk synthesize --session-start')) {
-		console.log(`${file} already contains pk block — skipping`);
-		return;
+/**
+ * Apply a list of harnesses, installing skill once per unique target dir.
+ * Returns the set of skill paths installed.
+ */
+export function applyHarnesses(harnesses: Harness[], ctx: HarnessContext): string[] {
+	for (const h of harnesses) {
+		applyHarness(h, ctx);
 	}
 
-	writeFileSync(file, existing + block);
-	console.log(`appended pk block to ${file}`);
+	// Deduplicate skill installs by target path
+	const seen = new Set<string>();
+	const installed: string[] = [];
+	for (const h of harnesses) {
+		const skillPath = installSkill(h, ctx.projectRoot);
+		if (skillPath && !seen.has(skillPath)) {
+			seen.add(skillPath);
+			installed.push(skillPath);
+		}
+	}
+
+	return installed;
+}
+
+// ─── registerInit ─────────────────────────────────────────────────────────────
+
+export function registerInit(program: Command): void {
+	program
+		.command('init [name]')
+		.description('Set up a pk knowledge project and wire it to your agent harness(es)')
+		.option(
+			'--harness <harnesses>',
+			`Comma-separated harnesses: ${HARNESSES.map(h => h.value).join(', ')}`,
+		)
+		.action(async (nameArg: string | undefined, opts: {harness?: string}) => {
+			const projectRoot = process.cwd();
+			const home = os.homedir();
+			const existing = listExistingProjects();
+
+			// ── Validate harness flag early if provided ───────────────────────
+			let flagHarnesses: Harness[] | undefined;
+			if (opts.harness) {
+				const result = parseHarnesses(opts.harness);
+				if (typeof result === 'string') {
+					console.error(result);
+					process.exit(1);
+				}
+
+				flagHarnesses = result;
+			}
+
+			// ── Non-interactive path: both args supplied ───────────────────────
+			if (nameArg && flagHarnesses) {
+				const {created, knowledgeDir} = ensureProject(nameArg);
+				const ctx = {
+					home, knowledgeDir, name: nameArg, projectRoot,
+				};
+				const skillPaths = applyHarnesses(flagHarnesses, ctx);
+				console.log(created ? `created ${knowledgeDir}` : `connecting to existing project ${knowledgeDir}`);
+				for (const h of flagHarnesses) {
+					console.log(`  ${h}: MCP config written`);
+				}
+
+				for (const sp of skillPaths) {
+					console.log(`  skill installed to ${sp}`);
+				}
+
+				console.log(`\nDone. Set: export PK_KNOWLEDGE_DIR="${knowledgeDir}"`);
+				return;
+			}
+
+			// ── Interactive path ───────────────────────────────────────────────
+			p.intro('pk init');
+
+			// Step 1: project name
+			let name: string;
+			if (nameArg) {
+				name = nameArg;
+			} else {
+				const choices: Array<{value: string; label: string; hint?: string}> = [
+					...existing.map(n => ({hint: pkHome() + '/' + n, label: n, value: n})),
+					{label: '+ New project', value: '__new__'},
+				];
+
+				const picked = await p.select({message: 'Project', options: choices});
+				if (p.isCancel(picked)) {
+					p.cancel('Cancelled.');
+					process.exit(0);
+				}
+
+				if (picked === '__new__') {
+					const typed = await p.text({
+						message: 'Project name',
+						placeholder: 'my-project',
+						validate(v) {
+							if (!v?.trim()) {
+								return 'Name is required';
+							}
+
+							if (!/^[\w.-]+$/v.test(v)) {
+								return 'Use letters, numbers, hyphens, dots only';
+							}
+						},
+					});
+					if (p.isCancel(typed)) {
+						p.cancel('Cancelled.');
+						process.exit(0);
+					}
+
+					name = typed;
+				} else {
+					name = picked;
+				}
+			}
+
+			// Step 2: harnesses (multiselect)
+			let harnesses: Harness[];
+			if (flagHarnesses) {
+				harnesses = flagHarnesses;
+			} else {
+				const picked = await p.multiselect<Harness>({
+					message: 'Harnesses (space to toggle, enter to confirm)',
+					options: HARNESSES.map(h => ({hint: h.hint, label: h.label, value: h.value})),
+					required: true,
+				});
+				if (p.isCancel(picked)) {
+					p.cancel('Cancelled.');
+					process.exit(0);
+				}
+
+				harnesses = picked;
+			}
+
+			// ── Apply ──────────────────────────────────────────────────────────
+			const {created, knowledgeDir} = ensureProject(name);
+			const ctx = {
+				home, knowledgeDir, name, projectRoot,
+			};
+			const skillPaths = applyHarnesses(harnesses, ctx);
+
+			p.outro([
+				created ? `Created project: ${knowledgeDir}` : `Connected to existing project: ${knowledgeDir}`,
+				...harnesses.map(h => `  ${h}: MCP config written`),
+				...skillPaths.map(sp => `  skill installed to ${sp}`),
+				'',
+				`Next: export PK_KNOWLEDGE_DIR="${knowledgeDir}"`,
+			].join('\n'));
+		});
 }
