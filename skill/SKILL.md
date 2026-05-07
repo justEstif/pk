@@ -7,54 +7,33 @@ description: "Load when maintaining project knowledge, capturing decisions or qu
 
 Structured project knowledge — intake, search, recall, and audit over `knowledge/`.
 
-## Prerequisites
+## Tools
 
-Verify before every operation:
-
-```bash
-pk --version 2>/dev/null || npm install -g @justestif/pk
-```
-
-## First use in a project
-
-```bash
-pk init
-```
-
-Creates `knowledge/`, installs Claude Code hook at `.claude/hooks/pk-user-prompt-submit.ts`.
-The hook injects open questions, recent decisions, and active notes into every prompt automatically.
-
-## Commands
-
-```bash
-pk new <type> <title> [--tags tag1,tag2]   # type: note|decision|question|source
-pk search <query> [--context] [--limit 5]
-pk synthesize [query] [--all] [--session-start]
-pk index                                    # rebuild FTS5 + markdown indexes
-pk lint                                     # validate structure — exit 1 on errors
-pk instructions <command>                   # full behavioral guide per command
-```
-
-Run all commands from the project root (where `knowledge/` lives).
+| Task | Tool |
+|---|---|
+| Search notes | `pk_search` |
+| Context dump / session start | `pk_synthesize` |
+| Create a note | `pk_new` |
+| Validate structure | `pk_lint` |
 
 ## Intake
 
-**Search before creating** — always run `pk search` first.
+**Search before creating** — always call `pk_search` first.
 
 - Substantial messy input → `source`. Extract `note`, `decision`, `question` only when durable beyond this session.
 - Update existing when the match is obvious; otherwise create and link in body.
-- Run `pk lint` before committing. Auto-commit coherent operations only when lint passes and no unrelated files are staged.
+- Call `pk_lint` before committing. Auto-commit coherent operations only when lint passes and no unrelated files are staged.
 
 ## Asking
 
-1. `pk search <query> [--context]`
+1. `pk_search` with the relevant query
 2. Read top results directly
 3. Answer with citations to note paths/IDs
 4. If silent or ambiguous, offer to create a `question` note
 
 ## NEVER
 
-- **Skip `pk search` before creating** — duplicates erode trust in the knowledge base
+- **Skip `pk_search` before creating** — duplicates erode trust in the knowledge base
 - **Dump raw input into durable notes** — preserve in `source`, extract selectively
 - **Silently merge related-but-different claims** — create and link instead
 - **Auto-commit when lint fails or unrelated files are staged**
