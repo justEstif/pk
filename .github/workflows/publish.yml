@@ -31,3 +31,51 @@ jobs:
           echo "version ok: $PKG_VERSION"
       - name: publish
         run: npm publish --provenance --access public
+
+  update-homebrew:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: get version
+        id: version
+        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: compute sha256
+        id: sha
+        run: |
+          VERSION=${{ steps.version.outputs.value }}
+          URL="https://registry.npmjs.org/@justestif/pk/-/pk-${VERSION}.tgz"
+          # Retry up to 10 times — npm propagation can lag a few seconds
+          for i in $(seq 1 10); do
+            SHA=$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)
+            # sha256 of empty string — tarball not ready yet
+            if [ "$SHA" != "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" ]; then
+              echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+              echo "got sha256: $SHA"
+              break
+            fi
+            echo "attempt $i: tarball not ready, retrying in 15s..."
+            sleep 15
+          done
+
+      - name: update formula
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.value }}
+          SHA=${{ steps.sha.outputs.sha256 }}
+
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/justEstif/homebrew-tap.git"
+          cd homebrew-tap
+
+          sed -i "s|url \".*\"|url \"https://registry.npmjs.org/@justestif/pk/-/pk-${VERSION}.tgz\"|" Formula/pk.rb
+          sed -i "s|sha256 \".*\"|sha256 \"${SHA}\"|" Formula/pk.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/pk.rb
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "chore: update pk to v${VERSION}"
+          git push
