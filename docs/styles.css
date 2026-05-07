@@ -190,13 +190,19 @@ h1 {
    margin-bottom: 0;
 }
 
-/* ── Demo tabs ───────────────────────────────────────────── */
+/* ── Demo label + tabs ──────────────────────────────────── */
+
+.demo-label {
+   font-family: 'JetBrains Mono', monospace;
+   font-size: 11px;
+   color: var(--text-dim);
+   margin: 24px 0 10px;
+}
 
 .demo-tabs {
    display: grid;
    grid-template-columns: repeat(3, 1fr);
    gap: 2px;
-   margin-top: 24px;
 }
 
 .demo-tab {
@@ -224,6 +230,18 @@ h1 {
    border-bottom-color: var(--bg-2);
    position: relative;
    z-index: 1;
+}
+
+.tab-hint {
+   font-size: 10px;
+   color: var(--text-dim);
+   margin-left: 4px;
+   opacity: 0.7;
+}
+
+.demo-tab.active .tab-hint {
+   color: var(--amber);
+   opacity: 0.5;
 }
 
 /* ── Terminal ────────────────────────────────────────────── */
