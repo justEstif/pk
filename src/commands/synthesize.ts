@@ -11,7 +11,7 @@ export function registerSynthesize(program: Command): void {
 		.option('--tag <tag>', 'Filter by tag')
 		.option('--limit <n>', 'Max notes', '10')
 		.option('--session-start', 'Open questions + recent decisions + active notes')
-		.action((query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string}) => {
+		.action(async (query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string}) => {
 			let dir: string;
 			try {
 				dir = requireKnowledgeDir();
@@ -22,7 +22,7 @@ export function registerSynthesize(program: Command): void {
 
 			let notes;
 			try {
-				notes = selectNotes(dir, query, {
+				notes = await selectNotes(dir, query, {
 					all: opts.all,
 					limit: Number.parseInt(opts.limit, 10),
 					sessionStart: opts.sessionStart,

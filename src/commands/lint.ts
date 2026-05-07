@@ -6,7 +6,7 @@ export function registerLint(program: Command): void {
 	program
 		.command('lint')
 		.description('Validate knowledge notes structure and frontmatter')
-		.action(() => {
+		.action(async () => {
 			let dir: string;
 			try {
 				dir = requireKnowledgeDir();
@@ -15,7 +15,7 @@ export function registerLint(program: Command): void {
 				process.exit(1);
 			}
 
-			const {issues, noteCount} = lintNotes(dir);
+			const {issues, noteCount} = await lintNotes(dir);
 
 			let hasError = false;
 			for (const {level, path: p, message} of issues) {

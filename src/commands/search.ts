@@ -1,4 +1,3 @@
-import {readFileSync} from 'node:fs';
 import type {Command} from 'commander';
 import {search} from '../lib/db.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
@@ -13,7 +12,7 @@ export function registerSearch(program: Command): void {
 		.option('--limit <n>', 'Max results', '10')
 		.option('--context', 'Include full note body in output')
 		.option('--json', 'JSON output')
-		.action((query: string, opts: {status: string; tag: string; type: string; limit: string; json: boolean; context: boolean}) => {
+		.action(async (query: string, opts: {status: string; tag: string; type: string; limit: string; json: boolean; context: boolean}) => {
 			let dir: string;
 			try {
 				dir = requireKnowledgeDir();
@@ -45,18 +44,21 @@ export function registerSearch(program: Command): void {
 				return;
 			}
 
-			for (const r of results) {
+			// Prefetch context bodies concurrently to avoid await-in-loop
+			const bodies = opts.context
+				? await Promise.all(results.map(async r => Bun.file(r.path).text().catch(() => '')))
+				: [];
+
+			for (const [i, r] of results.entries()) {
 				const tags = r.tags.join(', ');
 				console.log(`${r.path} | ${r.type} | ${r.status} | ${r.id} | ${r.title}${tags ? ' | ' + tags : ''}`);
 				if (r.snippet) {
 					console.log(`  ${r.snippet}`);
 				}
 
-				if (opts.context) {
-					try {
-						console.log(readFileSync(r.path, 'utf8'));
-						console.log('---');
-					} catch {}
+				if (opts.context && bodies[i]) {
+					console.log(bodies[i]);
+					console.log('---');
 				}
 			}
 		});

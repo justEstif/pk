@@ -33,27 +33,29 @@ export type SynthesizeOptions = {
  * Select notes for a synthesize run.
  * Throws Error on invalid input (no query and no mode flag) or search failure.
  */
-export function selectNotes(
+export async function selectNotes(
 	knowledgeDir: string,
 	query: string | undefined,
 	opts: SynthesizeOptions,
-): Note[] {
+): Promise<Note[]> {
 	const {limit, sessionStart, all, tag, type} = opts;
 
 	if (sessionStart) {
-		const notes = validNotes(knowledgeDir, ['index', 'source']);
+		const notes = await validNotes(knowledgeDir, ['index', 'source']);
 		return notes
 			.filter(n => n.meta.status === 'open' || n.meta.status === 'accepted' || n.meta.status === 'active')
 			.slice(0, limit);
 	}
 
 	if (all) {
-		return validNotes(knowledgeDir, ['index']).slice(0, limit);
+		const allValid = await validNotes(knowledgeDir, ['index']);
+		return allValid.slice(0, limit);
 	}
 
 	if (query) {
 		const results = search(knowledgeDir, query, {filterTag: tag, filterType: type, limit});
-		const byPath = new Map(allNotes(knowledgeDir).map(n => [n.path, n]));
+		const noteList = await allNotes(knowledgeDir);
+		const byPath = new Map(noteList.map(n => [n.path, n]));
 		return results.map(r => byPath.get(r.path)).filter((n): n is Note => n !== undefined);
 	}
 
