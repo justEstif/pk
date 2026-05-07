@@ -18,7 +18,10 @@
   <nav>
     <div class="nav-inner">
       <span class="logo">pk</span>
-      <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="nav-gh">GitHub ↗</a>
+      <div class="nav-links">
+        <a href="https://www.npmjs.com/package/@justestif/pk" target="_blank" rel="noopener" class="nav-gh">npm ↗</a>
+        <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="nav-gh">GitHub ↗</a>
+      </div>
     </div>
   </nav>
 
@@ -34,22 +37,33 @@
       </p>
 
       <!-- Install -->
-      <button class="install-block" id="install-block" title="Click to copy">
+      <div class="install-tabs" role="tablist">
+        <button class="install-tab active" data-pkg="npm" role="tab" aria-selected="true">npm</button>
+        <button class="install-tab"        data-pkg="bun" role="tab" aria-selected="false">bun</button>
+        <button class="install-tab"        data-pkg="brew" role="tab" aria-selected="false">brew</button>
+      </div>
+      <button class="install-block" id="install-pkg" title="Click to copy" data-cmd-npm="npm install -g @justestif/pk" data-cmd-bun="bun install -g @justestif/pk" data-cmd-brew="brew install justEstif/tap/pk">
         <span class="dim">$</span>
-        <span class="amber"> npm install -g @justestif/pk</span>
+        <span class="amber" id="install-cmd"> npm install -g @justestif/pk</span>
       </button>
       <div id="install-toast" class="copy-toast" aria-live="polite"></div>
 
-      <!-- Harnesses -->
-      <div class="harnesses">
-        <button class="harness" data-cmd="pk init myproject --harness claude-desktop" title="Click to copy">Claude Desktop</button>
-        <button class="harness" data-cmd="pk init myproject --harness claude"         title="Click to copy">Claude Code</button>
-        <button class="harness" data-cmd="pk init myproject --harness cursor"         title="Click to copy">Cursor</button>
-        <button class="harness" data-cmd="pk init myproject --harness codex"          title="Click to copy">Codex</button>
-        <button class="harness" data-cmd="pk init myproject --harness omp"            title="Click to copy">OMP</button>
-        <button class="harness" data-cmd="pk init myproject --harness opencode"       title="Click to copy">OpenCode</button>
+      <!-- Init -->
+      <button class="install-block" id="install-init" title="Click to copy" style="margin-top: 12px">
+        <span class="dim">$</span>
+        <span class="amber"> pk init</span>
+      </button>
+      <div id="init-toast" class="copy-toast" aria-live="polite"></div>
+
+      <!-- Supported harnesses -->
+      <div class="harness-list">
+        <span>Claude Code</span>
+        <span>Cursor</span>
+        <span>Codex</span>
+        <span>Claude Desktop</span>
+        <span>OMP</span>
+        <span>OpenCode</span>
       </div>
-      <div id="harness-toast" class="copy-toast" aria-live="polite"></div>
       <div class="harness-divider"></div>
 
       <!-- Tabbed terminal demo -->
@@ -72,18 +86,6 @@
     </div>
   </div>
 
-  <!-- ── Footer ───────────────────────────────────────────── -->
-  <footer>
-    <div class="footer-inner">
-      <span class="logo">pk</span>
-      <div class="footer-links">
-        <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://www.npmjs.com/package/@justestif/pk" target="_blank" rel="noopener">npm</a>
-        <span>MIT License</span>
-      </div>
-    </div>
-  </footer>
-
   <script src="js/terminal.js"></script>
   <script>
     function copyWithToast(text, toastEl, sourceEl) {
@@ -97,17 +99,31 @@
       });
     }
 
-    document.getElementById('install-block').addEventListener('click', function () {
-      copyWithToast('npm install -g @justestif/pk', document.getElementById('install-toast'), this);
+    // Package manager toggle
+    const pkgBlock = document.getElementById('install-pkg');
+    const pkgCmd = document.getElementById('install-cmd');
+    let activePkg = 'npm';
+
+    document.querySelectorAll('.install-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.install-tab').forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        activePkg = tab.dataset.pkg;
+        pkgCmd.textContent = ' ' + pkgBlock.dataset['cmd' + activePkg.charAt(0).toUpperCase() + activePkg.slice(1)];
+      });
     });
 
-    document.querySelectorAll('.harness').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.harness').forEach(b => b.classList.remove('copied'));
-        const toast = document.getElementById('harness-toast');
-        toast.textContent = '';
-        copyWithToast(btn.dataset.cmd, toast, btn);
-      });
+    document.getElementById('install-pkg').addEventListener('click', function () {
+      const cmd = pkgBlock.dataset['cmd' + activePkg.charAt(0).toUpperCase() + activePkg.slice(1)];
+      copyWithToast(cmd, document.getElementById('install-toast'), this);
+    });
+
+    document.getElementById('install-init').addEventListener('click', function () {
+      copyWithToast('pk init', document.getElementById('init-toast'), this);
     });
   </script>
 

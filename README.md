@@ -4,8 +4,16 @@ Project knowledge CLI — structured intake, search, and recall.
 
 ## Install
 
+**npm:**
+
 ```bash
 npm install -g @justestif/pk
+```
+
+**Homebrew:**
+
+```bash
+brew install justEstif/tap/pk
 ```
 
 Requires [Bun](https://bun.sh).

@@ -100,6 +100,11 @@ nav {
    color: var(--amber);
 }
 
+.nav-links {
+   display: flex;
+   gap: 8px;
+}
+
 .nav-gh {
    font-family: 'JetBrains Mono', monospace;
    font-size: 12px;
@@ -131,7 +136,7 @@ nav {
 
 h1 {
    font-family: 'Unbounded', sans-serif;
-   font-size: clamp(2rem, 5vw, 3.4rem);
+   font-size: clamp(1.8rem, 4vw, 2.8rem);
    font-weight: 900;
    line-height: 1.06;
    letter-spacing: -0.02em;
@@ -146,36 +151,7 @@ h1 {
    margin: 0 0 32px;
 }
 
-/* ── Harnesses ───────────────────────────────────────────── */
-
-.harnesses {
-   display: flex;
-   flex-wrap: wrap;
-   gap: 6px;
-   margin-bottom: 12px;
-}
-
-.harness {
-   font-family: 'JetBrains Mono', monospace;
-   font-size: 12px;
-   padding: 5px 12px;
-   border: 1px solid var(--border);
-   border-radius: 3px;
-   color: var(--text-dim);
-   background: var(--bg-2);
-   cursor: pointer;
-   transition: color 0.15s, border-color 0.15s;
-}
-
-.harness:hover {
-   color: var(--text);
-   border-color: var(--border-hi);
-}
-
-.harness.copied {
-   color: var(--green);
-   border-color: var(--green);
-}
+/* ── Copy toast ─────────────────────────────────────── */
 
 .copy-toast {
    font-family: 'JetBrains Mono', monospace;
@@ -346,18 +322,46 @@ h1 {
    margin: 12px 0;
 }
 
-/* ── Install block ──────────────────────────────────────── */
+/* ── Install blocks ─────────────────────────────────────── */
+
+.install-tabs {
+   display: flex;
+   gap: 2px;
+   margin-bottom: 0;
+}
+
+.install-tab {
+   font-family: 'JetBrains Mono', monospace;
+   font-size: 11px;
+   padding: 4px 14px;
+   border: 1px solid var(--border);
+   border-bottom: none;
+   border-radius: 4px 4px 0 0;
+   background: var(--bg);
+   color: var(--text-dim);
+   cursor: pointer;
+   transition: color 0.15s;
+}
+
+.install-tab:hover {
+   color: var(--text-mid);
+}
+
+.install-tab.active {
+   color: var(--amber);
+   background: var(--bg-2);
+}
 
 .install-block {
    font-family: 'JetBrains Mono', monospace;
-   font-size: 14px;
+   font-size: 13px;
    background: var(--bg-2);
    border: 1px solid var(--border);
    border-left: 3px solid var(--amber);
-   border-radius: 4px;
-   padding: 12px 18px;
+   border-radius: 0 4px 4px 4px;
+   padding: 10px 16px;
    display: inline-block;
-   margin-bottom: 6px;
+   margin-bottom: 4px;
    cursor: pointer;
    transition: border-color 0.15s;
    text-align: left;
@@ -372,38 +376,17 @@ h1 {
    border-left-color: var(--green);
 }
 
-/* ── Footer ──────────────────────────────────────────────── */
+/* ── Harness list ─────────────────────────────────────── */
 
-footer {
-   border-top: 1px solid var(--border);
-   background: var(--bg-2);
+.harness-list {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 6px 16px;
+   margin-bottom: 20px;
 }
 
-.footer-inner {
-   max-width: 860px;
-   margin: 0 auto;
-   padding: 20px 32px;
-   display: flex;
-   align-items: center;
-   justify-content: space-between;
-}
-
-.footer-links {
-   display: flex;
-   gap: 20px;
+.harness-list span {
    font-family: 'JetBrains Mono', monospace;
-   font-size: 12px;
-}
-
-.footer-links a {
-   color: var(--text-dim);
-   text-decoration: none;
-}
-
-.footer-links a:hover {
-   color: var(--text);
-}
-
-.footer-links span {
+   font-size: 11px;
    color: var(--text-dim);
 }
