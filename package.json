@@ -5,7 +5,7 @@
   "bin": { "pk": "./dist/index.js" },
   "files": ["dist/", "README.md"],
   "scripts": {
-    "build": "bun build src/index.ts --outfile dist/index.js --target bun && sed -i '' '1s/^/\\#!/usr\\/bin\\/env bun\\n/' dist/index.js && chmod +x dist/index.js",
+    "build": "bun build src/index.ts --outfile dist/index.js --target bun && printf '#!/usr/bin/env bun\n' | cat - dist/index.js > dist/tmp.js && mv dist/tmp.js dist/index.js && chmod +x dist/index.js",
     "check": "bun run typecheck && bun run lint && bun test",
     "typecheck": "bunx tsc --noEmit",
     "lint": "bunx eslint src/",
