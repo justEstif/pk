@@ -178,11 +178,11 @@ h1 {
 }
 
 .copy-toast {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--green);
-  height: 18px;
-  margin-bottom: 4px;
+   font-family: 'JetBrains Mono', monospace;
+   font-size: 11px;
+   color: var(--green);
+   height: 18px;
+   margin-bottom: 4px;
 }
 
 .harness-divider {
@@ -333,6 +333,32 @@ h1 {
 .turn-divider {
    border-top: 1px dashed var(--border);
    margin: 12px 0;
+}
+
+/* ── Install block ──────────────────────────────────────── */
+
+.install-block {
+   font-family: 'JetBrains Mono', monospace;
+   font-size: 14px;
+   background: var(--bg-2);
+   border: 1px solid var(--border);
+   border-left: 3px solid var(--amber);
+   border-radius: 4px;
+   padding: 12px 18px;
+   display: inline-block;
+   margin-bottom: 6px;
+   cursor: pointer;
+   transition: border-color 0.15s;
+   text-align: left;
+}
+
+.install-block:hover {
+   border-color: var(--border-hi);
+   border-left-color: var(--amber);
+}
+
+.install-block.copied {
+   border-left-color: var(--green);
 }
 
 /* ── Footer ──────────────────────────────────────────────── */
