@@ -61,7 +61,7 @@ const frontmatterSchema = z.object({
 // Per-note checks
 // ---------------------------------------------------------------------------
 
-export function checkFrontmatter(
+function checkFrontmatter(
 	meta: Record<string, unknown>,
 	p: string,
 	knowledgeDir: string,
@@ -93,13 +93,13 @@ export function checkFrontmatter(
 	return issues;
 }
 
-export function checkRequiredSections(body: string, type: string, p: string): Issue[] {
+function checkRequiredSections(body: string, type: string, p: string): Issue[] {
 	const sections = new Set([...body.matchAll(/^## (.+?)\s*$/gmv)].map(m => m[1]));
 	return (REQUIRED_SECTIONS[type] ?? []).flatMap(req =>
 		sections.has(req) ? [] : [issue('error', `missing section: ## ${req}`, p)]);
 }
 
-export function checkLength(p: string, type: string): Issue[] {
+function checkLength(p: string, type: string): Issue[] {
 	const out: Issue[] = [];
 	const lineCount = readFileSync(p, 'utf8').split('\n').length;
 	const warnT = LENGTH_WARN[type];
@@ -114,7 +114,7 @@ export function checkLength(p: string, type: string): Issue[] {
 	return out;
 }
 
-export function checkSourceExtracted(body: string, meta: Record<string, unknown>, p: string): Issue[] {
+function checkSourceExtracted(body: string, meta: Record<string, unknown>, p: string): Issue[] {
 	if (meta.type !== 'source' || meta.status !== 'processed') {
 		return [];
 	}
@@ -131,7 +131,7 @@ export function checkSourceExtracted(body: string, meta: Record<string, unknown>
 // Cross-note check: duplicate ids
 // ---------------------------------------------------------------------------
 
-export function checkUniqueIds(notes: Note[]): Issue[] {
+function checkUniqueIds(notes: Note[]): Issue[] {
 	const ids = new Map<string, string>();
 	const issues: Issue[] = [];
 	for (const n of notes) {

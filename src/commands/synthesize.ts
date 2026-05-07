@@ -1,15 +1,6 @@
 import type {Command} from 'commander';
 import {formatSynthesizeOutput, selectNotes} from '../lib/synthesize.ts';
-
-function knowledgeDir(): string {
-	const dir = process.env.PK_KNOWLEDGE_DIR;
-	if (!dir) {
-		console.error('PK_KNOWLEDGE_DIR is not set. Run: pk init <name> --harness <harness>');
-		process.exit(1);
-	}
-
-	return dir;
-}
+import {requireKnowledgeDir} from '../lib/paths.ts';
 
 export function registerSynthesize(program: Command): void {
 	program
@@ -21,7 +12,13 @@ export function registerSynthesize(program: Command): void {
 		.option('--limit <n>', 'Max notes', '10')
 		.option('--session-start', 'Open questions + recent decisions + active notes')
 		.action((query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string}) => {
-			const dir = knowledgeDir();
+			let dir: string;
+			try {
+				dir = requireKnowledgeDir();
+			} catch (error) {
+				console.error(String(error));
+				process.exit(1);
+			}
 
 			let notes;
 			try {

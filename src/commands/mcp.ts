@@ -1,24 +1,12 @@
-import {mkdirSync, existsSync, writeFileSync} from 'node:fs';
-import path from 'node:path';
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {z} from 'zod';
 import type {Command} from 'commander';
 import {search} from '../lib/db.ts';
 import {lintNotes} from '../lib/lint.ts';
-import {slugify, validNotes} from '../lib/notes.ts';
-import {renderTemplate} from '../lib/templates.ts';
+import {createNote, validNotes} from '../lib/notes.ts';
 import {selectNotes, formatSynthesizeOutput} from '../lib/synthesize.ts';
-import {TYPE_DIRS} from '../lib/schema.ts';
-
-function requireKnowledgeDir(): string {
-	const dir = process.env.PK_KNOWLEDGE_DIR;
-	if (!dir) {
-		throw new Error('PK_KNOWLEDGE_DIR is not set');
-	}
-
-	return dir;
-}
+import {requireKnowledgeDir} from '../lib/paths.ts';
 
 export function createPkMcpServer(): McpServer {
 	const server = new McpServer({
@@ -99,30 +87,15 @@ export function createPkMcpServer(): McpServer {
 		},
 		async ({type, title, tags}) => {
 			const dir = requireKnowledgeDir();
-			const today = new Date().toISOString().slice(0, 10);
-			const slug = slugify(title);
-			const tagStr = (tags ?? '')
-				.split(',')
-				.map(t => t.trim())
-				.filter(Boolean)
-				.join(', ');
-
-			const content = renderTemplate(type, {
-				date: today, slug, tags: tagStr, title,
-			});
-			const noteDir = path.join(dir, TYPE_DIRS[type]!);
-			mkdirSync(noteDir, {recursive: true});
-
-			const outPath = path.join(noteDir, `${today}-${slug}.md`);
-			if (existsSync(outPath)) {
+			try {
+				const outPath = createNote(dir, type, title, tags ?? '');
+				return {content: [{type: 'text', text: outPath}]};
+			} catch (error) {
 				return {
-					content: [{type: 'text', text: `Error: already exists: ${outPath}`}],
+					content: [{type: 'text', text: String(error)}],
 					isError: true,
 				};
 			}
-
-			writeFileSync(outPath, content);
-			return {content: [{type: 'text', text: outPath}]};
 		},
 	);
 

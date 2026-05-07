@@ -12,6 +12,19 @@ export function projectDir(name: string): string {
 	return path.join(pkHome(), name);
 }
 
+/**
+ * Reads PK_KNOWLEDGE_DIR from the environment.
+ * Throws if unset — callers (CLI commands and MCP tools) must have it configured.
+ */
+export function requireKnowledgeDir(): string {
+	const dir = process.env.PK_KNOWLEDGE_DIR;
+	if (!dir) {
+		throw new Error('PK_KNOWLEDGE_DIR is not set. Run: pk init <name> --harness <harness>');
+	}
+
+	return dir;
+}
+
 /** Returns sorted list of existing project names under ~/.pk/ */
 export function listExistingProjects(): string[] {
 	const home = pkHome();

@@ -1,9 +1,10 @@
 import {
-	existsSync, readdirSync, readFileSync, statSync,
+	existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
-import type {Note, NoteMeta} from './schema.ts';
+import {type Note, type NoteMeta, TYPE_DIRS} from './schema.ts';
+import {renderTemplate} from './templates.ts';
 
 // Re-export schema so callers that previously imported everything from
 // notes.ts keep working without modification.
@@ -81,6 +82,43 @@ export function excerpt(note: Note, maxChars = 140): string {
 	}
 
 	return '';
+}
+
+/**
+ * Creates a new knowledge note. Returns the path to the written file.
+ * Throws if the type is unknown or the file already exists.
+ */
+export function createNote(
+	knowledgeDir: string,
+	type: string,
+	title: string,
+	tags: string,
+): string {
+	if (!TYPE_DIRS[type]) {
+		throw new Error(`Unknown type: ${type}. Valid: ${Object.keys(TYPE_DIRS).join(', ')}`);
+	}
+
+	const today = new Date().toISOString().slice(0, 10);
+	const slug = slugify(title);
+	const tagStr = tags
+		.split(',')
+		.map(t => t.trim())
+		.filter(Boolean)
+		.join(', ');
+
+	const content = renderTemplate(type, {
+		date: today, slug, tags: tagStr, title,
+	});
+	const noteDir = path.join(knowledgeDir, TYPE_DIRS[type]);
+	mkdirSync(noteDir, {recursive: true});
+
+	const outPath = path.join(noteDir, `${today}-${slug}.md`);
+	if (existsSync(outPath)) {
+		throw new Error(`Already exists: ${outPath}`);
+	}
+
+	writeFileSync(outPath, content);
+	return outPath;
 }
 
 export function slugify(text: string): string {

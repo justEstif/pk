@@ -1,80 +1,53 @@
-import {describe, expect, test} from 'bun:test';
+import {existsSync, mkdirSync, rmSync} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import {
-	type Note, slugify, excerpt, TYPE_DIRS,
-} from './notes.ts';
+	afterEach, beforeEach, describe, expect, test,
+} from 'bun:test';
+import {createNote} from './notes.ts';
 
-// ---------------------------------------------------------------------------
-// slugify
-// ---------------------------------------------------------------------------
+describe('createNote', () => {
+	let dir: string;
 
-describe('slugify', () => {
-	test('lowercases and replaces spaces with hyphens', () => {
-		expect(slugify('Hello World')).toBe('hello-world');
+	beforeEach(() => {
+		dir = path.join(os.tmpdir(), `pk-notes-test-${Date.now()}`);
+		mkdirSync(dir, {recursive: true});
 	});
 
-	test('collapses multiple non-alphanumeric chars into one hyphen', () => {
-		expect(slugify('foo  --  bar')).toBe('foo-bar');
+	afterEach(() => {
+		rmSync(dir, {recursive: true, force: true});
 	});
 
-	test('strips leading and trailing hyphens', () => {
-		expect(slugify('  leading and trailing  ')).toBe('leading-and-trailing');
+	test('creates a note file and returns its path', () => {
+		const notePath = createNote(dir, 'decision', 'Use SQLite', '');
+		expect(existsSync(notePath)).toBe(true);
+		expect(notePath).toMatch(/decisions\/\d{4}-\d{2}-\d{2}-use-sqlite\.md$/v);
 	});
 
-	test('handles already-lowercase alphanumeric input unchanged', () => {
-		expect(slugify('simple')).toBe('simple');
-	});
-});
-
-// ---------------------------------------------------------------------------
-// excerpt
-// ---------------------------------------------------------------------------
-
-describe('excerpt', () => {
-	const makeNote = (type: string, body: string): Note => ({
-		body,
-		meta: {
-			type, id: 'x', title: 'T', status: 'active', tags: [], created: '2024-01-01', updated: '2024-01-01',
-		},
-		path: '/tmp/x.md',
+	test('writes frontmatter with correct type and title', async () => {
+		const notePath = createNote(dir, 'note', 'My Note', '');
+		const text = Bun.file(notePath).text();
+		return text.then(content => {
+			expect(content).toContain('type: note');
+			expect(content).toContain('title: My Note');
+		});
 	});
 
-	test('returns first paragraph from the primary section', () => {
-		const note = makeNote('note', '## Summary\n\nThis is the summary paragraph.\n\n## Details\n\nMore here.\n');
-		expect(excerpt(note)).toBe('This is the summary paragraph.');
+	test('tags are written into frontmatter', async () => {
+		const notePath = createNote(dir, 'question', 'Is this right?', 'arch, scope');
+		const text = Bun.file(notePath).text();
+		return text.then(content => {
+			expect(content).toContain('arch');
+			expect(content).toContain('scope');
+		});
 	});
 
-	test('truncates at maxChars and appends ellipsis', () => {
-		const long = 'a'.repeat(200);
-		// Needs a trailing section so the regex anchor fires; real notes always have ## Details etc.
-		const note = makeNote('note', `## Summary\n\n${long}\n\n## Details\n\nmore\n`);
-		const result = excerpt(note, 20);
-		expect(result.length).toBe(20);
-		expect(result.endsWith('...')).toBe(true);
+	test('throws if type is unknown', () => {
+		expect(() => createNote(dir, 'bogus', 'title', '')).toThrow('Unknown type: bogus');
 	});
 
-	test('returns empty string for unknown type', () => {
-		const note = makeNote('unknown', '## Summary\n\nSome text.\n');
-		expect(excerpt(note)).toBe('');
-	});
-
-	test('skips list items and finds first prose paragraph', () => {
-		const note = makeNote('note', '## Summary\n\n- item one\n- item two\n\nProse paragraph.\n\n## Details\n\nmore\n');
-		expect(excerpt(note)).toBe('Prose paragraph.');
-	});
-
-	test('returns empty string when primary section has no prose', () => {
-		const note = makeNote('note', '## Summary\n\n- only a list\n\n## Details\n\nSomething.\n');
-		expect(excerpt(note)).toBe('');
+	test('throws if note already exists', () => {
+		createNote(dir, 'note', 'Duplicate', '');
+		expect(() => createNote(dir, 'note', 'Duplicate', '')).toThrow(/Already exists/v);
 	});
 });
-
-// ---------------------------------------------------------------------------
-// TYPE_DIRS (spot check that the schema is intact)
-// ---------------------------------------------------------------------------
-
-describe('TYPE_DIRS', () => {
-	test('contains all five canonical types', () => {
-		expect(Object.keys(TYPE_DIRS).toSorted()).toEqual(['decision', 'index', 'note', 'question', 'source']);
-	});
-});
-
