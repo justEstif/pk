@@ -13,7 +13,7 @@ typecheck:
 	bunx tsc --noEmit
 
 lint:
-	bunx eslint src/
+	bunx xo
 
 clean:
 	rm -f dist/index.js

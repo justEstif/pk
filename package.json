@@ -1,35 +1,35 @@
 {
-  "name": "@justestif/pk",
-  "version": "0.1.6",
-  "description": "Project knowledge — structured intake, search, and recall",
-  "bin": {
-    "pk": "dist/index.js"
-  },
-  "files": [
-    "dist/",
-    "skill/",
-    "README.md"
-  ],
-  "scripts": {
-    "build": "bun build src/index.ts --outfile dist/index.js --target bun && printf '#!/usr/bin/env bun\n' | cat - dist/index.js > dist/tmp.js && mv dist/tmp.js dist/index.js && chmod +x dist/index.js",
-    "check": "bun run typecheck && bun run lint && bun test",
-    "typecheck": "bunx tsc --noEmit",
-    "lint": "bunx eslint src/",
-    "test": "bun test",
-    "prepublishOnly": "bun run build"
-  },
-  "dependencies": {
-    "commander": "^14.0.0",
-    "markdownlint": "^0.40.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/justEstif/pk.git"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "typescript": "latest",
-    "eslint": "^9.0.0",
-    "typescript-eslint": "^8.0.0"
-  }
+   "name": "@justestif/pk",
+   "type": "module",
+   "version": "0.1.6",
+   "description": "Project knowledge — structured intake, search, and recall",
+   "bin": {
+      "pk": "dist/index.js"
+   },
+   "files": [
+      "dist/",
+      "skill/",
+      "README.md"
+   ],
+   "scripts": {
+      "build": "bun build src/index.ts --outfile dist/index.js --target bun && printf '#!/usr/bin/env bun\n' | cat - dist/index.js > dist/tmp.js && mv dist/tmp.js dist/index.js && chmod +x dist/index.js",
+      "check": "bun run typecheck && bun run lint && bun test",
+      "typecheck": "bunx tsc --noEmit",
+      "lint": "xo",
+      "test": "bun test",
+      "prepublishOnly": "bun run build"
+   },
+   "dependencies": {
+      "commander": "^14.0.0",
+      "markdownlint": "^0.40.0"
+   },
+   "repository": {
+      "type": "git",
+      "url": "git+https://github.com/justEstif/pk.git"
+   },
+   "devDependencies": {
+      "@types/bun": "latest",
+      "typescript": "latest",
+      "xo": "^2.0.2"
+   }
 }
