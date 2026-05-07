@@ -1,66 +1,69 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import path from 'node:path'
-import type { Command } from 'commander'
-import { TYPE_DIRS } from '../lib/notes.ts'
+import {
+	cpSync, existsSync, mkdirSync, readFileSync, writeFileSync,
+} from 'node:fs';
+import path from 'node:path';
+import type {Command} from 'commander';
+import {TYPE_DIRS} from '../lib/notes.ts';
 
-const KNOWLEDGE_DIR = 'knowledge'
-const AGENTS_SKILLS_DIR = '.agents/skills/pk'
+const KNOWLEDGE_DIR = 'knowledge';
+const AGENTS_SKILLS_DIR = '.agents/skills/pk';
 
-type Harness = 'claude' | 'codex' | 'cursor' | 'omp' | 'opencode' | 'pi'
+type Harness = 'claude' | 'codex' | 'cursor' | 'omp' | 'opencode' | 'pi';
 
 const HARNESS_DESCRIPTIONS: Record<Harness, string> = {
-  claude:   'Claude Code — UserPromptSubmit hook',
-  codex:    'Codex CLI — AGENTS.md injection',
-  cursor:   'Cursor — .cursor/rules/pk.mdc',
-  omp:      'Oh My Pi — .omp/extensions/pk.ts',
-  opencode: 'OpenCode — experimental.chat.system.transform plugin',
-  pi:       'Pi — .pi/extensions/pk.ts',
-}
+	claude: 'Claude Code — UserPromptSubmit hook',
+	codex: 'Codex CLI — AGENTS.md injection',
+	cursor: 'Cursor — .cursor/rules/pk.mdc',
+	omp: 'Oh My Pi — .omp/extensions/pk.ts',
+	opencode: 'OpenCode — experimental.chat.system.transform plugin',
+	pi: 'Pi — .pi/extensions/pk.ts',
+};
 
 export function registerInit(program: Command): void {
-  program
-    .command('init')
-    .description('Initialize knowledge base and install agent hook')
-    .option(
-      '--harness <harness>',
-      `Agent harness: ${Object.keys(HARNESS_DESCRIPTIONS).join(', ')} (default: claude)`,
-      'claude',
-    )
-    .action((opts: { harness: string }) => {
-      const harness = opts.harness as Harness
-      if (!HARNESS_DESCRIPTIONS[harness]) {
-        console.error(`Unknown harness: ${harness}. Valid: ${Object.keys(HARNESS_DESCRIPTIONS).join(', ')}`)
-        process.exit(1)
-      }
+	program
+		.command('init')
+		.description('Initialize knowledge base and install agent hook')
+		.option(
+			'--harness <harness>',
+			`Agent harness: ${Object.keys(HARNESS_DESCRIPTIONS).join(', ')} (default: claude)`,
+			'claude',
+		)
+		.action((opts: {harness: string}) => {
+			const harness = opts.harness as Harness;
+			if (!HARNESS_DESCRIPTIONS[harness]) {
+				console.error(`Unknown harness: ${harness}. Valid: ${Object.keys(HARNESS_DESCRIPTIONS).join(', ')}`);
+				process.exit(1);
+			}
 
-      // 1. Create knowledge/ directories
-      for (const dir of Object.values(TYPE_DIRS)) {
-        mkdirSync(path.join(KNOWLEDGE_DIR, dir), { recursive: true })
-      }
-      console.log('created knowledge/ directories')
+			// 1. Create knowledge/ directories
+			for (const dir of Object.values(TYPE_DIRS)) {
+				mkdirSync(path.join(KNOWLEDGE_DIR, dir), {recursive: true});
+			}
 
-      // 2. knowledge/.gitignore
-      const gi = path.join(KNOWLEDGE_DIR, '.gitignore')
-      if (!existsSync(gi)) {
-        writeFileSync(gi, '.index.db\n')
-        console.log('created knowledge/.gitignore')
-      }
+			console.log('created knowledge/ directories');
 
-      // 3. Copy skill into .agents/skills/pk/
-      installSkill()
+			// 2. knowledge/.gitignore
+			const gi = path.join(KNOWLEDGE_DIR, '.gitignore');
+			if (!existsSync(gi)) {
+				writeFileSync(gi, '.index.db\n');
+				console.log('created knowledge/.gitignore');
+			}
 
-      // 4. Harness adapter
-      const harnessFns: Record<Harness, () => void> = {
-        claude:   installClaudeHook,
-        codex:    installCodexAgentsMd,
-        cursor:   installCursorRule,
-        omp:      installOmpExtension,
-        opencode: installOpenCodePlugin,
-        pi:       installPiExtension,
-      }
-      harnessFns[harness]()
+			// 3. Copy skill into .agents/skills/pk/
+			installSkill();
 
-      console.log(`
+			// 4. Harness adapter
+			const harnessFns: Record<Harness, () => void> = {
+				claude: installClaudeHook,
+				codex: installCodexAgentsMd,
+				cursor: installCursorRule,
+				omp: installOmpExtension,
+				opencode: installOpenCodePlugin,
+				pi: installPiExtension,
+			};
+			harnessFns[harness]();
+
+			console.log(`
 pk init complete (${HARNESS_DESCRIPTIONS[harness]})
 
 Next steps:
@@ -71,48 +74,56 @@ Customize note templates at:
   ${AGENTS_SKILLS_DIR}/assets/templates/
 
 To reset templates to defaults, delete ${AGENTS_SKILLS_DIR} and re-run pk init.
-`)
-    })
+`);
+		});
 }
 
 function skillSourceDir(): string {
-  return path.resolve(import.meta.dir, '..', 'skill')
+	return path.resolve(import.meta.dir, '..', 'skill');
 }
 
 function installSkill(): void {
-  if (existsSync(AGENTS_SKILLS_DIR)) {
-    console.log(`skill already present at ${AGENTS_SKILLS_DIR} — skipping (delete to reset)`)
-    return
-  }
-  const src = skillSourceDir()
-  if (!existsSync(src)) {
-    console.log(`skill source not found at ${src} — skipping`)
-    return
-  }
-  cpSync(src, AGENTS_SKILLS_DIR, { recursive: true })
-  console.log(`installed skill to ${AGENTS_SKILLS_DIR}`)
+	if (existsSync(AGENTS_SKILLS_DIR)) {
+		console.log(`skill already present at ${AGENTS_SKILLS_DIR} — skipping (delete to reset)`);
+		return;
+	}
+
+	const src = skillSourceDir();
+	if (!existsSync(src)) {
+		console.log(`skill source not found at ${src} — skipping`);
+		return;
+	}
+
+	cpSync(src, AGENTS_SKILLS_DIR, {recursive: true});
+	console.log(`installed skill to ${AGENTS_SKILLS_DIR}`);
 }
 
 // ─── Claude Code ─────────────────────────────────────────────────────────────
 
 function installClaudeHook(): void {
-  mkdirSync(path.join('.claude', 'hooks'), { recursive: true })
-  const hookFile = path.join('.claude', 'hooks', 'pk-user-prompt-submit.ts')
-  writeFileSync(hookFile, CLAUDE_HOOK)
-  console.log(`wrote ${hookFile}`)
+	mkdirSync(path.join('.claude', 'hooks'), {recursive: true});
+	const hookFile = path.join('.claude', 'hooks', 'pk-user-prompt-submit.ts');
+	writeFileSync(hookFile, CLAUDE_HOOK);
+	console.log(`wrote ${hookFile}`);
 
-  const settingsFile = path.join('.claude', 'settings.json')
-  let settings: Record<string, unknown> = {}
-  if (existsSync(settingsFile)) {
-    try { settings = JSON.parse(readFileSync(settingsFile, 'utf8')) as Record<string, unknown> } catch {}
-  }
-  const hooks = (settings['hooks'] as Record<string, string[]> | undefined) ?? {}
-  const existing: string[] = (hooks['UserPromptSubmit'] as string[] | undefined) ?? []
-  const cmd = `bun ${hookFile} user-prompt-submit`
-  if (!existing.includes(cmd)) hooks['UserPromptSubmit'] = [...existing, cmd]
-  settings['hooks'] = hooks
-  writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n')
-  console.log('updated .claude/settings.json')
+	const settingsFile = path.join('.claude', 'settings.json');
+	let settings: Record<string, unknown> = {};
+	if (existsSync(settingsFile)) {
+		try {
+			settings = JSON.parse(readFileSync(settingsFile, 'utf8')) as Record<string, unknown>;
+		} catch {}
+	}
+
+	const hooks = (settings.hooks as Record<string, string[]> | undefined) ?? {};
+	const existing: string[] = (hooks.UserPromptSubmit) ?? [];
+	const cmd = `bun ${hookFile} user-prompt-submit`;
+	if (!existing.includes(cmd)) {
+		hooks.UserPromptSubmit = [...existing, cmd];
+	}
+
+	settings.hooks = hooks;
+	writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n');
+	console.log('updated .claude/settings.json');
 }
 
 const CLAUDE_HOOK = `// pk hook — auto-generated by pk init
@@ -140,16 +151,16 @@ async function handleUserPromptSubmit() {
 const event = process.argv[2] ?? ''
 if (event === 'user-prompt-submit') handleUserPromptSubmit().catch(() => process.exit(0))
 else process.exit(0)
-`
+`;
 
 // ─── Pi / Oh My Pi ───────────────────────────────────────────────────────────
 
 function installPiExtension(): void {
-  const dir = path.join('.pi', 'extensions')
-  mkdirSync(dir, { recursive: true })
-  const file = path.join(dir, 'pk.ts')
-  writeFileSync(file, PI_EXTENSION)
-  console.log(`wrote ${file}`)
+	const dir = path.join('.pi', 'extensions');
+	mkdirSync(dir, {recursive: true});
+	const file = path.join(dir, 'pk.ts');
+	writeFileSync(file, PI_EXTENSION);
+	console.log(`wrote ${file}`);
 }
 
 const PI_EXTENSION = `// pk extension — auto-generated by pk init
@@ -173,19 +184,19 @@ export default function (pi: ExtensionAPI) {
     }
   })
 }
-`
+`;
 
 // ─── Oh My Pi ──────────────────────────────────────────────────────────────
 
 function installOmpExtension(): void {
-  const dir = path.join('.omp', 'extensions')
-  mkdirSync(dir, { recursive: true })
-  const file = path.join(dir, 'pk.ts')
-  writeFileSync(file, OMP_EXTENSION)
-  console.log(`wrote ${file}`)
+	const dir = path.join('.omp', 'extensions');
+	mkdirSync(dir, {recursive: true});
+	const file = path.join(dir, 'pk.ts');
+	writeFileSync(file, OMP_EXTENSION);
+	console.log(`wrote ${file}`);
 }
 
-const OMP_EXTENSION = `// pk hook \ auto-generated by pk init
+const OMP_EXTENSION = `// pk hook — auto-generated by pk init
 import type { HookAPI } from '@oh-my-pi/pi-coding-agent/extensibility/hooks'
 
 async function runPk(args: string[]): Promise<string> {
@@ -211,17 +222,17 @@ export default function (pi: HookAPI) {
     }
   })
 }
-`
+`;
 
 // ─── OpenCode ────────────────────────────────────────────────────────────────
 
 function installOpenCodePlugin(): void {
-  const dir = path.join('.opencode', 'plugins')
-  mkdirSync(dir, { recursive: true })
-  const file = path.join(dir, 'pk.ts')
-  writeFileSync(file, OPENCODE_PLUGIN)
-  console.log(`wrote ${file}`)
-  console.log(`Register in .opencode/config.json: { "plugins": [".opencode/plugins/pk.ts"] }`)
+	const dir = path.join('.opencode', 'plugins');
+	mkdirSync(dir, {recursive: true});
+	const file = path.join(dir, 'pk.ts');
+	writeFileSync(file, OPENCODE_PLUGIN);
+	console.log(`wrote ${file}`);
+	console.log('Register in .opencode/config.json: { "plugins": [".opencode/plugins/pk.ts"] }');
 }
 
 const OPENCODE_PLUGIN = `// pk plugin — auto-generated by pk init
@@ -246,16 +257,16 @@ export const PkPlugin: Plugin = async () => {
     },
   }
 }
-`
+`;
 
 // ─── Cursor ───────────────────────────────────────────────────────────────────
 
 function installCursorRule(): void {
-  const dir = path.join('.cursor', 'rules')
-  mkdirSync(dir, { recursive: true })
-  const file = path.join(dir, 'pk.mdc')
-  writeFileSync(file, CURSOR_RULE)
-  console.log(`wrote ${file}`)
+	const dir = path.join('.cursor', 'rules');
+	mkdirSync(dir, {recursive: true});
+	const file = path.join(dir, 'pk.mdc');
+	writeFileSync(file, CURSOR_RULE);
+	console.log(`wrote ${file}`);
 }
 
 const CURSOR_RULE = `---
@@ -287,13 +298,13 @@ pk lint                          # validate note structure
 ## Notes live in \`knowledge/\`
 
 Templates can be customized at \`.agents/skills/pk/assets/templates/\`.
-`
+`;
 
 // ─── Codex CLI ───────────────────────────────────────────────────────────────
 
 function installCodexAgentsMd(): void {
-  const file = 'AGENTS.md'
-  const block = `
+	const file = 'AGENTS.md';
+	const block = `
 ## Project Knowledge (pk)
 
 This project uses \`pk\` for structured knowledge management.
@@ -313,13 +324,14 @@ pk lint     # validate structure
 \`\`\`
 
 Notes live in \`knowledge/\`. Templates at \`.agents/skills/pk/assets/templates/\`.
-`
+`;
 
-  const existing = existsSync(file) ? readFileSync(file, 'utf8') : ''
-  if (existing.includes('pk synthesize --session-start')) {
-    console.log(`${file} already contains pk block — skipping`)
-    return
-  }
-  writeFileSync(file, existing + block)
-  console.log(`appended pk block to ${file}`)
+	const existing = existsSync(file) ? readFileSync(file, 'utf8') : '';
+	if (existing.includes('pk synthesize --session-start')) {
+		console.log(`${file} already contains pk block — skipping`);
+		return;
+	}
+
+	writeFileSync(file, existing + block);
+	console.log(`appended pk block to ${file}`);
 }

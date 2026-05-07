@@ -1,5 +1,5 @@
 const TEMPLATES: Record<string, string> = {
-   decision: `---
+	decision: `---
 id: decision-{{date}}-{{slug}}
 type: decision
 title: {{title}}
@@ -30,7 +30,7 @@ What this changes or constrains.
 Links to source, questions, notes, or superseded decisions.
 `,
 
-   note: `---
+	note: `---
 id: note-{{date}}-{{slug}}
 type: note
 title: {{title}}
@@ -57,7 +57,7 @@ Source links, files, quotes, or observations.
 Links to related notes, decisions, or questions.
 `,
 
-   question: `---
+	question: `---
 id: question-{{date}}-{{slug}}
 type: question
 title: {{title}}
@@ -84,7 +84,7 @@ What is known so far.
 Leave blank until answered.
 `,
 
-   index: `---
+	index: `---
 id: index-{{date}}-{{slug}}
 type: index
 title: {{title}}
@@ -111,7 +111,7 @@ Open questions in this topic area.
 What has been added or changed recently.
 `,
 
-   source: `---
+	source: `---
 id: source-{{date}}-{{slug}}
 type: source
 title: {{title}}
@@ -133,13 +133,16 @@ Paste or summarize the raw input here.
 
 Leave blank until processed — list notes/decisions/questions extracted from this source.
 `,
-}
+};
 
 export function renderTemplate(type: string, vars: Record<string, string>): string {
-   const tmpl = TEMPLATES[type]
-   if (!tmpl) throw new Error(`Unknown note type: ${type}`)
-   return Object.entries(vars).reduce(
-      (t, [k, v]) => t.replaceAll(`{{${k}}}`, v),
-      tmpl,
-   )
+	const tmpl = TEMPLATES[type];
+	if (!tmpl) {
+		throw new Error(`Unknown note type: ${type}`);
+	}
+
+	return Object.entries(vars).reduce(
+		(t, [k, v]) => t.replaceAll(`{{${k}}}`, v),
+		tmpl,
+	);
 }
