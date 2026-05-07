@@ -8,133 +8,96 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@900&family=JetBrains+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
   <!-- ── Nav ──────────────────────────────────────────────── -->
-  <nav aria-label="Main navigation">
+  <nav>
     <div class="nav-inner">
       <span class="logo">pk</span>
       <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="nav-gh">GitHub ↗</a>
     </div>
   </nav>
 
-  <!-- ── What is pk ───────────────────────────────────────── -->
-  <section class="first-section grid-bg">
-    <div class="inner first-inner">
-
-      <div class="first-left">
-        <h1>Structured bookkeeping<br>for every project.</h1>
-        <p class="hero-sub">
-          Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't answered yet.
-          Your agent organizes it. The more you put in, the more useful it gets.
-        </p>
-        <div class="install-block">
-          <span class="dim">$</span>
-          <span class="cmd"> npm install -g @justestif/pk</span>
-        </div>
-        <p class="req">Requires Bun · MIT License</p>
-      </div>
-
-      <div class="first-right">
-        <div class="demo-tabs" role="tablist">
-          <button class="demo-tab active" data-tab="pm"   role="tab" aria-selected="true">Product</button>
-          <button class="demo-tab"        data-tab="eng"  role="tab" aria-selected="false">Engineering</button>
-          <button class="demo-tab"        data-tab="hire" role="tab" aria-selected="false">New hire</button>
-        </div>
-
-        <div class="terminal">
-          <div class="terminal-bar">
-            <span class="dot dot-red"    aria-hidden="true"></span>
-            <span class="dot dot-yellow" aria-hidden="true"></span>
-            <span class="dot dot-green"  aria-hidden="true"></span>
-            <span class="win-label">Claude Code · ~/projects/acme</span>
-          </div>
-          <div class="terminal-body terminal-scroll" id="demo-body" role="log" aria-live="polite"></div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ── Four tools ────────────────────────────────────────── -->
-  <section class="section bg-2">
+  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <div class="grid-area">
     <div class="inner">
-      <h2>Four tools. Your agent does the filing.</h2>
-      <p class="section-sub">
-        Connect pk to your AI tool with <code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text)">pk init</code>.
-        Drop in a Slack thread, a doc, a decision you just made — ask your agent to organize it.
-        It writes structured notes. You search them later.
+
+      <h1>Structured bookkeeping<br>for every project.</h1>
+
+      <p class="desc">
+        Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't answered yet.
+        Your agent organizes it. The more you put in, the more useful it gets.
       </p>
 
-      <div class="tools-grid">
-        <div class="tool">
-          <p class="tool-name">pk_search</p>
-          <p class="tool-desc">Ranked full-text search across every note. Ask: "what did we decide about the database?"</p>
+      <!-- Harnesses -->
+      <div class="harnesses">
+        <div class="harness-featured">
+          <span class="harness-featured-name">Claude Desktop</span>
+          <span class="harness-badge">no terminal needed</span>
         </div>
-        <div class="tool">
-          <p class="tool-name">pk_synthesize</p>
-          <p class="tool-desc">Dump relevant context into the session. Start informed instead of re-explaining from scratch.</p>
+        <div class="harness-rest">
+          <span>Claude Code</span>
+          <span>Cursor</span>
+          <span>Codex</span>
+          <span>OMP</span>
+          <span>OpenCode</span>
         </div>
-        <div class="tool">
-          <p class="tool-name">pk_new</p>
-          <p class="tool-desc">Tell your agent to save a decision, question, note, or source. Structured and findable later.</p>
-        </div>
-        <div class="tool">
-          <p class="tool-name">pk_lint</p>
-          <p class="tool-desc">Validate every note for completeness. Flags missing sections, stale questions, schema drift.</p>
-        </div>
+        <div class="harness-divider"></div>
       </div>
-    </div>
-  </section>
 
-  <!-- ── Get started ──────────────────────────────────────── -->
-  <section class="section" id="install">
+      <!-- Tabbed terminal demo -->
+      <div class="demo-tabs" role="tablist">
+        <button class="demo-tab active" data-tab="pm"   role="tab" aria-selected="true">Product</button>
+        <button class="demo-tab"        data-tab="eng"  role="tab" aria-selected="false">Engineering</button>
+        <button class="demo-tab"        data-tab="hire" role="tab" aria-selected="false">New hire</button>
+      </div>
+
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="dot dot-r" aria-hidden="true"></span>
+          <span class="dot dot-y" aria-hidden="true"></span>
+          <span class="dot dot-g" aria-hidden="true"></span>
+          <span class="win-label">Claude Code · ~/projects/acme</span>
+        </div>
+        <div class="terminal-body" id="demo-body" role="log" aria-live="polite"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Setup ─────────────────────────────────────────────── -->
+  <div class="setup-area">
     <div class="inner">
-      <h2>Get started</h2>
+
+      <div class="install-block">
+        <span class="dim">$</span>
+        <span class="amber"> npm install -g @justestif/pk</span>
+      </div>
 
       <div class="steps">
         <div class="step">
           <span class="step-n">1</span>
           <div>
-            <p class="step-title">Install</p>
-            <code class="step-cmd">npm install -g @justestif/pk</code>
+            <p class="step-title">Init for your AI tool</p>
+            <code class="step-cmd">pk init myproject --harness claude-desktop</code>
+            <p class="step-note">
+              Writes the MCP config. pk appears in your agent's tool list automatically.
+              Supports Claude Desktop, Claude Code, Cursor, Codex, OMP, and OpenCode.
+            </p>
           </div>
         </div>
+
         <div class="step">
           <span class="step-n">2</span>
           <div>
-            <p class="step-title">Init for your AI tool</p>
-            <code class="step-cmd">pk init myproject --harness claude</code>
-            <p class="step-note">
-              Writes the MCP config so your agent discovers pk automatically.
-              Supports: claude · claude-desktop · cursor · omp · opencode · codex
-            </p>
-          </div>
-        </div>
-        <div class="step">
-          <span class="step-n">3</span>
-          <div>
             <p class="step-title">Feed it. It organizes. Repeat.</p>
             <p class="step-note">
-              Paste anything in and tell your agent to save it — it writes a typed, structured note.
-              Or go further: connect a source MCP alongside pk and your agent can pull directly from it.
-            </p>
-            <div class="source-mcps">
-              <span>Slack</span>
-              <span>Notion</span>
-              <span>GitHub</span>
-              <span>Linear</span>
-              <span>Confluence</span>
-              <span>Jira</span>
-              <span>Google Drive</span>
-              <span>any MCP…</span>
-            </div>
-            <p class="step-note" style="margin-top:10px">
-              The knowledge base grows every session. Search it from any tool, any time.
+              Paste a Slack thread, a doc, a decision you just made — tell your agent to save it.
+              It writes a structured note. Search it from any tool, any session.
+              The knowledge base grows every time you use it.
             </p>
           </div>
         </div>
@@ -144,21 +107,23 @@
         <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="btn-primary">View on GitHub</a>
         <a href="https://www.npmjs.com/package/@justestif/pk" target="_blank" rel="noopener" class="btn-ghost">npm ↗</a>
       </div>
+
     </div>
-  </section>
+  </div>
 
   <!-- ── Footer ───────────────────────────────────────────── -->
   <footer>
-    <div class="nav-inner">
+    <div class="footer-inner">
       <span class="logo">pk</span>
       <div class="footer-links">
         <a href="https://github.com/justEstif/pk" target="_blank" rel="noopener">GitHub</a>
         <a href="https://www.npmjs.com/package/@justestif/pk" target="_blank" rel="noopener">npm</a>
-        <span class="dim">MIT License</span>
+        <span>MIT License</span>
       </div>
     </div>
   </footer>
 
   <script src="js/terminal.js"></script>
+
 </body>
 </html>

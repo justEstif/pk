@@ -94,7 +94,7 @@ const scenarios = {
 function renderLine(line) {
    if (line.type === 'gap') {
       const d = document.createElement('div');
-      d.className = 'gap';
+      d.className = 't-gap';
       return d;
    }
    if (line.type === 'divider') {
