@@ -13,7 +13,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    environment: npm
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -22,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
+          # no registry-url — avoids setup-node injecting GITHUB_TOKEN as NODE_AUTH_TOKEN
       - run: bun install --frozen-lockfile
       - run: make build
       - name: version check
@@ -32,6 +31,4 @@ jobs:
           [ "$PKG_VERSION" != "$TAG_VERSION" ] && echo "VERSION MISMATCH: package=$PKG_VERSION tag=$TAG_VERSION" && exit 1
           echo "version ok: $PKG_VERSION"
       - name: publish
-        run: |
-          unset NODE_AUTH_TOKEN
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
