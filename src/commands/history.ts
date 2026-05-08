@@ -1,5 +1,6 @@
 import type {Command} from 'commander';
 import {getHistory, formatHistory} from '../lib/git.ts';
+import {writeJson} from '../lib/json-output.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
 
 export function registerHistory(program: Command): void {
@@ -11,12 +12,14 @@ export function registerHistory(program: Command): void {
 		.option('--filter-type <type>', 'Filter by note type: note, decision, question, source')
 		.option('--filter-tag <tag>', 'Filter by tag')
 		.option('--filter-operation <operation>', 'Filter by operation: create, update, delete')
+		.option('--json', 'JSON output')
 		.action(async (options: {
 			limit: string;
 			type: string;
 			filterType?: string;
 			filterTag?: string;
 			filterOperation?: string;
+			json?: boolean;
 		}) => {
 			const knowledgeDir = requireKnowledgeDir();
 
@@ -29,6 +32,11 @@ export function registerHistory(program: Command): void {
 					filterTag: options.filterTag,
 					filterOperation: options.filterOperation as 'create' | 'update' | 'delete' | undefined,
 				});
+
+				if (options.json) {
+					writeJson({entries: history});
+					return;
+				}
 
 				if (history.length === 0) {
 					console.log('No history found.');

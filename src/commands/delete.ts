@@ -3,6 +3,7 @@ import {existsSync} from 'node:fs';
 import type {Command} from 'commander';
 import {deleteKnowledgeNote} from '../lib/operations.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
+import {writeJson} from '../lib/json-output.ts';
 
 export function registerDelete(program: Command): void {
 	program
@@ -10,12 +11,13 @@ export function registerDelete(program: Command): void {
 		.description('Delete a knowledge note')
 		.argument('<path>', 'Path to the note file')
 		.option('-y, --yes', 'Skip confirmation prompt')
-		.action(async (notePath: string, options: {yes?: boolean}) => {
+		.option('--json', 'JSON output')
+		.action(async (notePath: string, options: {yes?: boolean; json?: boolean}) => {
 			await handleDelete(notePath, options);
 		});
 }
 
-async function handleDelete(notePath: string, options: {yes?: boolean}): Promise<void> {
+async function handleDelete(notePath: string, options: {yes?: boolean; json?: boolean}): Promise<void> {
 	const knowledgeDir = requireKnowledgeDir();
 	const fullPath = resolveFullPath(notePath, knowledgeDir);
 
@@ -24,12 +26,19 @@ async function handleDelete(notePath: string, options: {yes?: boolean}): Promise
 		process.exit(1);
 	}
 
-	if (!(await confirmDeletion(fullPath, options.yes))) {
+	// --json implies --yes (skip confirmation in machine-readable mode)
+	if (!(await confirmDeletion(fullPath, options.yes ?? options.json))) {
 		console.log('Aborted.');
 		process.exit(0);
 	}
 
 	await performDeletion(fullPath);
+
+	if (options.json) {
+		writeJson({path: fullPath, status: 'deleted'});
+	} else {
+		console.log(`Deleted: ${fullPath}`);
+	}
 }
 
 function resolveFullPath(notePath: string, knowledgeDir: string): string {
@@ -54,7 +63,6 @@ async function confirmDeletion(fullPath: string, skipConfirm: boolean | undefine
 async function performDeletion(fullPath: string): Promise<void> {
 	try {
 		await deleteKnowledgeNote(fullPath);
-		console.log(`Deleted: ${fullPath}`);
 	} catch (error) {
 		if (error instanceof Error) {
 			console.error(`Error: ${error.message}`);

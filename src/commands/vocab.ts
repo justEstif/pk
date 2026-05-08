@@ -1,5 +1,6 @@
 import type {Command} from 'commander';
 import {vocab} from '../lib/db.ts';
+import {writeJson} from '../lib/json-output.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
 
 export function registerVocab(program: Command): void {
@@ -25,7 +26,7 @@ export function registerVocab(program: Command): void {
 			}
 
 			if (opts.json) {
-				console.log(JSON.stringify(tags, null, 2));
+				writeJson({tags});
 				return;
 			}
 

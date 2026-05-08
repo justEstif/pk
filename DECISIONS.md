@@ -18,6 +18,10 @@
 8. **`pk_lint` accepts optional `paths` array.** No args = all notes. No type/filter — agents chain `pk_search` → `pk_lint`.
 9. **Harness setup is context file + skill + eval hook.** No per-harness MCP config.
 10. **Project creation extracted from harness wiring** in init.ts
+11. **`--json` uses shared `writeJson()` helper and typed output shapes.** All JSON schemas are defined in `src/lib/json-output.ts`. MCPB parses these stable schemas.
+12. **`lint --json` exits 0 even with errors.** Errors are in the JSON payload (`issues` array with `level: "error"` entries). Human mode still exits 1 on errors.
+13. **`delete --json` implies `--yes`.** Machine-readable mode skips confirmation prompts.
+14. **`search --json` and `vocab --json` wrap results in objects.** `search` returns `{results: [...]}` not bare array. `vocab` returns `{tags: [...]}` not bare array. Consistency across all commands.
 
 ## Assumptions
 
@@ -28,15 +32,14 @@
 
 ## Open Questions
 
-- **`--json` output format** — needs a consistent schema across all commands before MCPB can parse it
 - **MCPB project picker (#17)** — `user_config` manifest vs runtime `pk_project_switch`. Deferred to MCPB work.
 - **Synthesis architecture (#16)** — deferred, not blocking current work
 
 ## Sequencing
 
 1. ~~**Removal PR:** Drop Cursor, Gemini, `auto_commit` (#18)~~ ✅ commit `1b38a70`
-2. **Deepen Candidate 1:** Note Validator (lint consolidation)
-3. **Add `--json` flag** to all CLI commands (new seam contract)
+2. ~~**Deepen Candidate 1:** Note Validator (lint consolidation)~~ ✅ commit `bdcf03e`
+3. ~~**Add `--json` flag** to all CLI commands (new seam contract)~~ ✅
 4. **Add `pk_read` CLI, `pk_vocab` MCP tool** (complete symmetry)
 5. **Revisit Candidate 4** — may not need formal builder pattern anymore
 6. **MCPB package** (separate, after CLI is stable)
