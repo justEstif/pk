@@ -34,7 +34,7 @@
 
 ## Sequencing
 
-1. **Removal PR:** Drop Cursor, Gemini, `auto_commit` (#18)
+1. ~~**Removal PR:** Drop Cursor, Gemini, `auto_commit` (#18)~~ ✅ commit `1b38a70`
 2. **Deepen Candidate 1:** Note Validator (lint consolidation)
 3. **Add `--json` flag** to all CLI commands (new seam contract)
 4. **Add `pk_read` CLI, `pk_vocab` MCP tool** (complete symmetry)
