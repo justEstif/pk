@@ -14,7 +14,7 @@ export function projectDir(name: string): string {
 
 /**
  * Reads PK_KNOWLEDGE_DIR from the environment.
- * Throws if unset — callers (CLI commands and MCP tools) must have it configured.
+ * Throws if unset — callers must have it configured.
  */
 export function requireKnowledgeDir(): string {
 	const dir = process.env.PK_KNOWLEDGE_DIR;

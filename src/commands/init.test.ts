@@ -9,18 +9,9 @@ import {
 	ensureProject,
 	installSkill,
 } from './init.ts';
-import {resolvePkCommand, writeClaudeMd, writeAgentsMd} from './harnesses/shared.ts';
-import {writeClaudeConfig, writeClaudeHook} from './harnesses/claude.ts';
-import {writeCodexConfig, writeCodexHook} from './harnesses/codex.ts';
-import {writeOpenCodeConfig, writeOpenCodePlugin} from './harnesses/opencode.ts';
-
-type McpEntry = {command: string; args: string[]; env: Record<string, string>};
-type McpServers = Record<string, McpEntry | undefined>;
-type McpConfig = {mcpServers: McpServers};
-
-async function readMcpConfig(filePath: string): Promise<McpConfig> {
-	return JSON.parse(await Bun.file(filePath).text()) as McpConfig;
-}
+import {writeAgentsMd} from './harnesses/shared.ts';
+import {writeClaudeHook} from './harnesses/claude.ts';
+import {writeOpenCodePlugin} from './harnesses/opencode.ts';
 
 let tmpDir: string;
 let fakeHome: string;
@@ -81,65 +72,13 @@ describe('installSkill', () => {
 // ─── applyHarnesses ────────────────────────────────────────────────────────
 
 describe('applyHarnesses', () => {
-	test('applies both harnesses in one call', async () => {
+	test('applies claude and codex harnesses', async () => {
 		const ctx = {
 			home: fakeHome, knowledgeDir: KNOWLEDGE_DIR, name: 'myproject', projectRoot: tmpDir,
 		};
 		await applyHarnesses(['claude', 'codex'], ctx);
-		expect(existsSync(path.join(tmpDir, '.mcp.json'))).toBe(true);
-		expect(existsSync(path.join(tmpDir, '.codex', 'config.toml'))).toBe(true);
-		expect(existsSync(path.join(tmpDir, 'CLAUDE.md'))).toBe(true);
-	});
-});
-
-// ─── claude (.mcp.json) ─────────────────────────────────────────────────────
-
-describe('writeClaudeConfig', () => {
-	test('creates .mcp.json with mcpServers.pk entry', async () => {
-		await writeClaudeConfig(tmpDir, KNOWLEDGE_DIR);
-		const cfg = await readMcpConfig(path.join(tmpDir, '.mcp.json'));
-
-		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
-		expect(cfg.mcpServers.pk!.args).toEqual(['mcp']);
-		expect(cfg.mcpServers.pk!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
-	});
-
-	test('merges with existing .mcp.json without clobbering other servers', async () => {
-		const existing = {mcpServers: {other: {command: 'other'}}};
-		await Bun.write(path.join(tmpDir, '.mcp.json'), JSON.stringify(existing));
-		await writeClaudeConfig(tmpDir, KNOWLEDGE_DIR);
-		const cfg = await readMcpConfig(path.join(tmpDir, '.mcp.json'));
-
-		expect(cfg.mcpServers.other!.command).toBe('other');
-		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
-	});
-});
-
-// ─── CLAUDE.md ───────────────────────────────────────────────────────────────
-
-describe('writeClaudeMd', () => {
-	test('creates CLAUDE.md with pk section', async () => {
-		await writeClaudeMd(tmpDir, '/fake/knowledge-dir');
-		const content = await Bun.file(path.join(tmpDir, 'CLAUDE.md')).text();
-		expect(content).toContain('<!-- pk:start -->');
-		expect(content).toContain('<!-- pk:end -->');
-		expect(content).toContain('pk synthesize --session-start');
-	});
-
-	test('replaces existing pk section without duplicating', async () => {
-		await writeClaudeMd(tmpDir, '/fake/knowledge-dir');
-		await writeClaudeMd(tmpDir, '/fake/knowledge-dir');
-		const content = await Bun.file(path.join(tmpDir, 'CLAUDE.md')).text();
-		const count = (content.match(/<!-- pk:start -->/gv) ?? []).length;
-		expect(count).toBe(1);
-	});
-
-	test('appends to existing CLAUDE.md without clobbering existing content', async () => {
-		await Bun.write(path.join(tmpDir, 'CLAUDE.md'), '# My project\n\nExisting content.\n');
-		await writeClaudeMd(tmpDir, '/fake/knowledge-dir');
-		const content = await Bun.file(path.join(tmpDir, 'CLAUDE.md')).text();
-		expect(content).toContain('# My project');
-		expect(content).toContain('<!-- pk:start -->');
+		expect(existsSync(path.join(tmpDir, '.claude', 'hooks', 'pk-eval.ts'))).toBe(true);
+		expect(existsSync(path.join(tmpDir, 'AGENTS.md'))).toBe(true);
 	});
 });
 
@@ -150,20 +89,38 @@ describe('writeAgentsMd', () => {
 		await writeAgentsMd(tmpDir, '/fake/knowledge-dir');
 		const content = await Bun.file(path.join(tmpDir, 'AGENTS.md')).text();
 		expect(content).toContain('<!-- pk:start -->');
+		expect(content).toContain('<!-- pk:end -->');
 		expect(content).toContain('pk synthesize --session-start');
+	});
+
+	test('replaces existing pk section without duplicating', async () => {
+		await writeAgentsMd(tmpDir, '/fake/knowledge-dir');
+		await writeAgentsMd(tmpDir, '/fake/knowledge-dir');
+		const content = await Bun.file(path.join(tmpDir, 'AGENTS.md')).text();
+		const count = (content.match(/<!-- pk:start -->/gv) ?? []).length;
+		expect(count).toBe(1);
+	});
+
+	test('appends to existing AGENTS.md without clobbering existing content', async () => {
+		await Bun.write(path.join(tmpDir, 'AGENTS.md'), '# My project\n\nExisting content.\n');
+		await writeAgentsMd(tmpDir, '/fake/knowledge-dir');
+		const content = await Bun.file(path.join(tmpDir, 'AGENTS.md')).text();
+		expect(content).toContain('# My project');
+		expect(content).toContain('<!-- pk:start -->');
 	});
 });
 
 // ─── Claude forced-eval hook ─────────────────────────────────────────────────
 
 describe('writeClaudeHook', () => {
-	test('creates pk-eval.ts hook and registers it in settings.json', async () => {
-		await writeClaudeHook(tmpDir);
+	test('creates pk-eval.ts hook that calls pk prime and registers it in settings.json', async () => {
+		await writeClaudeHook(tmpDir, KNOWLEDGE_DIR);
 		const hookPath = path.join(tmpDir, '.claude', 'hooks', 'pk-eval.ts');
 		expect(existsSync(hookPath)).toBe(true);
 		const hook = await Bun.file(hookPath).text();
 		expect(hook).toContain('UserPromptSubmit');
-		expect(hook).toContain('additionalContext');
+		expect(hook).toContain('prime');
+		expect(hook).toContain(KNOWLEDGE_DIR);
 
 		const settings = JSON.parse(await Bun.file(path.join(tmpDir, '.claude', 'settings.json')).text()) as {
 			hooks: {UserPromptSubmit: Array<{matcher: string; hooks: Array<{type: string; command: string}>}>};
@@ -172,8 +129,8 @@ describe('writeClaudeHook', () => {
 	});
 
 	test('does not duplicate hook registration on re-run', async () => {
-		await writeClaudeHook(tmpDir);
-		await writeClaudeHook(tmpDir);
+		await writeClaudeHook(tmpDir, KNOWLEDGE_DIR);
+		await writeClaudeHook(tmpDir, KNOWLEDGE_DIR);
 		const settings = JSON.parse(await Bun.file(path.join(tmpDir, '.claude', 'settings.json')).text()) as {
 			hooks: {UserPromptSubmit: Array<{matcher: string; hooks: Array<{type: string; command: string}>}>};
 		};
@@ -181,7 +138,7 @@ describe('writeClaudeHook', () => {
 	});
 });
 
-// ─── Skill installation for new harnesses ────────────────────────────────────
+// ─── Skill installation for harnesses ─────────────────────────────────────────
 
 describe('installSkill', () => {
 	test('opencode uses .agents/skills/pk', () => {
@@ -201,88 +158,17 @@ describe('installSkill', () => {
 	});
 });
 
-// ─── Codex (.codex/config.toml) ───────────────────────────────────────────────
-
-describe('writeCodexConfig', () => {
-	test('creates .codex/config.toml with [mcp_servers.pk] section', async () => {
-		await writeCodexConfig(tmpDir, KNOWLEDGE_DIR);
-		const cfgPath = path.join(tmpDir, '.codex', 'config.toml');
-		expect(existsSync(cfgPath)).toBe(true);
-		const content = await Bun.file(cfgPath).text();
-		expect(content).toContain('[mcp_servers.pk]');
-		expect(content).toContain('command =');
-		expect(content).toContain('PK_KNOWLEDGE_DIR');
-	});
-});
-
-describe('writeCodexHook', () => {
-	test('creates pk-eval.sh hook and registers in hooks.json', async () => {
-		await writeCodexHook(tmpDir);
-		const hookPath = path.join(tmpDir, '.codex', 'hooks', 'pk-eval.sh');
-		expect(existsSync(hookPath)).toBe(true);
-		const hook = await Bun.file(hookPath).text();
-		expect(hook).toContain('#!/bin/bash');
-
-		const hooks = JSON.parse(await Bun.file(path.join(tmpDir, '.codex', 'hooks.json')).text()) as {
-			hooks: {UserPromptSubmit: Array<{command: string}>};
-		};
-		expect(hooks.hooks.UserPromptSubmit.some(h => typeof h === 'object' && h !== null && 'command' in h && typeof h.command === 'string' && h.command.includes('pk-eval'))).toBe(true);
-	});
-
-	test('does not duplicate hook registration', async () => {
-		await writeCodexHook(tmpDir);
-		await writeCodexHook(tmpDir);
-		const hooks = JSON.parse(await Bun.file(path.join(tmpDir, '.codex', 'hooks.json')).text()) as {
-			hooks: {UserPromptSubmit: Array<Record<string, unknown>>};
-		};
-		const count = hooks.hooks.UserPromptSubmit.filter(h => typeof h === 'object' && h !== null && 'command' in h && typeof h.command === 'string' && h.command.includes('pk-eval')).length;
-		expect(count).toBe(1);
-	});
-});
-
-// ─── OpenCode (opencode.json) ─────────────────────────────────────────────────
-
-describe('writeOpenCodeConfig', () => {
-	test('creates opencode.json with mcp.pk section', async () => {
-		await writeOpenCodeConfig(tmpDir, KNOWLEDGE_DIR);
-		const cfgPath = path.join(tmpDir, 'opencode.json');
-		expect(existsSync(cfgPath)).toBe(true);
-		const cfg = JSON.parse(await Bun.file(cfgPath).text()) as {
-			mcp: Record<string, {type: string; enabled: boolean; command: string[]; environment: Record<string, string>} | undefined>;
-		};
-		expect(cfg.mcp.pk).toBeDefined();
-		expect(cfg.mcp.pk?.type).toBe('local');
-		expect(cfg.mcp.pk?.enabled).toBe(true);
-		expect(cfg.mcp.pk?.command).toEqual([resolvePkCommand(), 'mcp']);
-		expect(cfg.mcp.pk?.environment.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
-	});
-
-	test('merges with existing opencode.json', async () => {
-		const existing = {
-			mcp: {
-				other: {
-					type: 'local', enabled: true, command: ['other'], environment: {},
-				},
-			},
-		};
-		await Bun.write(path.join(tmpDir, 'opencode.json'), JSON.stringify(existing));
-		await writeOpenCodeConfig(tmpDir, KNOWLEDGE_DIR);
-		const cfg = JSON.parse(await Bun.file(path.join(tmpDir, 'opencode.json')).text()) as {
-			mcp: Record<string, unknown>;
-		};
-		expect(cfg.mcp.other).toBeDefined();
-		expect(cfg.mcp.pk).toBeDefined();
-	});
-});
+// ─── OpenCode plugin ─────────────────────────────────────────────────────────
 
 describe('writeOpenCodePlugin', () => {
-	test('creates .opencode/plugins/pk-eval.ts plugin', async () => {
-		await writeOpenCodePlugin(tmpDir);
+	test('creates .opencode/plugins/pk-eval.ts plugin that calls pk prime', async () => {
+		await writeOpenCodePlugin(tmpDir, KNOWLEDGE_DIR);
 		const pluginPath = path.join(tmpDir, '.opencode', 'plugins', 'pk-eval.ts');
 		expect(existsSync(pluginPath)).toBe(true);
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('experimental');
 		expect(plugin).toContain('chat.system.transform');
-		expect(plugin).toContain('system.unshift');
+		expect(plugin).toContain('prime');
+		expect(plugin).toContain(KNOWLEDGE_DIR);
 	});
 });

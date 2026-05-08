@@ -5,24 +5,23 @@ import * as p from '@clack/prompts';
 import type {Command} from 'commander';
 import {TYPE_DIRS} from '../lib/schema.ts';
 import {listExistingProjects, pkHome, projectDir} from '../lib/paths.ts';
-import {writeClaudeMd, writeAgentsMd} from './harnesses/shared.ts';
-import {writeClaudeConfig, writeClaudeHook} from './harnesses/claude.ts';
-import {writeCodexConfig, writeCodexHook} from './harnesses/codex.ts';
-import {writeOpenCodeConfig, writeOpenCodePlugin} from './harnesses/opencode.ts';
+import {writeAgentsMd} from './harnesses/shared.ts';
+import {writeClaudeHook} from './harnesses/claude.ts';
+import {writeOpenCodePlugin} from './harnesses/opencode.ts';
 
 export type Harness = 'claude' | 'codex' | 'opencode';
 
 const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
-	{hint: '.mcp.json + CLAUDE.md + forced-eval hook', label: 'Claude Code', value: 'claude'},
-	{hint: '.codex/config.toml + AGENTS.md + hook', label: 'Codex', value: 'codex'},
-	{hint: 'opencode.json + plugin (reads AGENTS.md/CLAUDE.md)', label: 'OpenCode', value: 'opencode'},
+	{hint: 'forced-eval hook', label: 'Claude Code', value: 'claude'},
+	{hint: 'AGENTS.md injection', label: 'Codex', value: 'codex'},
+	{hint: 'forced-eval plugin', label: 'OpenCode', value: 'opencode'},
 ];
 
 const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
 
 const HARNESS_ACTIVATION: Record<Harness, string> = {
 	claude: 'start a new Claude Code session in this project',
-	codex: 'restart Codex for MCP to connect',
+	codex: 'start a new Codex session in this project',
 	opencode: 'reload OpenCode or restart the app',
 };
 
@@ -49,11 +48,8 @@ function buildOutro(
 
 	lines.push(
 		'',
-		'MCP is ready — no env export needed.',
-		'To verify: ask your agent to list its tools — pk_search should appear.',
-		'',
-		'For CLI commands (pk search, pk new, pk lint, …):',
-		`  export PK_KNOWLEDGE_DIR="${knowledgeDir}"`,
+		'Verify: pk search --help',
+		`export PK_KNOWLEDGE_DIR="${knowledgeDir}"`,
 	);
 
 	return lines;
@@ -137,25 +133,17 @@ async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void
 	const {knowledgeDir, projectRoot} = ctx;
 	switch (harness) {
 		case 'claude': {
-			await writeClaudeConfig(projectRoot, knowledgeDir);
-			await writeClaudeMd(projectRoot, knowledgeDir);
-			await writeClaudeHook(projectRoot);
+			await writeClaudeHook(projectRoot, knowledgeDir);
 			break;
 		}
 
 		case 'codex': {
-			await writeCodexConfig(projectRoot, knowledgeDir);
 			await writeAgentsMd(projectRoot, knowledgeDir);
-			await writeCodexHook(projectRoot);
 			break;
 		}
 
 		case 'opencode': {
-			await writeOpenCodeConfig(projectRoot, knowledgeDir);
-			// OpenCode reads AGENTS.md and CLAUDE.md natively
-			await writeAgentsMd(projectRoot, knowledgeDir);
-			await writeClaudeMd(projectRoot, knowledgeDir);
-			await writeOpenCodePlugin(projectRoot);
+			await writeOpenCodePlugin(projectRoot, knowledgeDir);
 			break;
 		}
 	}

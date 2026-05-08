@@ -4,7 +4,7 @@
 
 This system is project-specific. It is not a personal second brain, a full wiki platform, or a semantic memory database.
 
-The canonical store is plain markdown files managed via `pk` MCP tools. The root directory is set by `PK_KNOWLEDGE_DIR`. The knowledge base is for durable context and future answers — not for task tracking.
+The canonical store is plain markdown files managed via the `pk` CLI. The root directory is set by `PK_KNOWLEDGE_DIR`. The knowledge base is for durable context and future answers — not for task tracking.
 
 ## Folder and Type Rules
 

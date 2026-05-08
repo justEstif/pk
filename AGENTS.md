@@ -13,6 +13,16 @@ make build   # compile dist/index.js
 
 All source in `src/`. Bun + TypeScript.
 
+## Architecture
+
+pk is a CLI tool. No MCP server. Agents interact via CLI commands with `--json`.
+
+- **Hooks/plugins** call `pk prime` to inject context into agent sessions
+- **Skill** documents CLI usage patterns for agents
+- **`--json` flag** is the seam for machine consumers
+
+Three harnesses: Claude Code (hook), Codex (AGENTS.md), OpenCode (plugin).
+
 ## Release
 
 ### First publish (one-time — OIDC cannot be used until package exists on npm)

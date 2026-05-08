@@ -1,17 +1,14 @@
-import path from 'node:path';
 import type {Command} from 'commander';
-
-function skillPath(): string {
-	return path.resolve(import.meta.dir, '..', 'skill', 'SKILL.md');
-}
+import {requireKnowledgeDir} from '../lib/paths.ts';
+import {pkInstruction, FORCED_EVAL_PROMPT} from './harnesses/shared.ts';
 
 export function registerPrime(program: Command): void {
 	program
 		.command('prime')
-		.description('Print the pk skill to stdout — used by harness adapters to inject into system prompt at session start')
-		.action(async () => {
-			const text = await Bun.file(skillPath()).text();
-			// Strip YAML frontmatter before outputting
-			process.stdout.write(text.replace(/^---[\s\S]*?---\n/v, ''));
+		.description('Print priming context for agent injection — used by hooks at session start')
+		.action(() => {
+			const knowledgeDir = requireKnowledgeDir();
+			const output = FORCED_EVAL_PROMPT + '\n\n' + pkInstruction(knowledgeDir);
+			process.stdout.write(output + '\n');
 		});
 }

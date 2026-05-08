@@ -1,6 +1,6 @@
 /**
  * JSON output types for CLI commands.
- * These are the stable schemas that MCPB parses when shelling out to `pk <cmd> --json`.
+ * These are the stable schemas for CLI --json output.
  */
 import type {Issue} from './lint.ts';
 import type {HistoryEntry} from './git.ts';

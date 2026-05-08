@@ -4,7 +4,7 @@ import type {Note} from './schema.ts';
 
 /**
  * Format notes into a markdown context block suitable for agent injection.
- * Returns the full string (caller decides whether to print or return via MCP).
+ * Returns the full string (caller decides whether to print or return to caller).
  */
 export function formatSynthesizeOutput(notes: Note[], label: string): string {
 	const today = new Date().toISOString().slice(0, 10);
