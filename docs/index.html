@@ -37,18 +37,28 @@
       </p>
 
       <!-- Install + Init -->
-      <div class="install-tabs" role="tablist">
-        <button class="install-tab active" data-pkg="npm" role="tab" aria-selected="true">npm</button>
-        <button class="install-tab"        data-pkg="bun" role="tab" aria-selected="false">bun</button>
-        <button class="install-tab"        data-pkg="brew" role="tab" aria-selected="false">brew</button>
-      </div>
-      <button class="install-block" id="install-pkg" title="Click to copy"
+      <div class="install-widget"
         data-cmd-npm="npm install -g @justestif/pk"
         data-cmd-bun="bun install -g @justestif/pk"
         data-cmd-brew="brew install justEstif/tap/pk">
-        <div class="install-line"><span class="dim">$</span><span class="amber" id="install-cmd"> npm install -g @justestif/pk</span></div>
-        <div class="install-line"><span class="dim">$</span><span class="amber"> pk init</span></div>
-      </button>
+        <div class="install-header">
+          <div class="install-tabs" role="tablist">
+            <button class="install-tab active" data-pkg="npm" role="tab" aria-selected="true">npm</button>
+            <button class="install-tab"        data-pkg="bun" role="tab" aria-selected="false">bun</button>
+            <button class="install-tab"        data-pkg="brew" role="tab" aria-selected="false">brew</button>
+          </div>
+          <button class="copy-btn" id="install-pkg" title="Copy to clipboard" aria-label="Copy commands">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="copy-label">copy</span>
+          </button>
+        </div>
+        <div class="install-body">
+          <div class="install-line"><span class="dim">$</span><span class="amber" id="install-cmd"> npm install -g @justestif/pk</span></div>
+          <div class="install-line"><span class="dim">$</span><span class="amber"> pk init</span></div>
+        </div>
+      </div>
       <div id="install-toast" class="copy-toast" aria-live="polite"></div>
 
       <!-- Supported harnesses -->
@@ -62,6 +72,7 @@
       </div>
 
       <!-- Tabbed terminal demo -->
+      <div class="demo-label">example session</div>
       <div class="demo-tabs" role="tablist">
         <button class="demo-tab active" data-tab="acme"  role="tab" aria-selected="true">acme <span class="tab-hint">startup</span></button>
         <button class="demo-tab"        data-tab="nova"  role="tab" aria-selected="false">nova <span class="tab-hint">research</span></button>
@@ -95,9 +106,15 @@
     }
 
     // Package manager toggle
-    const pkgBlock = document.getElementById('install-pkg');
+    const widget = document.querySelector('.install-widget');
     const pkgCmd = document.getElementById('install-cmd');
+    const copyBtn = document.getElementById('install-pkg');
+    const copyLabel = document.getElementById('copy-label');
     let activePkg = 'npm';
+
+    function pkKey(pkg) {
+      return 'cmd' + pkg.charAt(0).toUpperCase() + pkg.slice(1);
+    }
 
     document.querySelectorAll('.install-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -108,13 +125,20 @@
         tab.classList.add('active');
         tab.setAttribute('aria-selected', 'true');
         activePkg = tab.dataset.pkg;
-        pkgCmd.textContent = ' ' + pkgBlock.dataset['cmd' + activePkg.charAt(0).toUpperCase() + activePkg.slice(1)];
+        pkgCmd.textContent = ' ' + widget.dataset[pkKey(activePkg)];
       });
     });
 
-    document.getElementById('install-pkg').addEventListener('click', function () {
-      const install = pkgBlock.dataset['cmd' + activePkg.charAt(0).toUpperCase() + activePkg.slice(1)];
-      copyWithToast(install + ' && pk init', document.getElementById('install-toast'), this);
+    copyBtn.addEventListener('click', function () {
+      const install = widget.dataset[pkKey(activePkg)];
+      navigator.clipboard.writeText(install + ' && pk init').then(() => {
+        copyBtn.classList.add('copied');
+        copyLabel.textContent = 'copied!';
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          copyLabel.textContent = 'copy';
+        }, 2000);
+      });
     });
   </script>
 
