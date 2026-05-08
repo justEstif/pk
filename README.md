@@ -30,10 +30,10 @@ Non-interactive:
 
 ```bash
 pk init my-project --harness claude
-pk init my-project --harness claude,omp   # multiple harnesses
+pk init my-project --harness claude,cursor   # multiple harnesses
 ```
 
-Available harnesses: `claude` (Claude Code), `omp` (Oh My Pi), `cursor` (Cursor), `gemini` (Gemini CLI), `codex` (Codex), `opencode` (OpenCode).
+Available harnesses: `claude` (Claude Code & Claude Desktop), `cursor` (Cursor), `gemini` (Gemini CLI), `codex` (Codex), `opencode` (OpenCode).
 
 `pk init` does three things:
 
@@ -43,8 +43,7 @@ Available harnesses: `claude` (Claude Code), `omp` (Oh My Pi), `cursor` (Cursor)
 
 | Harness | Files written |
 |---|---|
-| `claude` | `.mcp.json`, `CLAUDE.md`, `.claude/hooks/pk-eval.ts`, `.claude/settings.json` |
-| `omp` | `.omp/mcp.json`, `AGENTS.md`, `.omp/extensions/pk-eval.ts` |
+| `claude` | `.mcp.json`, `CLAUDE.md`, `.claude/hooks/pk-eval.ts`, `.claude/settings.json` | (also works for Claude Desktop) |
 | `cursor` | `.cursor/mcp.json`, `.cursor/rules/pk.mdc`, `.cursor/hooks/pk-eval.sh`, `.cursor/hooks.json` |
 | `gemini` | `.gemini/settings.json`, `GEMINI.md`, `.gemini/hooks/pk-eval.sh` |
 | `codex` | `.codex/config.toml`, `AGENTS.md`, `.codex/hooks/pk-eval.sh`, `.codex/hooks.json` |

@@ -13,8 +13,6 @@ import {
 	writeClaudeConfig,
 	writeClaudeHook,
 	writeClaudeMd,
-	writeOmpConfig,
-	writeOmpHook,
 	writeCursorConfig,
 	writeCursorRules,
 	writeCursorHook,
@@ -81,8 +79,8 @@ describe('ensureProject', () => {
 // ─── installSkill ────────────────────────────────────────────────────────────
 
 describe('installSkill', () => {
-	test('returns target path for omp when skill source exists', () => {
-		const result = installSkill('omp', tmpDir);
+	test('returns target path for cursor when skill source exists', () => {
+		const result = installSkill('cursor', tmpDir);
 		if (result) {
 			expect(result).toBe(path.join(tmpDir, '.agents', 'skills', 'pk'));
 			expect(existsSync(result)).toBe(true);
@@ -92,7 +90,7 @@ describe('installSkill', () => {
 	test('skips reinstall if target already exists', () => {
 		const target = path.join(tmpDir, '.agents', 'skills', 'pk');
 		mkdirSync(target, {recursive: true});
-		const result = installSkill('omp', tmpDir);
+		const result = installSkill('cursor', tmpDir);
 		if (result) {
 			expect(result).toBe(target);
 		}
@@ -106,11 +104,10 @@ describe('applyHarnesses', () => {
 		const ctx = {
 			home: fakeHome, knowledgeDir: KNOWLEDGE_DIR, name: 'myproject', projectRoot: tmpDir,
 		};
-		await applyHarnesses(['claude', 'omp'], ctx);
+		await applyHarnesses(['claude', 'cursor'], ctx);
 		expect(existsSync(path.join(tmpDir, '.mcp.json'))).toBe(true);
-		expect(existsSync(path.join(tmpDir, '.omp', 'mcp.json'))).toBe(true);
+		expect(existsSync(path.join(tmpDir, '.cursor', 'mcp.json'))).toBe(true);
 		expect(existsSync(path.join(tmpDir, 'CLAUDE.md'))).toBe(true);
-		expect(existsSync(path.join(tmpDir, 'AGENTS.md'))).toBe(true);
 	});
 });
 
@@ -134,18 +131,6 @@ describe('writeClaudeConfig', () => {
 
 		expect(cfg.mcpServers.other!.command).toBe('other');
 		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
-	});
-});
-
-// ─── omp (.omp/mcp.json) ─────────────────────────────────────────────────────
-
-describe('writeOmpConfig', () => {
-	test('creates .omp/mcp.json with mcpServers.pk', async () => {
-		await writeOmpConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = await readMcpConfig(path.join(tmpDir, '.omp', 'mcp.json'));
-
-		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
-		expect(cfg.mcpServers.pk!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
 	});
 });
 
@@ -200,31 +185,18 @@ describe('writeClaudeHook', () => {
 		expect(hook).toContain('additionalContext');
 
 		const settings = JSON.parse(await Bun.file(path.join(tmpDir, '.claude', 'settings.json')).text()) as {
-			hooks: {UserPromptSubmit: Array<{command: string}>};
+			hooks: {UserPromptSubmit: Array<{matcher: string; hooks: Array<{type: string; command: string}>}>};
 		};
-		expect(settings.hooks.UserPromptSubmit.some(h => h.command.includes('pk-eval.ts'))).toBe(true);
+		expect(settings.hooks.UserPromptSubmit.some(entry => entry.hooks.some(h => h.type === 'command' && h.command.includes('pk-eval.ts')))).toBe(true);
 	});
 
 	test('does not duplicate hook registration on re-run', async () => {
 		await writeClaudeHook(tmpDir);
 		await writeClaudeHook(tmpDir);
 		const settings = JSON.parse(await Bun.file(path.join(tmpDir, '.claude', 'settings.json')).text()) as {
-			hooks: {UserPromptSubmit: Array<{command: string}>};
+			hooks: {UserPromptSubmit: Array<{matcher: string; hooks: Array<{type: string; command: string}>}>};
 		};
 		expect(settings.hooks.UserPromptSubmit.length).toBe(1);
-	});
-});
-
-// ─── OMP forced-eval hook ────────────────────────────────────────────────────
-
-describe('writeOmpHook', () => {
-	test('creates pk-eval.ts extension with forced-eval prompt', async () => {
-		await writeOmpHook(tmpDir);
-		const hookPath = path.join(tmpDir, '.omp', 'extensions', 'pk-eval.ts');
-		expect(existsSync(hookPath)).toBe(true);
-		const hook = await Bun.file(hookPath).text();
-		expect(hook).toContain('before_agent_start');
-		expect(hook).toContain('systemPrompt');
 	});
 });
 
