@@ -119,16 +119,16 @@ describe('writeClaudeConfig', () => {
 
 describe('writeClaudeMd', () => {
 	test('creates CLAUDE.md with pk section', async () => {
-		await writeClaudeMd(tmpDir);
+		await writeClaudeMd(tmpDir, '/fake/knowledge-dir');
 		const content = await Bun.file(path.join(tmpDir, 'CLAUDE.md')).text();
 		expect(content).toContain('<!-- pk:start -->');
 		expect(content).toContain('<!-- pk:end -->');
-		expect(content).toContain('pk_synthesize');
+		expect(content).toContain('pk synthesize --session-start');
 	});
 
 	test('replaces existing pk section without duplicating', async () => {
-		await writeClaudeMd(tmpDir);
-		await writeClaudeMd(tmpDir);
+		await writeClaudeMd(tmpDir, '/fake/knowledge-dir');
+		await writeClaudeMd(tmpDir, '/fake/knowledge-dir');
 		const content = await Bun.file(path.join(tmpDir, 'CLAUDE.md')).text();
 		const count = (content.match(/<!-- pk:start -->/gv) ?? []).length;
 		expect(count).toBe(1);
@@ -136,7 +136,7 @@ describe('writeClaudeMd', () => {
 
 	test('appends to existing CLAUDE.md without clobbering existing content', async () => {
 		await Bun.write(path.join(tmpDir, 'CLAUDE.md'), '# My project\n\nExisting content.\n');
-		await writeClaudeMd(tmpDir);
+		await writeClaudeMd(tmpDir, '/fake/knowledge-dir');
 		const content = await Bun.file(path.join(tmpDir, 'CLAUDE.md')).text();
 		expect(content).toContain('# My project');
 		expect(content).toContain('<!-- pk:start -->');
@@ -147,10 +147,10 @@ describe('writeClaudeMd', () => {
 
 describe('writeAgentsMd', () => {
 	test('creates AGENTS.md with pk section', async () => {
-		await writeAgentsMd(tmpDir);
+		await writeAgentsMd(tmpDir, '/fake/knowledge-dir');
 		const content = await Bun.file(path.join(tmpDir, 'AGENTS.md')).text();
 		expect(content).toContain('<!-- pk:start -->');
-		expect(content).toContain('pk_synthesize');
+		expect(content).toContain('pk synthesize --session-start');
 	});
 });
 
