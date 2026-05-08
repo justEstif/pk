@@ -1,6 +1,7 @@
 import type {Command} from 'commander';
 import {search} from '../lib/db.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
+import {writeJson} from '../lib/json-output.ts';
 
 export function registerSearch(program: Command): void {
 	program
@@ -35,7 +36,7 @@ export function registerSearch(program: Command): void {
 			}
 
 			if (opts.json) {
-				console.log(JSON.stringify(results, null, 2));
+				writeJson({results});
 				return;
 			}
 

@@ -9,70 +9,59 @@ See DECISIONS.md for the full decision log.
 ## Progress
 
 - [x] **Step 1: Removal PR** — Drop Cursor, Gemini, `auto_commit` (#18, commit `1b38a70`)
-- [ ] **Step 2: Deepen Note Validator** — consolidate lint.ts + schema.ts + notes.ts validation
-- [ ] **Step 3: Add `--json` flag** — consistent JSON output on all CLI commands (MCPB seam)
+- [x] **Step 2: Deepen Note Validator** — commit `bdcf03e`, PR #19 (merged)
+- [x] **Step 3: Add `--json` flag** — consistent JSON output on all CLI commands (MCPB seam)
 - [ ] **Step 4: Add `pk_read` CLI, `pk_vocab` MCP tool** — complete CLI/MCP symmetry
 - [ ] **Step 5: Revisit Harness Builder** — may not need formal builder pattern post-simplification
 - [ ] **Step 6: MCPB package** — separate Node.js package, shells out to `pk` CLI
 
-## Deepening Candidates
+## Step 3 Completed
 
-### 1. Knowledge Note Validator (NEXT)
+**What changed:**
+- Created `src/lib/json-output.ts` — shared types (`JsonNewOutput`, `JsonLintOutput`, `JsonSearchOutput`, `JsonSynthesizeOutput`, `JsonHistoryOutput`, `JsonDeleteOutput`, `JsonVocabOutput`) and `writeJson()` helper
+- Added `--json` flag to all 7 CLI commands: `new`, `lint`, `search`, `synthesize`, `history`, `delete`, `vocab`
+- `search --json` and `vocab --json` already existed — updated to use `writeJson()` and wrap in `{results: [...]}` / `{tags: [...]}` shapes
+- `lint --json` exits 0 even with errors — errors are in the JSON `issues` array
+- `delete --json` implies `--yes` (skips confirmation in machine-readable mode)
+- 8 new e2e tests covering all `--json` outputs
 
-**Files:** `src/lib/lint.ts`, `src/lib/notes.ts`, `src/lib/schema.ts`
+**JSON output schemas:**
+- `pk new` → `{path: string}`
+- `pk lint` → `{issues: Issue[], noteCount: number}`
+- `pk search` → `{results: SearchResult[]}`
+- `pk synthesize` → `{notes: SynthesizedNote[], label: string}`
+- `pk history` → `{entries: HistoryEntry[]}`
+- `pk delete` → `{path: string, status: "deleted"}`
+- `pk vocab` → `{tags: Array<{tag: string, count: number}>}`
 
-**Problem:** Validation logic is scattered across three tightly-coupled modules. Understanding what "valid" means requires bouncing between files.
+**Tests:** 102 pass | 0 fail | 221 expect() calls
 
-**Solution:** Consolidate into a deep `validateNote(path) => ValidationReport` interface. `pk_lint` accepts optional `paths` array — absent = all notes, present = only those. No filters (agents chain `pk_search` → `pk_lint`). Cross-note checks (duplicate IDs) fire when scanning all or multiple notes.
+## Deepening Candidates (Remaining)
 
-**Interface:**
-```
-pk lint                           → all notes
-pk lint notes/foo.md dec/bar.md   → specific notes
-pk_lint({})                       → all notes
-pk_lint({ paths: [...] })         → specific notes
-```
-
-### 2. Search Results Formatter (DEFERRED)
-
+### Search Results Formatter
 **Files:** `src/commands/search.ts`, `src/lib/db.ts`
+CRAP 132. CLI mixes search with formatting. `--json` flag (step 3) forces separation.
 
-**Problem:** CRAP 132 — CLI command mixes search logic with output formatting. Compounded by the need for `--json` output (step 3).
-
-**Solution:** Extract formatting into a `SearchResults` module. The `--json` flag work (step 3) will force this separation naturally.
-
-### 3. Git History Parser (DEFERRED)
-
+### Git History Parser
 **Files:** `src/lib/git.ts`
+`passesFilters` at CRAP 72. Lower priority after reducing `parseHistoryLine` CRAP 306 → 42.
 
-**Problem:** `passesFilters` at CRAP 72. Parsing mixed with filtering.
-
-**Solution:** Domain-oriented query interface. Lower priority since we already reduced `parseHistoryLine` from CRAP 306 → 42.
-
-### 4. Harness Integration (SIMPLIFIED)
-
+### Harness Integration
 **Files:** `src/commands/init.ts`
+Three harnesses remain. Builder pattern may be overkill — reassess at step 5.
 
-**Original problem:** 679 lines, CRAP 240, 5 harnesses with different MCP config formats.
-
-**After removals:** Three harnesses (Claude Code, Codex, OpenCode). CLI-first means no per-harness MCP config. Harness setup is now: context file + skill + eval hook. The builder pattern may be overkill — reassess after step 5.
-
-### 5. Knowledge Index Operations (DEFERRED)
-
+### Knowledge Index Operations
 **Files:** `src/lib/db.ts`, `src/lib/notes.ts`
-
-**Problem:** `db.ts` imports `validNotes` from `notes.ts`, creating coupling.
-
-**Lower priority** — the coupling is contained and doesn't block other work.
+Coupling is contained. Lower priority.
 
 ## Related Issues
 
 - #3 — embedding/semantic search
 - #13 — profile system for non-project use cases
-- #14 — git auto-commit (DONE — always-on, no opt-out)
+- #14 — git auto-commit (DONE — always-on, flag removed — close issue)
 - #16 — synthesis architecture design question
 - #17 — Claude Desktop multi-project support
-- #18 — remove Cursor and Gemini harness support (DONE)
+- #18 — remove Cursor and Gemini harness support (DONE, closed)
 
 ---
 

@@ -2,6 +2,8 @@ import type {Command} from 'commander';
 import {formatSynthesizeOutput, selectNotes} from '../lib/synthesize.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
 import {addSynthesizeNote} from '../lib/git.ts';
+import {writeJson} from '../lib/json-output.ts';
+import {excerpt} from '../lib/notes.ts';
 
 export function registerSynthesize(program: Command): void {
 	program
@@ -12,7 +14,8 @@ export function registerSynthesize(program: Command): void {
 		.option('--tag <tag>', 'Filter by tag')
 		.option('--limit <n>', 'Max notes', '10')
 		.option('--session-start', 'Open questions + recent decisions + active notes')
-		.action(async (query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string}) => {
+		.option('--json', 'JSON output')
+		.action(async (query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string; json: boolean}) => {
 			let dir: string;
 			try {
 				dir = requireKnowledgeDir();
@@ -36,11 +39,30 @@ export function registerSynthesize(program: Command): void {
 			}
 
 			if (notes.length === 0) {
-				console.log('No matching notes.');
+				if (opts.json) {
+					writeJson({notes: [], label: opts.sessionStart ? 'session context' : (query ?? 'all')});
+				} else {
+					console.log('No matching notes.');
+				}
+
 				return;
 			}
 
 			const label = opts.sessionStart ? 'session context' : (query ?? 'all');
+
+			if (opts.json) {
+				const mappedNotes = notes.map(note => ({
+					path: note.path,
+					type: note.meta.type ?? '',
+					status: note.meta.status ?? '',
+					title: note.meta.title ?? '',
+					tags: Array.isArray(note.meta.tags) ? note.meta.tags : [],
+					excerpt: excerpt(note),
+				}));
+				writeJson({notes: mappedNotes, label});
+				return;
+			}
+
 			console.log(formatSynthesizeOutput(notes, label));
 
 			// Add git note for synthesize operation
