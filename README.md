@@ -51,9 +51,21 @@ Available harnesses: `claude` (Claude Code & Claude Desktop), `codex` (Codex), `
 
 ## MCP
 
-`pk mcp` starts an MCP server on stdio. It spawns `@justestif/pk-mcp` which handles the protocol and shells out to `pk` CLI for each tool call.
+`pk mcp` starts an MCP server on stdio. It runs in-process — tools call the same lib functions as the CLI, no subprocess overhead.
 
-For Claude Desktop without `pk init`, install `@justestif/pk-mcp` separately and configure manually. See [`packages/pk-mcp/README.md`](packages/pk-mcp/).
+For Claude Desktop, add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "pk": {
+      "command": "pk",
+      "args": ["mcp"],
+      "env": { "PK_KNOWLEDGE_DIR": "/Users/you/.pk/my-project" }
+    }
+  }
+}
+```
 
 ## Commands
 
