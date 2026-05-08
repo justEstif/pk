@@ -13,6 +13,7 @@ import type {
 	JsonSynthesizeOutput,
 	JsonVocabOutput,
 	JsonSearchOutput,
+	JsonReadOutput,
 } from '../lib/json-output.ts';
 
 const CLI_PATH = path.resolve(import.meta.dir, '../../dist/index.js');
@@ -255,6 +256,30 @@ describe('pk CLI e2e tests', () => {
 			expect(result.exitCode).toBe(0);
 			const output = parseJson<JsonSearchOutput>(result.stdout.toString().trim());
 			expect(Array.isArray(output.results)).toBe(true);
+		});
+
+		test('pk read --json outputs valid JSON with path and content', async () => {
+			const createResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Read JSON Note" --tags read-test`.quiet();
+			const notePath = createResult.stdout.toString().trim();
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} read ${notePath} --json`.quiet();
+			expect(result.exitCode).toBe(0);
+			const output = parseJson<JsonReadOutput>(result.stdout.toString().trim());
+			expect(output.path).toBe(notePath);
+			expect(typeof output.content).toBe('string');
+			expect(output.content).toContain('Read JSON Note');
+		});
+
+		test('pk read outputs note content without --json', async () => {
+			const createResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Read Plain Note"`.quiet();
+			const notePath = createResult.stdout.toString().trim();
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} read ${notePath}`.quiet();
+			expect(result.exitCode).toBe(0);
+			expect(result.stdout.toString()).toContain('Read Plain Note');
+		});
+
+		test('pk read exits 1 for missing file', async () => {
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} read /nonexistent/path.md`.nothrow();
+			expect(result.exitCode).toBe(1);
 		});
 	});
 });

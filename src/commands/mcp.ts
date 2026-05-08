@@ -2,7 +2,7 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {z} from 'zod';
 import type {Command} from 'commander';
-import {search, rebuild} from '../lib/db.ts';
+import {search, rebuild, vocab} from '../lib/db.ts';
 import {lintNotes} from '../lib/lint.ts';
 import {validNotes} from '../lib/notes.ts';
 import {selectNotes, formatSynthesizeOutput} from '../lib/synthesize.ts';
@@ -250,6 +250,29 @@ export function createPkMcpServer(): McpServer {
 
 				await deleteKnowledgeNote(fullPath);
 				return {content: [{type: 'text', text: `Deleted: ${fullPath}`}]};
+			} catch (error) {
+				return {
+					content: [{type: 'text', text: String(error)}],
+					isError: true,
+				};
+			}
+		},
+	);
+
+	// Tool: pk_vocab
+	server.registerTool(
+		'pk_vocab',
+		{
+			description: 'List tags in the knowledge base by frequency. Returns tag names and their occurrence counts.',
+			inputSchema: {},
+		},
+		async () => {
+			const dir = requireKnowledgeDir();
+			try {
+				const tags = vocab(dir);
+				return {
+					content: [{type: 'text', text: JSON.stringify({tags}, null, 2)}],
+				};
 			} catch (error) {
 				return {
 					content: [{type: 'text', text: String(error)}],

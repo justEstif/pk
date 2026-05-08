@@ -14,6 +14,7 @@ import {registerInstructions} from './commands/instructions.ts';
 import {registerVocab} from './commands/vocab.ts';
 import {registerMcp} from './commands/mcp.ts';
 import {registerPrime} from './commands/prime.ts';
+import {registerRead} from './commands/read.ts';
 
 const program = new Command()
 	.name('pk')
@@ -34,5 +35,6 @@ registerInstructions(program);
 registerVocab(program);
 registerMcp(program);
 registerPrime(program);
+registerRead(program);
 
 program.parse();
