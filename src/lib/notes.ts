@@ -119,7 +119,7 @@ export async function createNote(
 	return outPath;
 }
 
-export function slugify(text: string): string {
+function slugify(text: string): string {
 	return text
 		.toLowerCase()
 		.replaceAll(/[^a-z\d]+/gv, '-')

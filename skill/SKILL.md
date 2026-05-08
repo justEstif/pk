@@ -78,22 +78,28 @@ pk_history({ filterOperation: 'update' })               # only updates
 
 Returns formatted history of all knowledge operations (create, update, delete) with git commits and synthesize operations as git notes.
 
-### `pk_edit` — edit existing note
-
-```
-pk_edit({ path: '/abs/path/to/note.md' })
-pk_edit({ path: '/abs/path/to/note.md', editor: 'code' })
-```
-
-Opens the note in $EDITOR (or specified editor), validates frontmatter after save, and commits changes. Returns the updated file path.
-
 ### `pk_delete` — delete a note
 
 ```
-pk_delete({ path: '/abs/path/to/note.md', skipConfirm: true })
+pk_delete({ path: '/abs/path/to/note.md' })
 ```
 
-Deletes a knowledge note. Requires `skipConfirm: true` for agents (bypasses confirmation). Commits deletion to git.
+Deletes a knowledge note and commits the deletion. No confirmation step in MCP mode.
+
+### `pk_vocab` — list tags by frequency
+
+```
+pk_vocab({})
+```
+
+Returns `{tags: [{tag, count}]}`. Useful for orienting before searching.
+
+### Editing notes
+
+There is no `pk_edit` MCP tool. To edit a note:
+1. `pk_read` to get current content
+2. Use your standard file Edit tool on the path
+3. `pk_lint` to validate after editing
 
 ### Status transitions
 

@@ -4,11 +4,13 @@
   "workspaces": {
     "": {
       "name": "@justestif/pk-mcp",
-      "devDependencies": {
+      "dependencies": {
         "@modelcontextprotocol/sdk": "^1.29.0",
+        "zod": "^4",
+      },
+      "devDependencies": {
         "@types/bun": "latest",
         "typescript": "latest",
-        "zod": "^4",
       },
     },
   },

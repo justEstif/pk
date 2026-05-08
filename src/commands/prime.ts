@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type {Command} from 'commander';
 
-export function skillPath(): string {
+function skillPath(): string {
 	return path.resolve(import.meta.dir, '..', 'skill', 'SKILL.md');
 }
 

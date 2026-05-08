@@ -295,7 +295,7 @@ export function extractTitleFromPath(filePath: string): string {
 /**
  * Extract note type from a knowledge note file path.
  */
-export function extractTypeFromPath(filePath: string): string {
+function extractTypeFromPath(filePath: string): string {
 	// Extract type from path like ~/.pk/myproject/notes/2026-05-08-my-title.md
 	const parentDir = path.dirname(filePath);
 	const dirName = path.basename(parentDir);

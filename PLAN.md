@@ -15,90 +15,46 @@ See DECISIONS.md for the full decision log.
 - [x] **Step 5: Revisit Harness Builder** — extracted per-harness modules, fixed duplicate check bug, removed dead `_name` param
 - [x] **Step 5b: Update docs, skill, and stale references** — removed cursor/gemini from README, added pk read/vocab
 - [x] **Step 6: MCPB package** — standalone `@justestif/pk-mcp` package, shells out to `pk` CLI
-- [ ] **Step 7: Revisit architecture and code quality** — deepen remaining shallow modules, reduce CRAP scores, tighten abstractions
+- [x] **Step 7: Revisit architecture and code quality** — dead code removal, MCPB as dependency, thin mcp shell
 
-## Step 3 Completed
-
-**What changed:**
-- Created `src/lib/json-output.ts` — shared types (`JsonNewOutput`, `JsonLintOutput`, `JsonSearchOutput`, `JsonSynthesizeOutput`, `JsonHistoryOutput`, `JsonDeleteOutput`, `JsonVocabOutput`) and `writeJson()` helper
-- Added `--json` flag to all 7 CLI commands: `new`, `lint`, `search`, `synthesize`, `history`, `delete`, `vocab`
-- `search --json` and `vocab --json` already existed — updated to use `writeJson()` and wrap in `{results: [...]}` / `{tags: [...]}` shapes
-- `lint --json` exits 0 even with errors — errors are in the JSON `issues` array
-- `delete --json` implies `--yes` (skips confirmation in machine-readable mode)
-- 8 new e2e tests covering all `--json` outputs
-
-**JSON output schemas:**
-- `pk new` → `{path: string}`
-- `pk lint` → `{issues: Issue[], noteCount: number}`
-- `pk search` → `{results: SearchResult[]}`
-- `pk synthesize` → `{notes: SynthesizedNote[], label: string}`
-- `pk history` → `{entries: HistoryEntry[]}`
-- `pk delete` → `{path: string, status: "deleted"}`
-- `pk vocab` → `{tags: Array<{tag: string, count: number}>}`
-
-**Tests:** 102 pass | 0 fail | 221 expect() calls
-
-## Step 6 Completed
+## Step 7 Completed
 
 **What changed:**
-- Created `packages/pk-mcp/` — standalone npm package (`@justestif/pk-mcp`)
-- `src/run.ts` — `pkJson()` helper: shells out to `pk` CLI, captures JSON stdout, returns MCP-formatted result
-- `src/index.ts` — MCP server with 8 tools: `pk_search`, `pk_synthesize`, `pk_new`, `pk_read`, `pk_lint`, `pk_history`, `pk_delete`, `pk_vocab`
-- Each tool maps MCP inputs to CLI flags and delegates to `pkJson()`
-- No pk internals imported — only the `pk` binary on PATH. `PK_COMMAND` env var overrides binary path.
-- Self-contained bundle via `bun build --target node` (1 MB, includes MCP SDK + zod)
-- 6 integration tests verifying `pkJson` against live `pk` CLI
-- Added `packages/**` to root xo ignores (separate package, separate lint)
-- `pk_edit` excluded from MCPB (CLI-only per decision)
+- Removed in-tree MCP server implementation from `src/commands/mcp.ts`. Replaced with thin shell that spawns `pk-mcp` binary.
+- Removed `@modelcontextprotocol/sdk` from pk's dependencies (zod still needed by lint.ts).
+- Removed `ajv` unused dev dependency.
+- Removed 10 dead re-exports from `src/commands/init.ts` (tests import from harness modules directly).
+- Unexported file-local functions: `extractTypeFromPath` (git.ts), `slugify` (notes.ts), `skillPath` (prime.ts), `PK_SECTION_START/END`, `PK_INSTRUCTION`, `writeInstructionSection` (harnesses/shared.ts), `applyHarness` (init.ts).
+- Set up bun workspaces. `@justestif/pk-mcp` is now a workspace dependency of `@justestif/pk`.
+- Added `bin` entry to MCPB package (`pk-mcp`). MCPB builds standalone Node.js bundle with shebang.
+- Created MCPB README documenting standalone and `pk mcp` usage.
+- Updated skill: removed `pk_edit` from MCP tool list, added editing workflow section, added `pk_vocab` documentation.
+- Updated README.md with MCP section linking to MCPB README.
+- Updated DECISIONS.md and PLAN.md.
 
-**Tests:** 111 pass (105 root + 6 MCPB) | 0 fail | 243 expect() calls
+**Tests:** 109 pass | 0 fail | 241 expect() calls
 
-## Step 4 Completed
+## Deepening Status
 
-**What changed:**
-- New `pk read <path>` CLI command — reads note content. Supports `--json` for `{path, content}` output.
-- New `pk_vocab` MCP tool — lists tags by frequency. Returns `{tags: Array<{tag, count}>}`.
-- `JsonReadOutput` type added to `src/lib/json-output.ts`
-- 3 new e2e tests: `pk read --json`, `pk read` plain, `pk read` missing file
+All primary deepening targets addressed:
+- `src/commands/init.ts` — was CRAP 240, now orchestration-only (~250 lines) with per-harness modules
+- `src/commands/search.ts` — clean after `--json` refactor, formatting is simple output logic
+- `src/lib/git.ts` — `passesFilters` is 3 simple if-checks after prior refactor
+- Dead code removed across 8 files, 2 dependencies
 
-**CLI/MCP symmetry now complete:**
-- `pk_search` / `pk search`
-- `pk_synthesize` / `pk synthesize`
-- `pk_new` / `pk new`
-- `pk_read` / `pk read` (new CLI)
-- `pk_lint` / `pk lint`
-- `pk_history` / `pk history`
-- `pk_vocab` / `pk vocab` (new MCP)
-- `pk_delete` / `pk delete`
-- CLI-only (no MCP): `edit`, `init`, `index`, `config`
+## Remaining Candidates (lower priority)
 
-**Tests:** 105 pass | 0 fail | 228 expect() calls
-
-## Deepening Candidates (Remaining)
-
-### Search Results Formatter
-**Files:** `src/commands/search.ts`, `src/lib/db.ts`
-CRAP 132. CLI mixes search with formatting. `--json` flag (step 3) forces separation.
-
-### Git History Parser
-**Files:** `src/lib/git.ts`
-`passesFilters` at CRAP 72. Lower priority after reducing `parseHistoryLine` CRAP 306 → 42.
-
-### Harness Integration
-**Files:** `src/commands/init.ts`, `src/commands/harnesses/*.ts`
-Extracted to per-harness modules. init.ts is now orchestration only. No further work needed.
-
-### Knowledge Index Operations
-**Files:** `src/lib/db.ts`, `src/lib/notes.ts`
-Coupling is contained. Lower priority.
+- `src/commands/lint.ts` (hotspot score 52.6, cooling trend) — CLI command, straightforward
+- `src/commands/synthesize.ts` (hotspot score 37.9, cooling trend) — CLI command, straightforward
+- `src/lib/db.ts` (hotspot score 23.1, accelerating trend) — FTS5 coupling contained
 
 ## Related Issues
 
 - #3 — embedding/semantic search
 - #13 — profile system for non-project use cases
-- #14 — git auto-commit (DONE — always-on, flag removed — close issue)
+- #14 — git auto-commit (DONE — always-on, flag removed)
 - #16 — synthesis architecture design question
-- #17 — Claude Desktop multi-project support
+- #17 — Claude Desktop multi-project support (MCPB is the foundation)
 - #18 — remove Cursor and Gemini harness support (DONE, closed)
 
 ---
