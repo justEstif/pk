@@ -242,7 +242,9 @@ export function formatHistory(entries: HistoryEntry[]): string {
       .map(e => {
          const date = new Date(e.timestamp).toLocaleDateString();
          if (e.type === 'note') {
-            return `${date} | ${e.hash.slice(0, 7)} | 📋 ${e.message}`;
+            // Replace newlines with spaces for single-line display
+            const cleanMessage = e.message.replace(/\n/g, ' ');
+            return `${date} | ${e.hash.slice(0, 7)} | 📋 ${cleanMessage}`;
          }
 
          return `${date} | ${e.hash.slice(0, 7)} | ${e.operation} ${e.noteType} | ${e.message.replace(/^knowledge: [^ ]+ [^ ]+ /v, '')}`;

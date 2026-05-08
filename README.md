@@ -33,6 +33,8 @@ pk init my-project --harness claude
 pk init my-project --harness claude,cursor   # multiple harnesses
 ```
 
+**Git integration:** `pk init` creates a git repository in `~/.pk/<name>/.git` and tracks all knowledge operations via commits and git notes.
+
 Available harnesses: `claude` (Claude Code & Claude Desktop), `cursor` (Cursor), `gemini` (Gemini CLI), `codex` (Codex), `opencode` (OpenCode).
 
 `pk init` does three things:
@@ -60,6 +62,9 @@ Available harnesses: `claude` (Claude Code & Claude Desktop), `cursor` (Cursor),
 | `pk_read` | Read the full content of a note by path |
 | `pk_new` | Create a new typed note skeleton, returns path to fill in |
 | `pk_lint` | Validate all notes for schema and quality rules |
+| `pk_history` | View knowledge history (git commits and notes) with filtering |
+| `pk_edit` | Edit an existing note (opens in $EDITOR, validates, commits) |
+| `pk_delete` | Delete a note (requires confirmation, commits deletion) |
 
 The agent calls these tools directly — no hooks, no shell extensions, no prompt injection. Agents should never read or write knowledge files directly.
 
@@ -70,8 +75,11 @@ pk init [name] [--harness h1,h2,…]   # set up project + MCP config
 pk mcp                                 # start MCP server (stdio)
 
 pk new <type> <title> [--tags t1,t2]
-pk search <query> [--context] [--limit 5] [--type] [--status] [--tag]
+pk edit <path> [--editor <cmd>]      # edit existing note
+pk delete <path> [--yes]               # delete note with confirmation
+pk search <query> [--limit 5] [--type] [--status] [--tag]
 pk synthesize [query] [--all]
+pk history [--limit 20] [--type <type>] [--filter-type <type>] [--filter-tag <tag>] [--filter-operation <op>]
 pk vocab [--json]
 pk rebuild
 pk lint
@@ -119,8 +127,9 @@ Agents access them exclusively through the MCP tools; humans can read and edit t
 Search is powered by SQLite FTS5 with BM25 ranking and porter stemming.
 Partial word matching works — `pk search migr` matches "migration", "migrate", etc.
 
-`pk vocab` lists all tags by frequency — useful for orienting an agent before
-searching, without loading full note content.
+`pk vocab` lists all tags by frequency — useful for orienting an agent before searching, without loading full note content.
+
+`pk history` shows all knowledge operations (create, update, delete) as git commits and synthesize operations as git notes. Supports filtering by type, tag, and operation.
 
 ## License
 

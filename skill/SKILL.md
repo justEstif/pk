@@ -66,6 +66,35 @@ pk_lint({})
 
 **Errors block commits** (missing frontmatter, duplicate id, wrong folder, missing required sections, broken links). **Warnings are advisory** (empty tags, note too long, source marked processed with no extracted items) — fix when practical, not required to commit.
 
+### `pk_history` — view knowledge operations
+
+```
+pk_history({})                                          # last 20 operations
+pk_history({ limit: 50, type: 'commits' })              # only CUD operations
+pk_history({ filterType: 'decision' })                 # only decisions
+pk_history({ filterTag: 'important' })                  # only tagged 'important'
+pk_history({ filterOperation: 'update' })               # only updates
+```
+
+Returns formatted history of all knowledge operations (create, update, delete) with git commits and synthesize operations as git notes.
+
+### `pk_edit` — edit existing note
+
+```
+pk_edit({ path: '/abs/path/to/note.md' })
+pk_edit({ path: '/abs/path/to/note.md', editor: 'code' })
+```
+
+Opens the note in $EDITOR (or specified editor), validates frontmatter after save, and commits changes. Returns the updated file path.
+
+### `pk_delete` — delete a note
+
+```
+pk_delete({ path: '/abs/path/to/note.md', skipConfirm: true })
+```
+
+Deletes a knowledge note. Requires `skipConfirm: true` for agents (bypasses confirmation). Commits deletion to git.
+
 ### Status transitions
 
 No MCP tool for status changes. Use your file Edit tool directly on the frontmatter, fill in the resolution section, then lint.

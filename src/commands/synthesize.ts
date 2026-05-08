@@ -1,6 +1,8 @@
 import type {Command} from 'commander';
 import {formatSynthesizeOutput, selectNotes} from '../lib/synthesize.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
+import {addSynthesizeNote} from '../lib/git.ts';
+import {loadConfig} from '../lib/config.ts';
 
 export function registerSynthesize(program: Command): void {
 	program
@@ -41,5 +43,12 @@ export function registerSynthesize(program: Command): void {
 
 			const label = opts.sessionStart ? 'session context' : (query ?? 'all');
 			console.log(formatSynthesizeOutput(notes, label));
+
+			// Add git note for synthesize operation
+			try {
+				await addSynthesizeNote(dir, query ?? 'session-start', await loadConfig());
+			} catch {
+				// Silently ignore git note errors - synthesize is the primary operation
+			}
 		});
 }

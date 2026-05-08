@@ -1,5 +1,8 @@
 import {Command} from 'commander';
 import pkg from '../package.json' with {type: 'json'};
+import {registerEdit} from './commands/edit.ts';
+import {registerDelete} from './commands/delete.ts';
+import {registerHistory} from './commands/history.ts';
 import {registerNew} from './commands/new.ts';
 import {registerSearch} from './commands/search.ts';
 import {registerSynthesize} from './commands/synthesize.ts';
@@ -18,7 +21,10 @@ const program = new Command()
 	.version(pkg.version);
 
 registerNew(program);
+registerEdit(program);
+registerDelete(program);
 registerSearch(program);
+registerHistory(program);
 registerSynthesize(program);
 registerRebuild(program);
 registerLint(program);
