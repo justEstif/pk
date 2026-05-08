@@ -26,6 +26,9 @@
 16. **`pk read` validates path is inside knowledge directory.** Rejects paths outside the knowledge root to prevent arbitrary file reads.
 17. **No formal builder pattern for harnesses.** Three harnesses with switch-case dispatch in `applyHarness`. Each harness in its own module under `src/commands/harnesses/`. No `HarnessDefinition` interface — the indirection doesn't earn its keep with only 3 implementations.
 18. **Per-harness module extraction over monolithic init.ts.** `init.ts` is orchestration only (~250 lines). Each harness module is self-contained and independently testable. Shared utilities (MCP config, instruction writers) in `harnesses/shared.ts`.
+19. **MCPB is a standalone npm package** (`@justestif/pk-mcp`). Shells out to `pk` CLI via `--json`. Zero imports from pk internals. Self-contained bundle (~1 MB). `PK_COMMAND` env var overrides binary path for testing.
+20. **MCPB excludes `pk_edit`.** Edit is CLI-only (opens `$EDITOR`). Agents use `pk_read` + file edit tools + `pk_lint`.
+21. **MCPB bundles all dependencies.** `bun build --target node` produces a single self-contained JS file. No `node_modules` needed at runtime.
 
 ## Assumptions
 
@@ -46,8 +49,9 @@
 3. ~~**Add `--json` flag** to all CLI commands (new seam contract)~~ ✅
 4. ~~**Add `pk_read` CLI, `pk_vocab` MCP tool** (complete symmetry)~~ ✅
 5. ~~**Revisit Harness Builder** — extracted per-harness modules~~ ✅
-6. **Update docs, skill, stale references** — README still lists removed harnesses
-7. **MCPB package** (separate, after CLI is stable)
+6. ~~**MCPB package** — `@justestif/pk-mcp` standalone package~~ ✅
+7. **Update docs, skill, stale references** — README still lists removed harnesses
+8. **MCPB package** (separate, after CLI is stable)
 
 ## Related Issues
 

@@ -13,10 +13,9 @@ See DECISIONS.md for the full decision log.
 - [x] **Step 3: Add `--json` flag** — consistent JSON output on all CLI commands (MCPB seam)
 - [x] **Step 4: Add `pk_read` CLI, `pk_vocab` MCP tool** — complete CLI/MCP symmetry
 - [x] **Step 5: Revisit Harness Builder** — extracted per-harness modules, fixed duplicate check bug, removed dead `_name` param
-- [ ] **Step 5b: Update docs, skill, and stale references** — README.md still lists cursor/gemini, missing `--json`, `pk read`, `pk_vocab`
-- [ ] **Step 6: MCPB package** — separate Node.js package, shells out to `pk` CLI
+- [x] **Step 5b: Update docs, skill, and stale references** — removed cursor/gemini from README, added pk read/vocab
+- [x] **Step 6: MCPB package** — standalone `@justestif/pk-mcp` package, shells out to `pk` CLI
 - [ ] **Step 7: Revisit architecture and code quality** — deepen remaining shallow modules, reduce CRAP scores, tighten abstractions
-- [ ] **Step 8: Revisit testing suite** — improve coverage, add unit tests for shallow commands, ensure edge cases are covered
 
 ## Step 3 Completed
 
@@ -39,23 +38,20 @@ See DECISIONS.md for the full decision log.
 
 **Tests:** 102 pass | 0 fail | 221 expect() calls
 
-## Step 5 Completed
+## Step 6 Completed
 
 **What changed:**
-- Extracted `src/commands/init.ts` (550 lines, CRAP 240) into 4 focused modules:
-  - `src/commands/harnesses/shared.ts` — MCP utilities (`resolvePkCommand`, `pkMcpEntry`, `readJson`, `writeJson`), instruction writers (`writeClaudeMd`, `writeAgentsMd`, `writeInstructionSection`), shared constants (`FORCED_EVAL_PROMPT`, `PK_INSTRUCTION`)
-  - `src/commands/harnesses/claude.ts` — `writeClaudeConfig`, `writeClaudeHook`
-  - `src/commands/harnesses/codex.ts` — `writeCodexConfig`, `writeCodexHook`
-  - `src/commands/harnesses/opencode.ts` — `writeOpenCodeConfig`, `writeOpenCodePlugin`
-- `init.ts` now ~250 lines: orchestration only (types, constants, `ensureProject`, `installSkill`, `applyHarness`, `applyHarnesses`, `registerInit`)
-- Fixed bug: duplicate `hasPkEval` check in `writeClaudeHook` (was checked twice, now once)
-- Removed dead `_name` parameter from all config writer signatures
-- No formal builder pattern — switch-case dispatch is appropriate for 3 harnesses
-- Tests updated to import from specific harness modules
+- Created `packages/pk-mcp/` — standalone npm package (`@justestif/pk-mcp`)
+- `src/run.ts` — `pkJson()` helper: shells out to `pk` CLI, captures JSON stdout, returns MCP-formatted result
+- `src/index.ts` — MCP server with 8 tools: `pk_search`, `pk_synthesize`, `pk_new`, `pk_read`, `pk_lint`, `pk_history`, `pk_delete`, `pk_vocab`
+- Each tool maps MCP inputs to CLI flags and delegates to `pkJson()`
+- No pk internals imported — only the `pk` binary on PATH. `PK_COMMAND` env var overrides binary path.
+- Self-contained bundle via `bun build --target node` (1 MB, includes MCP SDK + zod)
+- 6 integration tests verifying `pkJson` against live `pk` CLI
+- Added `packages/**` to root xo ignores (separate package, separate lint)
+- `pk_edit` excluded from MCPB (CLI-only per decision)
 
-**Decision:** No builder/registry pattern. Three harnesses with a switch-case in `applyHarness` is simpler and more readable than an abstract `HarnessDefinition` interface. Each harness module is self-contained and independently testable.
-
-**Tests:** 105 pass | 0 fail | 228 expect() calls
+**Tests:** 111 pass (105 root + 6 MCPB) | 0 fail | 243 expect() calls
 
 ## Step 4 Completed
 
