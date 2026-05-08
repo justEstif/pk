@@ -30,12 +30,12 @@ Non-interactive:
 
 ```bash
 pk init my-project --harness claude
-pk init my-project --harness claude,cursor   # multiple harnesses
+pk init my-project --harness claude,codex   # multiple harnesses
 ```
 
 **Git integration:** `pk init` creates a git repository in `~/.pk/<name>/.git` and tracks all knowledge operations via commits and git notes.
 
-Available harnesses: `claude` (Claude Code & Claude Desktop), `cursor` (Cursor), `gemini` (Gemini CLI), `codex` (Codex), `opencode` (OpenCode).
+Available harnesses: `claude` (Claude Code & Claude Desktop), `codex` (Codex), `opencode` (OpenCode).
 
 `pk init` does three things:
 
@@ -46,14 +46,12 @@ Available harnesses: `claude` (Claude Code & Claude Desktop), `cursor` (Cursor),
 | Harness | Files written |
 |---|---|
 | `claude` | `.mcp.json`, `CLAUDE.md`, `.claude/hooks/pk-eval.ts`, `.claude/settings.json` | (also works for Claude Desktop) |
-| `cursor` | `.cursor/mcp.json`, `.cursor/rules/pk.mdc`, `.cursor/hooks/pk-eval.sh`, `.cursor/hooks.json` |
-| `gemini` | `.gemini/settings.json`, `GEMINI.md`, `.gemini/hooks/pk-eval.sh` |
 | `codex` | `.codex/config.toml`, `AGENTS.md`, `.codex/hooks/pk-eval.sh`, `.codex/hooks.json` |
 | `opencode` | `opencode.json`, `AGENTS.md`, `CLAUDE.md`, `.opencode/plugins/pk-eval.ts` |
 
 ## How it works
 
-`pk mcp` runs a stdio MCP server that exposes five tools to any connected agent:
+`pk mcp` runs a stdio MCP server that exposes tools to any connected agent:
 
 | Tool | What it does |
 |---|---|
@@ -63,6 +61,7 @@ Available harnesses: `claude` (Claude Code & Claude Desktop), `cursor` (Cursor),
 | `pk_new` | Create a new typed note skeleton, returns path to fill in |
 | `pk_lint` | Validate all notes for schema and quality rules |
 | `pk_history` | View knowledge history (git commits and notes) with filtering |
+| `pk_vocab` | List all tags by frequency — orient before searching |
 | `pk_edit` | Edit an existing note (opens in $EDITOR, validates, commits) |
 | `pk_delete` | Delete a note (requires confirmation, commits deletion) |
 
@@ -80,9 +79,10 @@ pk delete <path> [--yes]               # delete note with confirmation
 pk search <query> [--limit 5] [--type] [--status] [--tag]
 pk synthesize [query] [--all]
 pk history [--limit 20] [--type <type>] [--filter-type <type>] [--filter-tag <tag>] [--filter-operation <op>]
+pk read <path> [--json]
 pk vocab [--json]
 pk rebuild
-pk lint
+pk lint [paths...] [--json]
 pk instructions <command>
 pk config
 ```

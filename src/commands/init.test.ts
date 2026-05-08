@@ -8,16 +8,11 @@ import {
 	applyHarnesses,
 	ensureProject,
 	installSkill,
-	resolvePkCommand,
-	writeAgentsMd,
-	writeClaudeConfig,
-	writeClaudeHook,
-	writeClaudeMd,
-	writeCodexConfig,
-	writeCodexHook,
-	writeOpenCodeConfig,
-	writeOpenCodePlugin,
 } from './init.ts';
+import {resolvePkCommand, writeClaudeMd, writeAgentsMd} from './harnesses/shared.ts';
+import {writeClaudeConfig, writeClaudeHook} from './harnesses/claude.ts';
+import {writeCodexConfig, writeCodexHook} from './harnesses/codex.ts';
+import {writeOpenCodeConfig, writeOpenCodePlugin} from './harnesses/opencode.ts';
 
 type McpEntry = {command: string; args: string[]; env: Record<string, string>};
 type McpServers = Record<string, McpEntry | undefined>;
@@ -101,7 +96,7 @@ describe('applyHarnesses', () => {
 
 describe('writeClaudeConfig', () => {
 	test('creates .mcp.json with mcpServers.pk entry', async () => {
-		await writeClaudeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		await writeClaudeConfig(tmpDir, KNOWLEDGE_DIR);
 		const cfg = await readMcpConfig(path.join(tmpDir, '.mcp.json'));
 
 		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
@@ -112,7 +107,7 @@ describe('writeClaudeConfig', () => {
 	test('merges with existing .mcp.json without clobbering other servers', async () => {
 		const existing = {mcpServers: {other: {command: 'other'}}};
 		await Bun.write(path.join(tmpDir, '.mcp.json'), JSON.stringify(existing));
-		await writeClaudeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		await writeClaudeConfig(tmpDir, KNOWLEDGE_DIR);
 		const cfg = await readMcpConfig(path.join(tmpDir, '.mcp.json'));
 
 		expect(cfg.mcpServers.other!.command).toBe('other');
@@ -210,7 +205,7 @@ describe('installSkill', () => {
 
 describe('writeCodexConfig', () => {
 	test('creates .codex/config.toml with [mcp_servers.pk] section', async () => {
-		await writeCodexConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		await writeCodexConfig(tmpDir, KNOWLEDGE_DIR);
 		const cfgPath = path.join(tmpDir, '.codex', 'config.toml');
 		expect(existsSync(cfgPath)).toBe(true);
 		const content = await Bun.file(cfgPath).text();
@@ -249,7 +244,7 @@ describe('writeCodexHook', () => {
 
 describe('writeOpenCodeConfig', () => {
 	test('creates opencode.json with mcp.pk section', async () => {
-		await writeOpenCodeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		await writeOpenCodeConfig(tmpDir, KNOWLEDGE_DIR);
 		const cfgPath = path.join(tmpDir, 'opencode.json');
 		expect(existsSync(cfgPath)).toBe(true);
 		const cfg = JSON.parse(await Bun.file(cfgPath).text()) as {
@@ -271,7 +266,7 @@ describe('writeOpenCodeConfig', () => {
 			},
 		};
 		await Bun.write(path.join(tmpDir, 'opencode.json'), JSON.stringify(existing));
-		await writeOpenCodeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		await writeOpenCodeConfig(tmpDir, KNOWLEDGE_DIR);
 		const cfg = JSON.parse(await Bun.file(path.join(tmpDir, 'opencode.json')).text()) as {
 			mcp: Record<string, unknown>;
 		};

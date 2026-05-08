@@ -24,6 +24,8 @@
 14. **`search --json` and `vocab --json` wrap results in objects.** `search` returns `{results: [...]}` not bare array. `vocab` returns `{tags: [...]}` not bare array. Consistency across all commands.
 15. **CLI/MCP symmetry is complete.** Every MCP tool has a CLI equivalent. CLI-only commands: `edit`, `init`, `index`, `config`. `pk_read` is new CLI command; `pk_vocab` is new MCP tool.
 16. **`pk read` validates path is inside knowledge directory.** Rejects paths outside the knowledge root to prevent arbitrary file reads.
+17. **No formal builder pattern for harnesses.** Three harnesses with switch-case dispatch in `applyHarness`. Each harness in its own module under `src/commands/harnesses/`. No `HarnessDefinition` interface — the indirection doesn't earn its keep with only 3 implementations.
+18. **Per-harness module extraction over monolithic init.ts.** `init.ts` is orchestration only (~250 lines). Each harness module is self-contained and independently testable. Shared utilities (MCP config, instruction writers) in `harnesses/shared.ts`.
 
 ## Assumptions
 
@@ -43,8 +45,9 @@
 2. ~~**Deepen Candidate 1:** Note Validator (lint consolidation)~~ ✅ commit `bdcf03e`
 3. ~~**Add `--json` flag** to all CLI commands (new seam contract)~~ ✅
 4. ~~**Add `pk_read` CLI, `pk_vocab` MCP tool** (complete symmetry)~~ ✅
-5. **Revisit Candidate 4** — may not need formal builder pattern anymore
-6. **MCPB package** (separate, after CLI is stable)
+5. ~~**Revisit Harness Builder** — extracted per-harness modules~~ ✅
+6. **Update docs, skill, stale references** — README still lists removed harnesses
+7. **MCPB package** (separate, after CLI is stable)
 
 ## Related Issues
 
