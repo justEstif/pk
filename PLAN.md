@@ -11,9 +11,10 @@ See DECISIONS.md for the full decision log.
 - [x] **Step 1: Removal PR** — Drop Cursor, Gemini, `auto_commit` (#18, commit `1b38a70`)
 - [x] **Step 2: Deepen Note Validator** — commit `bdcf03e`, PR #19 (merged)
 - [x] **Step 3: Add `--json` flag** — consistent JSON output on all CLI commands (MCPB seam)
-- [ ] **Step 4: Add `pk_read` CLI, `pk_vocab` MCP tool** — complete CLI/MCP symmetry
+- [x] **Step 4: Add `pk_read` CLI, `pk_vocab` MCP tool** — complete CLI/MCP symmetry
 - [ ] **Step 5: Revisit Harness Builder** — may not need formal builder pattern post-simplification
 - [ ] **Step 6: MCPB package** — separate Node.js package, shells out to `pk` CLI
+- [ ] **Step 7: Revisit architecture and code quality** — deepen remaining shallow modules, reduce CRAP scores, tighten abstractions
 
 ## Step 3 Completed
 
@@ -35,6 +36,27 @@ See DECISIONS.md for the full decision log.
 - `pk vocab` → `{tags: Array<{tag: string, count: number}>}`
 
 **Tests:** 102 pass | 0 fail | 221 expect() calls
+
+## Step 4 Completed
+
+**What changed:**
+- New `pk read <path>` CLI command — reads note content. Supports `--json` for `{path, content}` output.
+- New `pk_vocab` MCP tool — lists tags by frequency. Returns `{tags: Array<{tag, count}>}`.
+- `JsonReadOutput` type added to `src/lib/json-output.ts`
+- 3 new e2e tests: `pk read --json`, `pk read` plain, `pk read` missing file
+
+**CLI/MCP symmetry now complete:**
+- `pk_search` / `pk search`
+- `pk_synthesize` / `pk synthesize`
+- `pk_new` / `pk new`
+- `pk_read` / `pk read` (new CLI)
+- `pk_lint` / `pk lint`
+- `pk_history` / `pk history`
+- `pk_vocab` / `pk vocab` (new MCP)
+- `pk_delete` / `pk delete`
+- CLI-only (no MCP): `edit`, `init`, `index`, `config`
+
+**Tests:** 105 pass | 0 fail | 228 expect() calls
 
 ## Deepening Candidates (Remaining)
 

@@ -22,6 +22,8 @@
 12. **`lint --json` exits 0 even with errors.** Errors are in the JSON payload (`issues` array with `level: "error"` entries). Human mode still exits 1 on errors.
 13. **`delete --json` implies `--yes`.** Machine-readable mode skips confirmation prompts.
 14. **`search --json` and `vocab --json` wrap results in objects.** `search` returns `{results: [...]}` not bare array. `vocab` returns `{tags: [...]}` not bare array. Consistency across all commands.
+15. **CLI/MCP symmetry is complete.** Every MCP tool has a CLI equivalent. CLI-only commands: `edit`, `init`, `index`, `config`. `pk_read` is new CLI command; `pk_vocab` is new MCP tool.
+16. **`pk read` validates path is inside knowledge directory.** Rejects paths outside the knowledge root to prevent arbitrary file reads.
 
 ## Assumptions
 
@@ -40,7 +42,7 @@
 1. ~~**Removal PR:** Drop Cursor, Gemini, `auto_commit` (#18)~~ ✅ commit `1b38a70`
 2. ~~**Deepen Candidate 1:** Note Validator (lint consolidation)~~ ✅ commit `bdcf03e`
 3. ~~**Add `--json` flag** to all CLI commands (new seam contract)~~ ✅
-4. **Add `pk_read` CLI, `pk_vocab` MCP tool** (complete symmetry)
+4. ~~**Add `pk_read` CLI, `pk_vocab` MCP tool** (complete symmetry)~~ ✅
 5. **Revisit Candidate 4** — may not need formal builder pattern anymore
 6. **MCPB package** (separate, after CLI is stable)
 

@@ -60,6 +60,11 @@ export type JsonVocabOutput = {
 	tags: Array<{tag: string; count: number}>;
 };
 
+export type JsonReadOutput = {
+	path: string;
+	content: string;
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
