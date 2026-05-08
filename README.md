@@ -33,7 +33,7 @@ pk init my-project --harness claude
 pk init my-project --harness claude,omp   # multiple harnesses
 ```
 
-Available harnesses: `claude` (Claude Code), `omp` (Oh My Pi).
+Available harnesses: `claude` (Claude Code), `omp` (Oh My Pi), `cursor` (Cursor), `gemini` (Gemini CLI), `codex` (Codex), `opencode` (OpenCode).
 
 `pk init` does three things:
 
@@ -45,6 +45,10 @@ Available harnesses: `claude` (Claude Code), `omp` (Oh My Pi).
 |---|---|
 | `claude` | `.mcp.json`, `CLAUDE.md`, `.claude/hooks/pk-eval.ts`, `.claude/settings.json` |
 | `omp` | `.omp/mcp.json`, `AGENTS.md`, `.omp/extensions/pk-eval.ts` |
+| `cursor` | `.cursor/mcp.json`, `.cursor/rules/pk.mdc`, `.cursor/hooks/pk-eval.sh`, `.cursor/hooks.json` |
+| `gemini` | `.gemini/settings.json`, `GEMINI.md`, `.gemini/hooks/pk-eval.sh` |
+| `codex` | `.codex/config.toml`, `AGENTS.md`, `.codex/hooks/pk-eval.sh`, `.codex/hooks.json` |
+| `opencode` | `opencode.json`, `AGENTS.md`, `CLAUDE.md`, `.opencode/plugins/pk-eval.ts` |
 
 ## How it works
 
