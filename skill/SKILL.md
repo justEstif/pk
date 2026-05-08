@@ -7,7 +7,7 @@ description: "Load when maintaining project knowledge, capturing decisions or qu
 
 Structured project knowledge — intake, search, recall, and audit.
 
-**All knowledge access goes through MCP tools. Never read or write note files directly — the tools enforce path safety and structure.**
+**Search, synthesis, creation, and validation go through MCP tools. Writing note body content uses your standard file Edit tool — but only on paths returned by `pk_new` or `pk_search`, never by navigating the filesystem yourself.**
 
 ## Tools
 
@@ -48,7 +48,7 @@ pk_new({ type: "question", title: "Should we rate-limit the search endpoint?" })
 pk_new({ type: "source", title: "Meeting notes 2024-06-01" })
 ```
 
-Returns the absolute path. Frontmatter (id, dates, status) is generated automatically. After receiving the path: call `pk_read` to see the skeleton, then use your standard file Edit tool to fill in the required sections.
+Returns the absolute path. Frontmatter (id, dates, status, tags as YAML array) is generated automatically from your inputs — you don't edit frontmatter after creation. After receiving the path: call `pk_read` to see the skeleton, then use your standard file Edit tool to fill in the required sections.
 
 **Required sections by type:**
 - `note` → `## Summary`, `## Details`, `## Evidence`, `## Related`
@@ -68,9 +68,9 @@ pk_lint({})
 
 ### Status transitions
 
-No MCP tool for status changes. Use your file Edit tool directly on the frontmatter (`status: open` → `status: answered`, `status: proposed` → `status: accepted`, etc.), fill in the resolution section, then lint.
+No MCP tool for status changes. Use your file Edit tool directly on the frontmatter, fill in the resolution section, then lint.
 
-**MANDATORY READ `references/knowledge-model.md`** when: creating a note type you haven't used before, unsure which folder a type belongs in, or validating frontmatter fields.
+**MANDATORY READ `references/knowledge-model.md`** when: creating a note type you haven't used before, unsure which folder a type belongs in, validating frontmatter fields, or unsure which status values are valid for a given type.
 
 **MANDATORY READ `references/git-workflow.md`** when: committing knowledge changes or unsure whether to auto-commit.
 
