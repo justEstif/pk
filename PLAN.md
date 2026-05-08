@@ -12,9 +12,11 @@ See DECISIONS.md for the full decision log.
 - [x] **Step 2: Deepen Note Validator** — commit `bdcf03e`, PR #19 (merged)
 - [x] **Step 3: Add `--json` flag** — consistent JSON output on all CLI commands (MCPB seam)
 - [x] **Step 4: Add `pk_read` CLI, `pk_vocab` MCP tool** — complete CLI/MCP symmetry
-- [ ] **Step 5: Revisit Harness Builder** — may not need formal builder pattern post-simplification
+- [x] **Step 5: Revisit Harness Builder** — extracted per-harness modules, fixed duplicate check bug, removed dead `_name` param
+- [ ] **Step 5b: Update docs, skill, and stale references** — README.md still lists cursor/gemini, missing `--json`, `pk read`, `pk_vocab`
 - [ ] **Step 6: MCPB package** — separate Node.js package, shells out to `pk` CLI
 - [ ] **Step 7: Revisit architecture and code quality** — deepen remaining shallow modules, reduce CRAP scores, tighten abstractions
+- [ ] **Step 8: Revisit testing suite** — improve coverage, add unit tests for shallow commands, ensure edge cases are covered
 
 ## Step 3 Completed
 
@@ -36,6 +38,24 @@ See DECISIONS.md for the full decision log.
 - `pk vocab` → `{tags: Array<{tag: string, count: number}>}`
 
 **Tests:** 102 pass | 0 fail | 221 expect() calls
+
+## Step 5 Completed
+
+**What changed:**
+- Extracted `src/commands/init.ts` (550 lines, CRAP 240) into 4 focused modules:
+  - `src/commands/harnesses/shared.ts` — MCP utilities (`resolvePkCommand`, `pkMcpEntry`, `readJson`, `writeJson`), instruction writers (`writeClaudeMd`, `writeAgentsMd`, `writeInstructionSection`), shared constants (`FORCED_EVAL_PROMPT`, `PK_INSTRUCTION`)
+  - `src/commands/harnesses/claude.ts` — `writeClaudeConfig`, `writeClaudeHook`
+  - `src/commands/harnesses/codex.ts` — `writeCodexConfig`, `writeCodexHook`
+  - `src/commands/harnesses/opencode.ts` — `writeOpenCodeConfig`, `writeOpenCodePlugin`
+- `init.ts` now ~250 lines: orchestration only (types, constants, `ensureProject`, `installSkill`, `applyHarness`, `applyHarnesses`, `registerInit`)
+- Fixed bug: duplicate `hasPkEval` check in `writeClaudeHook` (was checked twice, now once)
+- Removed dead `_name` parameter from all config writer signatures
+- No formal builder pattern — switch-case dispatch is appropriate for 3 harnesses
+- Tests updated to import from specific harness modules
+
+**Decision:** No builder/registry pattern. Three harnesses with a switch-case in `applyHarness` is simpler and more readable than an abstract `HarnessDefinition` interface. Each harness module is self-contained and independently testable.
+
+**Tests:** 105 pass | 0 fail | 228 expect() calls
 
 ## Step 4 Completed
 
@@ -69,8 +89,8 @@ CRAP 132. CLI mixes search with formatting. `--json` flag (step 3) forces separa
 `passesFilters` at CRAP 72. Lower priority after reducing `parseHistoryLine` CRAP 306 → 42.
 
 ### Harness Integration
-**Files:** `src/commands/init.ts`
-Three harnesses remain. Builder pattern may be overkill — reassess at step 5.
+**Files:** `src/commands/init.ts`, `src/commands/harnesses/*.ts`
+Extracted to per-harness modules. init.ts is now orchestration only. No further work needed.
 
 ### Knowledge Index Operations
 **Files:** `src/lib/db.ts`, `src/lib/notes.ts`
