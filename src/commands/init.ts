@@ -6,26 +6,18 @@ import type {Command} from 'commander';
 import {TYPE_DIRS} from '../lib/schema.ts';
 import {listExistingProjects, pkHome, projectDir} from '../lib/paths.ts';
 
-export type Harness = 'claude' | 'claude-desktop' | 'codex' | 'cursor' | 'omp' | 'opencode';
+export type Harness = 'claude' | 'omp';
 
 const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
-	{hint: '.mcp.json in project root', label: 'Claude Code', value: 'claude'},
-	{hint: '~/Library/…/claude_desktop_config.json', label: 'Claude Desktop', value: 'claude-desktop'},
-	{hint: '.cursor/mcp.json in project root', label: 'Cursor', value: 'cursor'},
-	{hint: '.omp/mcp.json in project root', label: 'Oh My Pi', value: 'omp'},
-	{hint: 'opencode.json in project root', label: 'OpenCode', value: 'opencode'},
-	{hint: '.codex/config.toml in project root', label: 'Codex CLI', value: 'codex'},
+	{hint: '.mcp.json + CLAUDE.md + forced-eval hook', label: 'Claude Code', value: 'claude'},
+	{hint: '.omp/mcp.json + AGENTS.md + forced-eval hook', label: 'Oh My Pi', value: 'omp'},
 ];
 
 const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
 
 const HARNESS_ACTIVATION: Record<Harness, string> = {
 	claude: 'start a new Claude Code session in this project',
-	'claude-desktop': 'quit and restart Claude Desktop',
-	codex: 'restart the Codex CLI',
-	cursor: 'reload the Cursor window (Cmd+Shift+P → Reload Window)',
 	omp: 'restart your Oh My Pi session',
-	opencode: 'restart opencode',
 };
 
 /**
@@ -42,7 +34,7 @@ function buildOutro(
 	];
 
 	for (const h of harnesses) {
-		lines.push(`  ${h}: MCP config written → ${HARNESS_ACTIVATION[h]}`);
+		lines.push(`  ${h}: configured → ${HARNESS_ACTIVATION[h]}`);
 	}
 
 	for (const sp of skillPaths) {
@@ -116,24 +108,6 @@ export async function writeClaudeConfig(projectRoot: string, _name: string, know
 	await writeJson(cfgPath, cfg);
 }
 
-export async function writeClaudeDesktopConfig(homeDir: string, name: string, knowledgeDir: string): Promise<void> {
-	const cfgPath = path.join(homeDir, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
-	const cfg = await readJson(cfgPath);
-	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
-	servers[`pk-${name}`] = pkMcpEntry(knowledgeDir);
-	cfg.mcpServers = servers;
-	await writeJson(cfgPath, cfg);
-}
-
-export async function writeCursorConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
-	const cfgPath = path.join(projectRoot, '.cursor', 'mcp.json');
-	const cfg = await readJson(cfgPath);
-	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
-	servers.pk = pkMcpEntry(knowledgeDir);
-	cfg.mcpServers = servers;
-	await writeJson(cfgPath, cfg);
-}
-
 export async function writeOmpConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
 	const cfgPath = path.join(projectRoot, '.omp', 'mcp.json');
 	const cfg = await readJson(cfgPath);
@@ -143,61 +117,119 @@ export async function writeOmpConfig(projectRoot: string, _name: string, knowled
 	await writeJson(cfgPath, cfg);
 }
 
-export async function writeOpenCodeConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
-	const cfgPath = path.join(projectRoot, 'opencode.json');
-	const cfg = await readJson(cfgPath);
-	const mcp = (cfg.mcp as Record<string, unknown> | undefined) ?? {};
-	mcp.pk = pkMcpEntry(knowledgeDir);
-	cfg.mcp = mcp;
-	await writeJson(cfgPath, cfg);
+// ─── Instruction file writers ─────────────────────────────────────────────────
+
+const PK_SECTION_START = '<!-- pk:start -->';
+const PK_SECTION_END = '<!-- pk:end -->';
+
+const PK_INSTRUCTION = `\
+## pk — project knowledge
+
+Use the pk skill and its MCP tools (pk_synthesize, pk_search, pk_read, pk_new, pk_lint) \
+to manage project knowledge for this project. \
+Run pk_synthesize({ sessionStart: true }) at the start of every session.`;
+
+async function writeInstructionSection(filePath: string, content: string): Promise<void> {
+	const section = `${PK_SECTION_START}\n${content}\n${PK_SECTION_END}\n`;
+	let existing = '';
+	try {
+		existing = await Bun.file(filePath).text();
+	} catch {}
+
+	const startIdx = existing.indexOf(PK_SECTION_START);
+	const endIdx = existing.indexOf(PK_SECTION_END);
+	let updated: string;
+	if (startIdx !== -1 && endIdx !== -1) {
+		updated = existing.slice(0, startIdx) + section + existing.slice(endIdx + PK_SECTION_END.length + 1);
+	} else {
+		updated = existing ? existing.trimEnd() + '\n\n' + section : section;
+	}
+
+	mkdirSync(path.dirname(filePath), {recursive: true});
+	await Bun.write(filePath, updated);
 }
 
-export async function writeCodexConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
-	const cfgPath = path.join(projectRoot, '.codex', 'config.toml');
-	const toml = [
-		'[mcp_servers.pk]',
-		`command = "${resolvePkCommand()}"`,
-		'args = ["mcp"]',
-		'',
-		'[mcp_servers.pk.env]',
-		`PK_KNOWLEDGE_DIR = "${knowledgeDir}"`,
-		'',
-	].join('\n');
+export async function writeClaudeMd(projectRoot: string): Promise<void> {
+	await writeInstructionSection(path.join(projectRoot, 'CLAUDE.md'), PK_INSTRUCTION);
+}
 
-	mkdirSync(path.dirname(cfgPath), {recursive: true});
-	if (existsSync(cfgPath)) {
-		const existing = await Bun.file(cfgPath).text();
-		if (existing.includes('[mcp_servers.pk]')) {
-			return;
-		}
+export async function writeAgentsMd(projectRoot: string): Promise<void> {
+	await writeInstructionSection(path.join(projectRoot, 'AGENTS.md'), PK_INSTRUCTION);
+}
 
-		await Bun.write(cfgPath, existing.trimEnd() + '\n\n' + toml);
-	} else {
-		await Bun.write(cfgPath, toml);
+// ─── Harness hook writers ─────────────────────────────────────────────────────
+
+const FORCED_EVAL_PROMPT = 'SKILL EVALUATION REQUIRED: Before responding, explicitly decide YES or NO'
+	+ ' — does this request involve project work, investigation, decisions, or knowledge capture'
+	+ ' where the pk skill applies? If YES, activate the pk skill, then proceed.';
+
+function claudeHookScript(): string {
+	return `\
+// pk forced-eval hook — auto-generated by pk init
+async function handleUserPromptSubmit() {
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'UserPromptSubmit',
+      additionalContext: ${JSON.stringify(FORCED_EVAL_PROMPT)},
+    },
+    suppressOutput: true,
+  }));
+}
+
+handleUserPromptSubmit().catch(() => process.exit(0));
+`;
+}
+
+export async function writeClaudeHook(projectRoot: string): Promise<void> {
+	const hookDir = path.join(projectRoot, '.claude', 'hooks');
+	const hookPath = path.join(hookDir, 'pk-eval.ts');
+	mkdirSync(hookDir, {recursive: true});
+	await Bun.write(hookPath, claudeHookScript());
+
+	const settingsPath = path.join(projectRoot, '.claude', 'settings.json');
+	const settings = await readJson(settingsPath);
+	const hooks = (settings.hooks as Record<string, unknown> | undefined) ?? {};
+	const ups = (hooks.UserPromptSubmit as Array<Record<string, unknown>> | undefined) ?? [];
+	const hookCmd = `bun run ${hookPath}`;
+	if (!ups.some(h => h.command === hookCmd)) {
+		ups.push({command: hookCmd});
 	}
+
+	hooks.UserPromptSubmit = ups;
+	settings.hooks = hooks;
+	await writeJson(settingsPath, settings);
+}
+
+function ompHookScript(): string {
+	return `\
+// pk forced-eval hook — auto-generated by pk init
+import type {HookAPI} from '@oh-my-pi/pi-coding-agent/extensibility/hooks';
+
+export default function (pi: HookAPI) {
+  pi.on('before_agent_start', (event: {systemPrompt?: string}) => ({
+    systemPrompt: ${JSON.stringify(FORCED_EVAL_PROMPT)} + '\\n\\n' + (event.systemPrompt ?? ''),
+  }));
+}
+`;
+}
+
+export async function writeOmpHook(projectRoot: string): Promise<void> {
+	const hookPath = path.join(projectRoot, '.omp', 'extensions', 'pk-eval.ts');
+	mkdirSync(path.dirname(hookPath), {recursive: true});
+	await Bun.write(hookPath, ompHookScript());
 }
 
 // ─── Skill installation ───────────────────────────────────────────────────────
 
 function skillTargetDir(harness: Harness, projectRoot: string): string {
 	switch (harness) {
-		case 'claude':
-		case 'claude-desktop': {
+		case 'claude': {
 			return path.join(os.homedir(), '.claude', 'skills', 'pk');
 		}
 
 		case 'omp': {
 			return path.join(projectRoot, '.agents', 'skills', 'pk');
 		}
-
-		case 'cursor': {
-			return path.join(projectRoot, '.cursor', 'skills', 'pk');
-		}
-
-		case 'opencode':
-		case 'codex': {
-			return '';
-		} // No standard skill dir
 	}
 }
 
@@ -219,7 +251,7 @@ export function installSkill(harness: Harness, projectRoot: string): string {
 
 	if (existsSync(target)) {
 		return target;
-	} // Already installed
+	}
 
 	cpSync(src, target, {recursive: true});
 	return target;
@@ -247,35 +279,19 @@ export async function ensureProject(name: string): Promise<{created: boolean; kn
 type HarnessContext = {name: string; knowledgeDir: string; projectRoot: string; home: string};
 
 export async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void> {
-	const {name, knowledgeDir, projectRoot, home} = ctx;
+	const {name, knowledgeDir, projectRoot} = ctx;
 	switch (harness) {
 		case 'claude': {
 			await writeClaudeConfig(projectRoot, name, knowledgeDir);
-			break;
-		}
-
-		case 'claude-desktop': {
-			await writeClaudeDesktopConfig(home, name, knowledgeDir);
-			break;
-		}
-
-		case 'codex': {
-			await writeCodexConfig(projectRoot, name, knowledgeDir);
-			break;
-		}
-
-		case 'cursor': {
-			await writeCursorConfig(projectRoot, name, knowledgeDir);
+			await writeClaudeMd(projectRoot);
+			await writeClaudeHook(projectRoot);
 			break;
 		}
 
 		case 'omp': {
 			await writeOmpConfig(projectRoot, name, knowledgeDir);
-			break;
-		}
-
-		case 'opencode': {
-			await writeOpenCodeConfig(projectRoot, name, knowledgeDir);
+			await writeAgentsMd(projectRoot);
+			await writeOmpHook(projectRoot);
 			break;
 		}
 	}

@@ -4,17 +4,17 @@
 
 This system is project-specific. It is not a personal second brain, a full wiki platform, or a semantic memory database.
 
-The canonical store is plain markdown under `knowledge/`. Beans/issues remain for trackable work; the knowledge base is for durable context and future answers.
+The canonical store is plain markdown files managed via `pk` MCP tools. The root directory is set by `PK_KNOWLEDGE_DIR`. The knowledge base is for durable context and future answers — not for task tracking.
 
 ## Folder and Type Rules
 
-| Type | Folder | Purpose | Status values |
+| Type | Subfolder | Purpose | Status values |
 | --- | --- | --- | --- |
-| `source` | `knowledge/sources/` | Provenance and raw/lightly cleaned input | `unprocessed`, `processed`, `archived` |
-| `note` | `knowledge/notes/` | Durable project knowledge | `active`, `superseded`, `archived` |
-| `decision` | `knowledge/decisions/` | Chosen direction and rationale | `proposed`, `accepted`, `superseded` |
-| `question` | `knowledge/questions/` | Unresolved or resolved uncertainty | `open`, `answered`, `obsolete` |
-| `index` | `knowledge/indexes/` | Navigation/MOC pages | `active`, `archived` |
+| `source` | `sources/` | Provenance and raw/lightly cleaned input | `unprocessed`, `processed`, `archived` |
+| `note` | `notes/` | Durable project knowledge | `active`, `superseded`, `archived` |
+| `decision` | `decisions/` | Chosen direction and rationale | `proposed`, `accepted`, `superseded` |
+| `question` | `questions/` | Unresolved or resolved uncertainty | `open`, `answered`, `obsolete` |
+| `index` | `indexes/` | Navigation/MOC pages | `active`, `archived` |
 
 ## Frontmatter
 
@@ -34,7 +34,7 @@ tags: [tag-one, tag-two]
 
 Rules:
 
-- `id` must be unique across `knowledge/**/*.md`.
+- `id` must be unique across all notes in the knowledge directory.
 - `type` must match both status set and folder.
 - `tags` must be a flat list of lowercase slugs.
 - Do not use nested YAML, multiline YAML, or relationship arrays.
@@ -85,7 +85,7 @@ Classify extracted material this way:
 - Chosen path with rationale/consequences → `decision`
 - Unknown that blocks or informs work → `question`
 - Navigation over a topic/type/tag → `index`
-- Action item/task → issue tracker, not a knowledge note
+- Action item/task → not a knowledge note; track elsewhere
 - Low-signal commentary → ignore or keep only in `source`
 
 ## Update Policy

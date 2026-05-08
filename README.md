@@ -30,25 +30,21 @@ Non-interactive:
 
 ```bash
 pk init my-project --harness claude
-pk init my-project --harness claude,omp,cursor   # multiple harnesses
+pk init my-project --harness claude,omp   # multiple harnesses
 ```
 
-Available harnesses: `claude`, `claude-desktop`, `omp`, `cursor`, `opencode`, `codex`.
+Available harnesses: `claude` (Claude Code), `omp` (Oh My Pi).
 
 `pk init` does three things:
 
 1. Creates `~/.pk/<name>/` as the knowledge home for this project
 2. Writes an MCP server config so your harness discovers `pk mcp`
-3. Copies the `pk` skill to the harness skill directory (where supported)
+3. Installs a harness adapter that calls `pk prime` at session start to inject the skill into context
 
-| Harness | Config file written |
+| Harness | Files written |
 |---|---|
-| `claude` | `.mcp.json` (project root) |
-| `claude-desktop` | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| `cursor` | `.cursor/mcp.json` |
-| `omp` | `.omp/mcp.json` |
-| `opencode` | `opencode.json` |
-| `codex` | `.codex/config.toml` |
+| `claude` | `.mcp.json`, `CLAUDE.md`, `.claude/hooks/pk-eval.ts`, `.claude/settings.json` |
+| `omp` | `.omp/mcp.json`, `AGENTS.md`, `.omp/extensions/pk-eval.ts` |
 
 ## How it works
 
