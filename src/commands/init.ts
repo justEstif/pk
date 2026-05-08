@@ -138,14 +138,14 @@ async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void
 	switch (harness) {
 		case 'claude': {
 			await writeClaudeConfig(projectRoot, knowledgeDir);
-			await writeClaudeMd(projectRoot);
+			await writeClaudeMd(projectRoot, knowledgeDir);
 			await writeClaudeHook(projectRoot);
 			break;
 		}
 
 		case 'codex': {
 			await writeCodexConfig(projectRoot, knowledgeDir);
-			await writeAgentsMd(projectRoot);
+			await writeAgentsMd(projectRoot, knowledgeDir);
 			await writeCodexHook(projectRoot);
 			break;
 		}
@@ -153,8 +153,8 @@ async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void
 		case 'opencode': {
 			await writeOpenCodeConfig(projectRoot, knowledgeDir);
 			// OpenCode reads AGENTS.md and CLAUDE.md natively
-			await writeAgentsMd(projectRoot);
-			await writeClaudeMd(projectRoot);
+			await writeAgentsMd(projectRoot, knowledgeDir);
+			await writeClaudeMd(projectRoot, knowledgeDir);
 			await writeOpenCodePlugin(projectRoot);
 			break;
 		}

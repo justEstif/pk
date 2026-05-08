@@ -39,12 +39,19 @@ export async function writeJson(filePath: string, data: unknown): Promise<void> 
 const PK_SECTION_START = '<!-- pk:start -->';
 const PK_SECTION_END = '<!-- pk:end -->';
 
-const PK_INSTRUCTION = `\
+function pkInstruction(knowledgeDir: string): string {
+	return `\
 ## pk — project knowledge
 
-Use the pk skill and its MCP tools (pk_synthesize, pk_search, pk_read, pk_new, pk_lint) \
-to manage project knowledge for this project. \
-Run pk_synthesize({ sessionStart: true }) at the start of every session.`;
+Use the pk skill and its CLI commands to manage project knowledge for this project. \
+Run \`pk synthesize --session-start\` at the start of every session.
+
+Knowledge directory: \`${knowledgeDir}\`
+
+\`\`\`bash
+export PK_KNOWLEDGE_DIR="${knowledgeDir}"
+\`\`\``;
+}
 
 async function writeInstructionSection(filePath: string, content: string): Promise<void> {
 	const section = `${PK_SECTION_START}\n${content}\n${PK_SECTION_END}\n`;
@@ -66,12 +73,12 @@ async function writeInstructionSection(filePath: string, content: string): Promi
 	await Bun.write(filePath, updated);
 }
 
-export async function writeClaudeMd(projectRoot: string): Promise<void> {
-	await writeInstructionSection(path.join(projectRoot, 'CLAUDE.md'), PK_INSTRUCTION);
+export async function writeClaudeMd(projectRoot: string, knowledgeDir: string): Promise<void> {
+	await writeInstructionSection(path.join(projectRoot, 'CLAUDE.md'), pkInstruction(knowledgeDir));
 }
 
-export async function writeAgentsMd(projectRoot: string): Promise<void> {
-	await writeInstructionSection(path.join(projectRoot, 'AGENTS.md'), PK_INSTRUCTION);
+export async function writeAgentsMd(projectRoot: string, knowledgeDir: string): Promise<void> {
+	await writeInstructionSection(path.join(projectRoot, 'AGENTS.md'), pkInstruction(knowledgeDir));
 }
 
 // ─── Shared constants ─────────────────────────────────────────────────────────
