@@ -121,4 +121,35 @@ describe('pk CLI e2e tests', () => {
 			expect(historyOutput).toContain('delete note');
 		});
 	});
+	describe('pk lint', () => {
+		beforeEach(async () => {
+			await $`${CLI_PATH} init ${projectName} --harness claude`.quiet();
+		});
+
+		test('passes for valid notes', async () => {
+			await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Lint Test Note" --tags lint`.quiet();
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} lint`.quiet();
+			expect(result.exitCode).toBe(0);
+			expect(result.stdout.toString()).toContain('lint passed');
+		});
+
+		test('accepts specific paths to lint', async () => {
+			const createResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Specific Lint" --tags lint`.quiet();
+			const notePath = createResult.stdout.toString().trim();
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} lint ${notePath}`.quiet();
+			expect(result.exitCode).toBe(0);
+			expect(result.stdout.toString()).toContain('lint passed');
+			expect(result.stdout.toString()).toContain('1 files');
+		});
+
+		test('reports errors for invalid notes', async () => {
+			// Create a note, then corrupt it
+			const createResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Bad Note" --tags lint`.quiet();
+			const notePath = createResult.stdout.toString().trim();
+			// Write invalid content (missing required fields)
+			await Bun.write(notePath, '---\ntype: note\n---\n\n## Summary\n\ntext.');
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} lint`.nothrow();
+			expect(result.exitCode).toBe(1);
+		});
+	});
 });

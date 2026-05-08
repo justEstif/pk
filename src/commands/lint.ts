@@ -4,9 +4,9 @@ import {requireKnowledgeDir} from '../lib/paths.ts';
 
 export function registerLint(program: Command): void {
 	program
-		.command('lint')
+		.command('lint [paths...]')
 		.description('Validate knowledge notes structure and frontmatter')
-		.action(async () => {
+		.action(async (paths: string[] | undefined) => {
 			let dir: string;
 			try {
 				dir = requireKnowledgeDir();
@@ -15,7 +15,10 @@ export function registerLint(program: Command): void {
 				process.exit(1);
 			}
 
-			const {issues, noteCount} = await lintNotes(dir);
+			const resolved = paths?.length
+				? paths.map(p => p.startsWith('/') ? p : `${dir}/${p}`)
+				: undefined;
+			const {issues, noteCount} = await lintNotes(dir, resolved);
 
 			let hasError = false;
 			for (const {level, path: p, message} of issues) {

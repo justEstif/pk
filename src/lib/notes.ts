@@ -1,15 +1,8 @@
 import {mkdirSync, readdirSync, statSync} from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
-import {type Note, type NoteMeta, TYPE_DIRS} from './schema.ts';
+import {type Note, TYPE_DIRS} from './schema.ts';
 import {renderTemplate} from './templates.ts';
-
-// Re-export schema so callers that previously imported everything from
-// notes.ts keep working without modification.
-export type {Note, NoteMeta} from './schema.ts';
-export {
-	LENGTH_WARN, REQUIRED_SECTIONS, STATUSES, TYPE_DIRS,
-} from './schema.ts';
 
 const PRIMARY_SECTION: Record<string, string> = {
 	decision: 'Decision',
