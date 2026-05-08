@@ -8,9 +8,13 @@ import {
 	listExistingProjects, pkHome, projectDir, requireKnowledgeDir,
 } from './paths.ts';
 
+function homeDir(): string {
+	return process.env.HOME ?? os.homedir();
+}
+
 describe('pkHome', () => {
 	test('returns ~/.pk', () => {
-		expect(pkHome()).toBe(path.join(os.homedir(), '.pk'));
+		expect(pkHome()).toBe(path.join(homeDir(), '.pk'));
 	});
 });
 
@@ -79,10 +83,10 @@ describe('requireKnowledgeDir', () => {
 
 describe('projectDir', () => {
 	test('returns ~/.pk/<name>', () => {
-		expect(projectDir('acme')).toBe(path.join(os.homedir(), '.pk', 'acme'));
+		expect(projectDir('acme')).toBe(path.join(homeDir(), '.pk', 'acme'));
 	});
 
 	test('handles names with hyphens', () => {
-		expect(projectDir('my-project')).toBe(path.join(os.homedir(), '.pk', 'my-project'));
+		expect(projectDir('my-project')).toBe(path.join(homeDir(), '.pk', 'my-project'));
 	});
 });
