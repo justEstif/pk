@@ -70,9 +70,9 @@ pk_lint({})
 
 No MCP tool for status changes. Use your file Edit tool directly on the frontmatter, fill in the resolution section, then lint.
 
-**MANDATORY READ `references/knowledge-model.md`** when: creating a note type you haven't used before, unsure which folder a type belongs in, validating frontmatter fields, or unsure which status values are valid for a given type.
+**MANDATORY READ `references/knowledge-model.md`** when: creating a note type you haven't used before, unsure which folder a type belongs in, validating frontmatter fields, or unsure which status values are valid for a given type. (Read with your standard file Read tool — these are local skill files, not MCP-accessible.)
 
-**MANDATORY READ `references/git-workflow.md`** when: committing knowledge changes or unsure whether to auto-commit.
+**MANDATORY READ `references/git-workflow.md`** when: committing knowledge changes or unsure whether to auto-commit. (Same — standard file Read tool.)
 
 ## NEVER
 
