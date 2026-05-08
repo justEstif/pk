@@ -36,35 +36,30 @@
         Your agent organizes it. The more you put in, the more useful it gets.
       </p>
 
-      <!-- Install -->
+      <!-- Install + Init -->
       <div class="install-tabs" role="tablist">
         <button class="install-tab active" data-pkg="npm" role="tab" aria-selected="true">npm</button>
         <button class="install-tab"        data-pkg="bun" role="tab" aria-selected="false">bun</button>
         <button class="install-tab"        data-pkg="brew" role="tab" aria-selected="false">brew</button>
       </div>
-      <button class="install-block" id="install-pkg" title="Click to copy" data-cmd-npm="npm install -g @justestif/pk" data-cmd-bun="bun install -g @justestif/pk" data-cmd-brew="brew install justEstif/tap/pk">
-        <span class="dim">$</span>
-        <span class="amber" id="install-cmd"> npm install -g @justestif/pk</span>
+      <button class="install-block" id="install-pkg" title="Click to copy"
+        data-cmd-npm="npm install -g @justestif/pk"
+        data-cmd-bun="bun install -g @justestif/pk"
+        data-cmd-brew="brew install justEstif/tap/pk">
+        <div class="install-line"><span class="dim">$</span><span class="amber" id="install-cmd"> npm install -g @justestif/pk</span></div>
+        <div class="install-line"><span class="dim">$</span><span class="amber"> pk init</span></div>
       </button>
       <div id="install-toast" class="copy-toast" aria-live="polite"></div>
 
-      <!-- Init -->
-      <button class="install-block" id="install-init" title="Click to copy" style="margin-top: 12px">
-        <span class="dim">$</span>
-        <span class="amber"> pk init</span>
-      </button>
-      <div id="init-toast" class="copy-toast" aria-live="polite"></div>
-
       <!-- Supported harnesses -->
       <div class="harness-list">
-        <span>Claude Code</span>
-        <span>Cursor</span>
-        <span>Codex</span>
-        <span>Claude Desktop</span>
-        <span>OMP</span>
-        <span>OpenCode</span>
+        <span><span class="harness-dot">●</span>Claude Code</span>
+        <span><span class="harness-dot">●</span>Cursor</span>
+        <span><span class="harness-dot">●</span>Codex</span>
+        <span><span class="harness-dot">●</span>Claude Desktop</span>
+        <span><span class="harness-dot">●</span>OMP</span>
+        <span><span class="harness-dot">●</span>OpenCode</span>
       </div>
-      <div class="harness-divider"></div>
 
       <!-- Tabbed terminal demo -->
       <div class="demo-tabs" role="tablist">
@@ -118,12 +113,8 @@
     });
 
     document.getElementById('install-pkg').addEventListener('click', function () {
-      const cmd = pkgBlock.dataset['cmd' + activePkg.charAt(0).toUpperCase() + activePkg.slice(1)];
-      copyWithToast(cmd, document.getElementById('install-toast'), this);
-    });
-
-    document.getElementById('install-init').addEventListener('click', function () {
-      copyWithToast('pk init', document.getElementById('init-toast'), this);
+      const install = pkgBlock.dataset['cmd' + activePkg.charAt(0).toUpperCase() + activePkg.slice(1)];
+      copyWithToast(install + ' && pk init', document.getElementById('install-toast'), this);
     });
   </script>
 

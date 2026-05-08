@@ -161,10 +161,6 @@ h1 {
    margin-bottom: 4px;
 }
 
-.harness-divider {
-   border-top: 1px solid var(--border);
-   margin-bottom: 0;
-}
 
 /* ── Demo label + tabs ──────────────────────────────────── */
 
@@ -376,17 +372,30 @@ h1 {
    border-left-color: var(--green);
 }
 
+.install-line {
+   line-height: 1.9;
+}
+
 /* ── Harness list ─────────────────────────────────────── */
 
 .harness-list {
    display: flex;
    flex-wrap: wrap;
-   gap: 6px 16px;
-   margin-bottom: 20px;
+   gap: 4px 20px;
+   margin-bottom: 28px;
 }
 
 .harness-list span {
    font-family: 'JetBrains Mono', monospace;
    font-size: 11px;
-   color: var(--text-dim);
+   color: var(--text-mid);
+   display: flex;
+   align-items: center;
+   gap: 5px;
+}
+
+.harness-dot {
+   font-size: 6px;
+   color: var(--amber);
+   opacity: 0.6;
 }
