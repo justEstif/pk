@@ -1,6 +1,4 @@
-import {
-	existsSync, mkdirSync, readFileSync, rmSync, writeFileSync,
-} from 'node:fs';
+import {existsSync, mkdirSync, rmSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
@@ -24,12 +22,12 @@ type McpServers = Record<string, McpEntry | undefined>;
 type McpConfig = {mcpServers: McpServers};
 type OpenCodeConfig = {mcp: McpServers};
 
-function readMcpConfig(filePath: string): McpConfig {
-	return JSON.parse(readFileSync(filePath, 'utf8')) as McpConfig;
+async function readMcpConfig(filePath: string): Promise<McpConfig> {
+	return JSON.parse(await Bun.file(filePath).text()) as McpConfig;
 }
 
-function readOpenCodeConfig(filePath: string): OpenCodeConfig {
-	return JSON.parse(readFileSync(filePath, 'utf8')) as OpenCodeConfig;
+async function readOpenCodeConfig(filePath: string): Promise<OpenCodeConfig> {
+	return JSON.parse(await Bun.file(filePath).text()) as OpenCodeConfig;
 }
 
 let tmpDir: string;
@@ -60,17 +58,17 @@ const KNOWLEDGE_DIR = '/home/test/.pk/myproject';
 // ─── ensureProject ────────────────────────────────────────────────────────────
 
 describe('ensureProject', () => {
-	test('creates project directories and returns created=true', () => {
-		const {created, knowledgeDir} = ensureProject('myproject');
+	test('creates project directories and returns created=true', async () => {
+		const {created, knowledgeDir} = await ensureProject('myproject');
 		expect(created).toBe(true);
 		expect(existsSync(knowledgeDir)).toBe(true);
 		expect(existsSync(path.join(knowledgeDir, 'notes'))).toBe(true);
 		expect(existsSync(path.join(knowledgeDir, '.gitignore'))).toBe(true);
 	});
 
-	test('returns created=false when project already exists', () => {
-		ensureProject('myproject');
-		const {created} = ensureProject('myproject');
+	test('returns created=false when project already exists', async () => {
+		await ensureProject('myproject');
+		const {created} = await ensureProject('myproject');
 		expect(created).toBe(false);
 	});
 });
@@ -109,28 +107,28 @@ describe('installSkill', () => {
 // ─── applyHarnesses ────────────────────────────────────────────────────────
 
 describe('applyHarnesses', () => {
-	test('applies multiple harnesses in one call', () => {
+	test('applies multiple harnesses in one call', async () => {
 		const ctx = {
 			home: fakeHome, knowledgeDir: KNOWLEDGE_DIR, name: 'myproject', projectRoot: tmpDir,
 		};
-		applyHarnesses(['claude', 'omp'], ctx);
+		await applyHarnesses(['claude', 'omp'], ctx);
 		expect(existsSync(path.join(tmpDir, '.mcp.json'))).toBe(true);
 		expect(existsSync(path.join(tmpDir, '.omp', 'mcp.json'))).toBe(true);
 	});
 
-	test('deduplicates skill install when two harnesses share the same target', () => {
+	test('deduplicates skill install when two harnesses share the same target', async () => {
 		const ctx = {
 			home: fakeHome, knowledgeDir: KNOWLEDGE_DIR, name: 'myproject', projectRoot: tmpDir,
 		};
-		const installed = applyHarnesses(['claude', 'claude-desktop'], ctx);
+		const installed = await applyHarnesses(['claude', 'claude-desktop'], ctx);
 		expect(new Set(installed).size).toBe(installed.length);
 	});
 
-	test('returns empty skill paths for harnesses without skill support', () => {
+	test('returns empty skill paths for harnesses without skill support', async () => {
 		const ctx = {
 			home: fakeHome, knowledgeDir: KNOWLEDGE_DIR, name: 'myproject', projectRoot: tmpDir,
 		};
-		const installed = applyHarnesses(['codex', 'opencode'], ctx);
+		const installed = await applyHarnesses(['codex', 'opencode'], ctx);
 		expect(installed).toEqual([]);
 	});
 });
@@ -138,9 +136,9 @@ describe('applyHarnesses', () => {
 // ─── claude (.mcp.json) ─────────────────────────────────────────────────────
 
 describe('writeClaudeConfig', () => {
-	test('creates .mcp.json with mcpServers.pk entry', () => {
-		writeClaudeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = readMcpConfig(path.join(tmpDir, '.mcp.json'));
+	test('creates .mcp.json with mcpServers.pk entry', async () => {
+		await writeClaudeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		const cfg = await readMcpConfig(path.join(tmpDir, '.mcp.json'));
 
 		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
 
@@ -149,11 +147,11 @@ describe('writeClaudeConfig', () => {
 		expect(cfg.mcpServers.pk!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
 	});
 
-	test('merges with existing .mcp.json without clobbering other servers', () => {
+	test('merges with existing .mcp.json without clobbering other servers', async () => {
 		const existing = {mcpServers: {other: {command: 'other'}}};
-		writeFileSync(path.join(tmpDir, '.mcp.json'), JSON.stringify(existing));
-		writeClaudeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = readMcpConfig(path.join(tmpDir, '.mcp.json'));
+		await Bun.write(path.join(tmpDir, '.mcp.json'), JSON.stringify(existing));
+		await writeClaudeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		const cfg = await readMcpConfig(path.join(tmpDir, '.mcp.json'));
 
 		expect(cfg.mcpServers.other!.command).toBe('other');
 
@@ -164,27 +162,27 @@ describe('writeClaudeConfig', () => {
 // ─── claude-desktop ─────────────────────────────────────────────────────────
 
 describe('writeClaudeDesktopConfig', () => {
-	test('writes pk-<name> entry to global config', () => {
-		writeClaudeDesktopConfig(fakeHome, 'myproject', KNOWLEDGE_DIR);
+	test('writes pk-<name> entry to global config', async () => {
+		await writeClaudeDesktopConfig(fakeHome, 'myproject', KNOWLEDGE_DIR);
 		const cfgPath = path.join(fakeHome, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
-		const cfg = readMcpConfig(cfgPath);
+		const cfg = await readMcpConfig(cfgPath);
 
 		expect(cfg.mcpServers['pk-myproject']!.command).toBe(resolvePkCommand());
 
 		expect(cfg.mcpServers['pk-myproject']!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
 	});
 
-	test('creates config file if it does not exist', () => {
-		writeClaudeDesktopConfig(fakeHome, 'myproject', KNOWLEDGE_DIR);
+	test('creates config file if it does not exist', async () => {
+		await writeClaudeDesktopConfig(fakeHome, 'myproject', KNOWLEDGE_DIR);
 		const cfgPath = path.join(fakeHome, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
 		expect(existsSync(cfgPath)).toBe(true);
 	});
 
-	test('multiple projects coexist in the same file', () => {
-		writeClaudeDesktopConfig(fakeHome, 'proj-a', '/home/.pk/proj-a');
-		writeClaudeDesktopConfig(fakeHome, 'proj-b', '/home/.pk/proj-b');
+	test('multiple projects coexist in the same file', async () => {
+		await writeClaudeDesktopConfig(fakeHome, 'proj-a', '/home/.pk/proj-a');
+		await writeClaudeDesktopConfig(fakeHome, 'proj-b', '/home/.pk/proj-b');
 		const cfgPath = path.join(fakeHome, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
-		const cfg = readMcpConfig(cfgPath);
+		const cfg = await readMcpConfig(cfgPath);
 		expect(cfg.mcpServers['pk-proj-a']).toBeDefined();
 		expect(cfg.mcpServers['pk-proj-b']).toBeDefined();
 	});
@@ -193,9 +191,9 @@ describe('writeClaudeDesktopConfig', () => {
 // ─── cursor (.cursor/mcp.json) ───────────────────────────────────────────────
 
 describe('writeCursorConfig', () => {
-	test('creates .cursor/mcp.json with mcpServers.pk', () => {
-		writeCursorConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = readMcpConfig(path.join(tmpDir, '.cursor', 'mcp.json'));
+	test('creates .cursor/mcp.json with mcpServers.pk', async () => {
+		await writeCursorConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		const cfg = await readMcpConfig(path.join(tmpDir, '.cursor', 'mcp.json'));
 
 		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
 
@@ -206,9 +204,9 @@ describe('writeCursorConfig', () => {
 // ─── omp (.omp/mcp.json) ─────────────────────────────────────────────────────
 
 describe('writeOmpConfig', () => {
-	test('creates .omp/mcp.json with mcpServers.pk', () => {
-		writeOmpConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = readMcpConfig(path.join(tmpDir, '.omp', 'mcp.json'));
+	test('creates .omp/mcp.json with mcpServers.pk', async () => {
+		await writeOmpConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		const cfg = await readMcpConfig(path.join(tmpDir, '.omp', 'mcp.json'));
 
 		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
 
@@ -219,9 +217,9 @@ describe('writeOmpConfig', () => {
 // ─── opencode (opencode.json) ────────────────────────────────────────────────
 
 describe('writeOpenCodeConfig', () => {
-	test('creates opencode.json with mcp.pk entry', () => {
-		writeOpenCodeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = readOpenCodeConfig(path.join(tmpDir, 'opencode.json'));
+	test('creates opencode.json with mcp.pk entry', async () => {
+		await writeOpenCodeConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		const cfg = await readOpenCodeConfig(path.join(tmpDir, 'opencode.json'));
 
 		expect(cfg.mcp.pk!.command).toBe(resolvePkCommand());
 
@@ -232,9 +230,9 @@ describe('writeOpenCodeConfig', () => {
 // ─── codex (.codex/config.toml) ──────────────────────────────────────────────
 
 describe('writeCodexConfig', () => {
-	test('creates .codex/config.toml with mcp_servers.pk section', () => {
-		writeCodexConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const toml = readFileSync(path.join(tmpDir, '.codex', 'config.toml'), 'utf8');
+	test('creates .codex/config.toml with mcp_servers.pk section', async () => {
+		await writeCodexConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		const toml = await Bun.file(path.join(tmpDir, '.codex', 'config.toml')).text();
 		expect(toml).toContain('[mcp_servers.pk]');
 		expect(toml).toContain(`command = "${resolvePkCommand()}"`);
 		expect(toml).toContain('args = ["mcp"]');
@@ -242,10 +240,10 @@ describe('writeCodexConfig', () => {
 		expect(toml).toContain(`PK_KNOWLEDGE_DIR = "${KNOWLEDGE_DIR}"`);
 	});
 
-	test('skips if section already present', () => {
-		writeCodexConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		writeCodexConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const toml = readFileSync(path.join(tmpDir, '.codex', 'config.toml'), 'utf8');
+	test('skips if section already present', async () => {
+		await writeCodexConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		await writeCodexConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
+		const toml = await Bun.file(path.join(tmpDir, '.codex', 'config.toml')).text();
 		const count = (toml.match(/\[mcp_servers[.]pk\]/gv) ?? []).length;
 		expect(count).toBe(1);
 	});

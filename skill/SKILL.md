@@ -5,43 +5,89 @@ description: "Load when maintaining project knowledge, capturing decisions or qu
 
 # pk
 
-Structured project knowledge — intake, search, recall, and audit over `knowledge/`.
+Structured project knowledge — intake, search, recall, and audit.
+
+**All knowledge access goes through MCP tools. Never read or write note files directly — the tools enforce path safety and structure.**
 
 ## Tools
 
-| Task | Tool |
-|---|---|
-| Search notes | `pk_search` |
-| Context dump / session start | `pk_synthesize` |
-| Create a note | `pk_new` |
-| Validate structure | `pk_lint` |
+### `pk_synthesize` — orient before any investigation
 
-## Intake
+```
+pk_synthesize({ sessionStart: true })                          # open questions + accepted decisions + active notes
+pk_synthesize({ query: "auth flow" })                         # ranked context for a topic
+pk_synthesize({ query: "auth", type: "decision", limit: 5 })
+```
 
-**Search before creating** — always call `pk_search` first.
+Returns formatted markdown with title, type, status, tags, and an excerpt per note. Use `sessionStart: true` at the start of every session.
 
-- Substantial messy input → `source`. Extract `note`, `decision`, `question` only when durable beyond this session.
-- Update existing when the match is obvious; otherwise create and link in body.
-- Call `pk_lint` before committing. Auto-commit coherent operations only when lint passes and no unrelated files are staged.
+### `pk_search` — locate notes by content
 
-## Asking
+```
+pk_search({ query: "database schema" })
+pk_search({ query: "api", type: "question", status: "open" })
+pk_search({ query: "deploy", tag: "infra", limit: 5 })
+```
 
-1. `pk_search` with the relevant query
-2. Read top results directly
-3. Answer with citations to note paths/IDs
-4. If silent or ambiguous, offer to create a `question` note
+Returns `[{ path, type, status, title, tags, snippet }]`. Always call before `pk_new` — duplicates erode trust faster than gaps do.
+
+### `pk_read` — full note body
+
+```
+pk_read({ path: "/abs/path/returned/by/pk_search" })
+```
+
+Returns complete file contents including frontmatter. Use paths from `pk_search` or `pk_synthesize` output.
+
+### `pk_new` — create a typed note skeleton
+
+```
+pk_new({ type: "note", title: "Auth token expiry behaviour", tags: "auth,security" })
+pk_new({ type: "decision", title: "Use JWT over sessions" })
+pk_new({ type: "question", title: "Should we rate-limit the search endpoint?" })
+pk_new({ type: "source", title: "Meeting notes 2024-06-01" })
+```
+
+Returns the absolute path. Frontmatter (id, dates, status) is generated automatically. After receiving the path: call `pk_read` to see the skeleton, then use your standard file Edit tool to fill in the required sections.
+
+**Required sections by type:**
+- `note` → `## Summary`, `## Details`, `## Evidence`, `## Related`
+- `decision` → `## Decision`, `## Context`, `## Rationale`, `## Consequences`, `## Related`
+- `question` → `## Question`, `## Why It Matters`, `## Current Understanding`, `## Resolution`
+- `source` → `## Source`, `## Raw Material`, `## Extracted Items`
+
+**`source` vs `note`:** `source` = raw/provenance-heavy input (meeting notes, transcripts, external docs, unprocessed data). `note` = stable synthesised fact or constraint you've derived. When synthesising across multiple sources into one insight: create a `note` and put source paths in `## Evidence`.
+
+### `pk_lint` — validate before committing
+
+```
+pk_lint({})
+```
+
+**Errors block commits** (missing frontmatter, duplicate id, wrong folder, missing required sections, broken links). **Warnings are advisory** (empty tags, note too long, source marked processed with no extracted items) — fix when practical, not required to commit.
+
+### Status transitions
+
+No MCP tool for status changes. Use your file Edit tool directly on the frontmatter (`status: open` → `status: answered`, `status: proposed` → `status: accepted`, etc.), fill in the resolution section, then lint.
+
+**MANDATORY READ `references/knowledge-model.md`** when: creating a note type you haven't used before, unsure which folder a type belongs in, or validating frontmatter fields.
+
+**MANDATORY READ `references/git-workflow.md`** when: committing knowledge changes or unsure whether to auto-commit.
 
 ## NEVER
 
-- **Skip `pk_search` before creating** — duplicates erode trust in the knowledge base
-- **Dump raw input into durable notes** — preserve in `source`, extract selectively
-- **Silently merge related-but-different claims** — create and link instead
-- **Auto-commit when lint fails or unrelated files are staged**
+- **NEVER skip `pk_search` before `pk_new`**
+  **Why:** Duplicates silently fragment knowledge — two notes on the same topic never get reconciled, and future searches return noise.
+  **Instead:** Search first; update the existing note if found, or create and link if genuinely different.
 
-## References
+- **NEVER dump raw input into a `note` or `decision`**
+  **Why:** Durable note types are for stable, verified claims. Raw input contains noise, ambiguity, and provenance that decays poorly.
+  **Instead:** Create a `source` note, then extract `note`/`decision`/`question` entries from it selectively.
 
-Load only when the task requires it:
+- **NEVER silently overwrite a conflicting claim**
+  **Why:** Silent overwrites destroy the rationale trail — you lose why the old claim existed.
+  **Instead:** Create a new note explaining the conflict, link both, and use `status: superseded` on the old one.
 
-- `references/knowledge-model.md` — types, folders, frontmatter schema, required sections
-- `references/git-workflow.md` — commit policy, safety stops
-- `references/source-principles.md` — documentation governance
+- **NEVER commit when `pk_lint` returns errors or unrelated files are staged**
+  **Why:** Lint errors mean required structure is broken; mixed commits make knowledge changes unauditable.
+  **Instead:** Fix errors, unstage unrelated files, then commit.

@@ -1,4 +1,4 @@
-import {mkdirSync, rmSync, writeFileSync} from 'node:fs';
+import {mkdirSync, rmSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
@@ -44,9 +44,9 @@ describe('listExistingProjects', () => {
 		expect(listExistingProjects()).toEqual(['alpha', 'zebra']);
 	});
 
-	test('ignores files (only returns directories)', () => {
+	test('ignores files (only returns directories)', async () => {
 		mkdirSync(path.join(fakeHome, '.pk', 'myproject'), {recursive: true});
-		writeFileSync(path.join(fakeHome, '.pk', 'notadir.txt'), '');
+		await Bun.write(path.join(fakeHome, '.pk', 'notadir.txt'), '');
 		expect(listExistingProjects()).toEqual(['myproject']);
 	});
 });

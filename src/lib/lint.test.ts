@@ -1,20 +1,17 @@
-import {
-	mkdirSync, mkdtempSync, rmSync, writeFileSync,
-} from 'node:fs';
+import {mkdirSync, mkdtempSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {describe, expect, test} from 'bun:test';
 import {lintNotes} from './lint.ts';
 
 describe('lintNotes', () => {
-	function makeKnowledgeDir(notes: Array<{subdir: string; name: string; content: string}>): string {
+	async function makeKnowledgeDir(notes: Array<{subdir: string; name: string; content: string}>): Promise<string> {
 		const root = mkdtempSync(path.join(tmpdir(), 'pk-knowledge-'));
-		for (const {subdir, name, content} of notes) {
+		await Promise.all(notes.map(async ({subdir, name, content}) => {
 			const dir = path.join(root, subdir);
 			mkdirSync(dir, {recursive: true});
-			writeFileSync(path.join(dir, name), content);
-		}
-
+			await Bun.write(path.join(dir, name), content);
+		}));
 		return root;
 	}
 
@@ -46,7 +43,7 @@ None.
 `;
 
 	test('returns no issues for a valid note', async () => {
-		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-test.md', content: VALID_NOTE}]);
+		const root = await makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-test.md', content: VALID_NOTE}]);
 		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues).toEqual([]);
@@ -77,7 +74,7 @@ e.
 
 r.
 `;
-		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
+		const root = await makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
 		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('status'))).toBe(true);
@@ -85,7 +82,7 @@ r.
 	});
 
 	test('flags a note stored in the wrong directory', async () => {
-		const root = makeKnowledgeDir([
+		const root = await makeKnowledgeDir([
 			{subdir: 'decisions', name: '2024-01-01-misplaced.md', content: VALID_NOTE},
 		]);
 		const {issues} = await lintNotes(root);
@@ -94,7 +91,7 @@ r.
 	});
 
 	test('reports noteCount matching number of files scanned', async () => {
-		const root = makeKnowledgeDir([
+		const root = await makeKnowledgeDir([
 			{subdir: 'notes', name: '2024-01-01-a.md', content: VALID_NOTE},
 			{subdir: 'notes', name: '2024-01-01-b.md', content: VALID_NOTE},
 		]);
@@ -105,7 +102,7 @@ r.
 
 	test('flags a note with an invalid type', async () => {
 		const content = VALID_NOTE.replace('type: note', 'type: bogus');
-		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
+		const root = await makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
 		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('invalid type'))).toBe(true);
@@ -113,7 +110,7 @@ r.
 
 	test('flags a note with an invalid status for its type', async () => {
 		const content = VALID_NOTE.replace('status: active', 'status: proposed');
-		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
+		const root = await makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
 		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('invalid status'))).toBe(true);
@@ -121,7 +118,7 @@ r.
 
 	test('flags a note where tags is not an array', async () => {
 		const content = VALID_NOTE.replace('tags: [testing]', 'tags: not-a-list');
-		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
+		const root = await makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
 		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('tags'))).toBe(true);
@@ -129,14 +126,14 @@ r.
 
 	test('flags a note missing a required section', async () => {
 		const content = VALID_NOTE.replace('## Summary\n\nA short summary.', '');
-		const root = makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
+		const root = await makeKnowledgeDir([{subdir: 'notes', name: '2024-01-01-x.md', content}]);
 		const {issues} = await lintNotes(root);
 		rmSync(root, {recursive: true});
 		expect(issues.some(i => i.message.includes('Summary'))).toBe(true);
 	});
 
 	test('flags a duplicate id', async () => {
-		const root = makeKnowledgeDir([
+		const root = await makeKnowledgeDir([
 			{subdir: 'notes', name: '2024-01-01-a.md', content: VALID_NOTE},
 			{subdir: 'notes', name: '2024-01-01-b.md', content: VALID_NOTE},
 		]);

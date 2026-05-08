@@ -52,16 +52,17 @@ Available harnesses: `claude`, `claude-desktop`, `omp`, `cursor`, `opencode`, `c
 
 ## How it works
 
-`pk mcp` runs a stdio MCP server that exposes four tools to any connected agent:
+`pk mcp` runs a stdio MCP server that exposes five tools to any connected agent:
 
 | Tool | What it does |
 |---|---|
 | `pk_search` | Full-text search over the knowledge base (BM25, porter stemming) |
-| `pk_synthesize` | Summarise notes matching a query or the whole base |
-| `pk_new` | Create a new note (type, title, tags, body) |
+| `pk_synthesize` | Ranked context dump — by query, session start, or all notes |
+| `pk_read` | Read the full content of a note by path |
+| `pk_new` | Create a new typed note skeleton, returns path to fill in |
 | `pk_lint` | Validate all notes for schema and quality rules |
 
-The agent calls these tools directly — no hooks, no shell extensions, no prompt injection.
+The agent calls these tools directly — no hooks, no shell extensions, no prompt injection. Agents should never read or write knowledge files directly.
 
 ## Commands
 
@@ -102,8 +103,8 @@ pk synthesize
 
 ## Knowledge structure
 
-Notes live in `~/.pk/<name>/` as plain markdown files — human-editable,
-git-diffable, readable without any tool.
+Notes live in `~/.pk/<name>/` as plain markdown files — human-editable and git-diffable.
+Agents access them exclusively through the MCP tools; humans can read and edit them directly.
 
 ```
 ~/.pk/

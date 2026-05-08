@@ -7,8 +7,8 @@ export function registerConfig(program: Command): void {
 		.description('Show or update pk configuration (~/.pk/config.json)')
 		.option('--auto-commit <bool>', 'Auto-commit knowledge operations (true/false)')
 		.option('--embedding <model>', 'Embedding model (empty to disable)')
-		.action((opts: {autoCommit?: string; embedding?: string}) => {
-			const config = loadConfig();
+		.action(async (opts: {autoCommit?: string; embedding?: string}) => {
+			const config = await loadConfig();
 			if (opts.autoCommit !== undefined) {
 				config.auto_commit = opts.autoCommit === 'true';
 			}
@@ -17,7 +17,7 @@ export function registerConfig(program: Command): void {
 				config.embedding = opts.embedding;
 			}
 
-			saveConfig(config);
+			await saveConfig(config);
 			console.log(JSON.stringify(config, null, 2));
 		});
 }

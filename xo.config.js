@@ -5,6 +5,20 @@ const xoConfig = [
 	},
 	{
 		rules: {
+			'no-restricted-imports': ['error', {
+				paths: [
+					{
+						name: 'node:fs',
+						importNames: ['readFile', 'readFileSync', 'writeFile', 'writeFileSync'],
+						message: 'Use Bun.file().text() for reads and Bun.write() for writes instead.',
+					},
+					{
+						name: 'node:fs/promises',
+						importNames: ['readFile', 'writeFile'],
+						message: 'Use Bun.file().text() for reads and Bun.write() for writes instead.',
+					},
+				],
+			}],
 			'unicorn/no-process-exit': 'off',
 			'unicorn/prevent-abbreviations': 'off',
 			'n/prefer-global/process': 'off',

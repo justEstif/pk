@@ -1,6 +1,4 @@
-import {
-	cpSync, existsSync, mkdirSync, readFileSync, writeFileSync,
-} from 'node:fs';
+import {cpSync, existsSync, mkdirSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import * as p from '@clack/prompts';
@@ -94,71 +92,67 @@ function pkMcpEntry(knowledgeDir: string): McpEntry {
 	};
 }
 
-function readJson(filePath: string): Record<string, unknown> {
-	if (!existsSync(filePath)) {
-		return {};
-	}
-
+async function readJson(filePath: string): Promise<Record<string, unknown>> {
 	try {
-		return JSON.parse(readFileSync(filePath, 'utf8')) as Record<string, unknown>;
+		return JSON.parse(await Bun.file(filePath).text()) as Record<string, unknown>;
 	} catch {
 		return {};
 	}
 }
 
-function writeJson(filePath: string, data: unknown): void {
+async function writeJson(filePath: string, data: unknown): Promise<void> {
 	mkdirSync(path.dirname(filePath), {recursive: true});
-	writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
+	await Bun.write(filePath, JSON.stringify(data, null, 2) + '\n');
 }
 
 // ─── Per-harness config writers (exported for testing) ───────────────────────
 
-export function writeClaudeConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+export async function writeClaudeConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
 	const cfgPath = path.join(projectRoot, '.mcp.json');
-	const cfg = readJson(cfgPath);
+	const cfg = await readJson(cfgPath);
 	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
 	servers.pk = pkMcpEntry(knowledgeDir);
 	cfg.mcpServers = servers;
-	writeJson(cfgPath, cfg);
+	await writeJson(cfgPath, cfg);
 }
 
-export function writeClaudeDesktopConfig(homeDir: string, name: string, knowledgeDir: string): void {
+export async function writeClaudeDesktopConfig(homeDir: string, name: string, knowledgeDir: string): Promise<void> {
 	const cfgPath = path.join(homeDir, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
-	const cfg = readJson(cfgPath);
+	const cfg = await readJson(cfgPath);
 	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
 	servers[`pk-${name}`] = pkMcpEntry(knowledgeDir);
 	cfg.mcpServers = servers;
-	writeJson(cfgPath, cfg);
+	await writeJson(cfgPath, cfg);
 }
 
-export function writeCursorConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+export async function writeCursorConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
 	const cfgPath = path.join(projectRoot, '.cursor', 'mcp.json');
-	const cfg = readJson(cfgPath);
+	const cfg = await readJson(cfgPath);
 	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
 	servers.pk = pkMcpEntry(knowledgeDir);
 	cfg.mcpServers = servers;
-	writeJson(cfgPath, cfg);
+	await writeJson(cfgPath, cfg);
 }
 
-export function writeOmpConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+export async function writeOmpConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
 	const cfgPath = path.join(projectRoot, '.omp', 'mcp.json');
-	const cfg = readJson(cfgPath);
+	const cfg = await readJson(cfgPath);
 	const servers = (cfg.mcpServers as Record<string, unknown> | undefined) ?? {};
 	servers.pk = pkMcpEntry(knowledgeDir);
 	cfg.mcpServers = servers;
-	writeJson(cfgPath, cfg);
+	await writeJson(cfgPath, cfg);
 }
 
-export function writeOpenCodeConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+export async function writeOpenCodeConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
 	const cfgPath = path.join(projectRoot, 'opencode.json');
-	const cfg = readJson(cfgPath);
+	const cfg = await readJson(cfgPath);
 	const mcp = (cfg.mcp as Record<string, unknown> | undefined) ?? {};
 	mcp.pk = pkMcpEntry(knowledgeDir);
 	cfg.mcp = mcp;
-	writeJson(cfgPath, cfg);
+	await writeJson(cfgPath, cfg);
 }
 
-export function writeCodexConfig(projectRoot: string, _name: string, knowledgeDir: string): void {
+export async function writeCodexConfig(projectRoot: string, _name: string, knowledgeDir: string): Promise<void> {
 	const cfgPath = path.join(projectRoot, '.codex', 'config.toml');
 	const toml = [
 		'[mcp_servers.pk]',
@@ -170,17 +164,16 @@ export function writeCodexConfig(projectRoot: string, _name: string, knowledgeDi
 		'',
 	].join('\n');
 
+	mkdirSync(path.dirname(cfgPath), {recursive: true});
 	if (existsSync(cfgPath)) {
-		const existing = readFileSync(cfgPath, 'utf8');
+		const existing = await Bun.file(cfgPath).text();
 		if (existing.includes('[mcp_servers.pk]')) {
 			return;
-		} // Already present
+		}
 
-		mkdirSync(path.dirname(cfgPath), {recursive: true});
-		writeFileSync(cfgPath, existing.trimEnd() + '\n\n' + toml);
+		await Bun.write(cfgPath, existing.trimEnd() + '\n\n' + toml);
 	} else {
-		mkdirSync(path.dirname(cfgPath), {recursive: true});
-		writeFileSync(cfgPath, toml);
+		await Bun.write(cfgPath, toml);
 	}
 }
 
@@ -234,7 +227,7 @@ export function installSkill(harness: Harness, projectRoot: string): string {
 
 // ─── Project creation ─────────────────────────────────────────────────────────
 
-export function ensureProject(name: string): {created: boolean; knowledgeDir: string} {
+export async function ensureProject(name: string): Promise<{created: boolean; knowledgeDir: string}> {
 	const kDir = projectDir(name);
 	const alreadyExists = existsSync(kDir);
 	for (const dir of Object.values(TYPE_DIRS)) {
@@ -243,7 +236,7 @@ export function ensureProject(name: string): {created: boolean; knowledgeDir: st
 
 	const gi = path.join(kDir, '.gitignore');
 	if (!existsSync(gi)) {
-		writeFileSync(gi, '.index.db\n');
+		await Bun.write(gi, '.index.db\n');
 	}
 
 	return {created: !alreadyExists, knowledgeDir: kDir};
@@ -253,36 +246,36 @@ export function ensureProject(name: string): {created: boolean; knowledgeDir: st
 
 type HarnessContext = {name: string; knowledgeDir: string; projectRoot: string; home: string};
 
-export function applyHarness(harness: Harness, ctx: HarnessContext): void {
+export async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void> {
 	const {name, knowledgeDir, projectRoot, home} = ctx;
 	switch (harness) {
 		case 'claude': {
-			writeClaudeConfig(projectRoot, name, knowledgeDir);
+			await writeClaudeConfig(projectRoot, name, knowledgeDir);
 			break;
 		}
 
 		case 'claude-desktop': {
-			writeClaudeDesktopConfig(home, name, knowledgeDir);
+			await writeClaudeDesktopConfig(home, name, knowledgeDir);
 			break;
 		}
 
 		case 'codex': {
-			writeCodexConfig(projectRoot, name, knowledgeDir);
+			await writeCodexConfig(projectRoot, name, knowledgeDir);
 			break;
 		}
 
 		case 'cursor': {
-			writeCursorConfig(projectRoot, name, knowledgeDir);
+			await writeCursorConfig(projectRoot, name, knowledgeDir);
 			break;
 		}
 
 		case 'omp': {
-			writeOmpConfig(projectRoot, name, knowledgeDir);
+			await writeOmpConfig(projectRoot, name, knowledgeDir);
 			break;
 		}
 
 		case 'opencode': {
-			writeOpenCodeConfig(projectRoot, name, knowledgeDir);
+			await writeOpenCodeConfig(projectRoot, name, knowledgeDir);
 			break;
 		}
 	}
@@ -292,12 +285,9 @@ export function applyHarness(harness: Harness, ctx: HarnessContext): void {
  * Apply a list of harnesses, installing skill once per unique target dir.
  * Returns the set of skill paths installed.
  */
-export function applyHarnesses(harnesses: Harness[], ctx: HarnessContext): string[] {
-	for (const h of harnesses) {
-		applyHarness(h, ctx);
-	}
+export async function applyHarnesses(harnesses: Harness[], ctx: HarnessContext): Promise<string[]> {
+	await Promise.all(harnesses.map(async h => applyHarness(h, ctx)));
 
-	// Deduplicate skill installs by target path
 	const seen = new Set<string>();
 	const installed: string[] = [];
 	for (const h of harnesses) {
@@ -340,11 +330,11 @@ export function registerInit(program: Command): void {
 
 			// ── Non-interactive path: both args supplied ───────────────────────
 			if (nameArg && flagHarnesses) {
-				const {created, knowledgeDir} = ensureProject(nameArg);
+				const {created, knowledgeDir} = await ensureProject(nameArg);
 				const ctx = {
 					home, knowledgeDir, name: nameArg, projectRoot,
 				};
-				const skillPaths = applyHarnesses(flagHarnesses, ctx);
+				const skillPaths = await applyHarnesses(flagHarnesses, ctx);
 				console.log(buildOutro(created, knowledgeDir, flagHarnesses, skillPaths).join('\n'));
 				return;
 			}
@@ -412,11 +402,11 @@ export function registerInit(program: Command): void {
 			}
 
 			// ── Apply ──────────────────────────────────────────────────────────
-			const {created, knowledgeDir} = ensureProject(name);
+			const {created, knowledgeDir} = await ensureProject(name);
 			const ctx = {
 				home, knowledgeDir, name, projectRoot,
 			};
-			const skillPaths = applyHarnesses(harnesses, ctx);
+			const skillPaths = await applyHarnesses(harnesses, ctx);
 
 			p.outro(buildOutro(created, knowledgeDir, harnesses, skillPaths).join('\n'));
 		});

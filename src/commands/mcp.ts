@@ -99,6 +99,36 @@ export function createPkMcpServer(): McpServer {
 		},
 	);
 
+	// Tool: pk_read
+	server.registerTool(
+		'pk_read',
+		{
+			description: 'Read the full content of a knowledge note by its path. Use paths returned by pk_search or pk_synthesize.',
+			inputSchema: {
+				path: z.string().describe('Absolute path to the note file, as returned by pk_search or pk_synthesize'),
+			},
+		},
+		async ({path: notePath}) => {
+			const dir = requireKnowledgeDir();
+			if (!notePath.startsWith(dir)) {
+				return {
+					content: [{type: 'text', text: `Path must be inside the knowledge directory: ${dir}`}],
+					isError: true,
+				};
+			}
+
+			try {
+				const text = await Bun.file(notePath).text();
+				return {content: [{type: 'text', text}]};
+			} catch {
+				return {
+					content: [{type: 'text', text: `File not found: ${notePath}`}],
+					isError: true,
+				};
+			}
+		},
+	);
+
 	// Tool: pk_lint
 	server.registerTool(
 		'pk_lint',
