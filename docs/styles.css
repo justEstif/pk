@@ -416,7 +416,8 @@ h1 {
 .harness-list {
    display: flex;
    flex-wrap: wrap;
-   gap: 4px 20px;
+   justify-content: space-between;
+   gap: 4px 0;
    margin-bottom: 28px;
 }
 
