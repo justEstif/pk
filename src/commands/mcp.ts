@@ -137,11 +137,13 @@ export function createPkMcpServer(): McpServer {
 		'pk_lint',
 		{
 			description: 'Validate knowledge note structure and frontmatter. Returns lint issues grouped by severity.',
-			inputSchema: {},
+			inputSchema: {
+				paths: z.array(z.string()).optional().describe('Optional note paths to lint. Absent = all notes.'),
+			},
 		},
-		async () => {
+		async ({paths}) => {
 			const dir = requireKnowledgeDir();
-			const {issues, noteCount} = await lintNotes(dir);
+			const {issues, noteCount} = await lintNotes(dir, paths);
 			const errors = issues.filter(i => i.level === 'error');
 			const warnings = issues.filter(i => i.level === 'warn');
 			const lines: string[] = [

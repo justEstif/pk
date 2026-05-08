@@ -1,5 +1,6 @@
 // Node:fs used only for path operations; file reads use Bun.file()
 import path from 'node:path';
+import matter from 'gray-matter';
 import {z} from 'zod';
 import {
 	REQUIRED_SECTIONS, STATUSES, TYPE_DIRS, LENGTH_WARN, type Note,
@@ -152,69 +153,84 @@ function checkUniqueIds(notes: Note[]): Issue[] {
 }
 
 // ---------------------------------------------------------------------------
-// lintNotes — full lint pass
+// Per-note validation — runs all checks for a single note
 // ---------------------------------------------------------------------------
 
-export async function validateNote(notePath: string): Promise<Issue[]> {
-	const knowledgeDir = path.dirname(notePath);
-	const all = await allNotes(knowledgeDir);
-	const note = all.find(n => n.path === notePath);
-	if (!note) {
-		return [{level: 'error', message: 'Note not found', path: notePath}];
+async function runPerNoteChecks(note: Note, knowledgeDir: string): Promise<Issue[]> {
+	const p = note.path;
+	if (note.err) {
+		return [issue('error', `parse error: ${note.err}`, p)];
 	}
 
-	const issues: Issue[] = [];
+	const result: Issue[] = [...checkFrontmatter(note.meta, p, knowledgeDir)];
 
-	// Check frontmatter
-	const {meta} = note;
-	const frontmatterIssues = checkFrontmatter(meta, notePath, knowledgeDir);
-	issues.push(...frontmatterIssues);
+	// If type is unknown skip structural checks that depend on it
+	const type = note.meta.type ?? '';
+	if (!TYPE_DIRS[type]) {
+		return result;
+	}
 
-	// Check required sections
-	const {body} = note;
-	const noteType = meta.type ?? 'note'; // Default to 'note' if type is missing
-	const sectionIssues = checkRequiredSections(body, noteType, notePath);
-	issues.push(...sectionIssues);
-
-	// Check length
-	const lengthIssues = await checkLength(notePath, noteType);
-	issues.push(...lengthIssues);
-
-	// Check source extracted
-	const sourceIssues = checkSourceExtracted(body, meta, notePath);
-	issues.push(...sourceIssues);
-
-	return issues;
+	const lengthIssues = await checkLength(p, type);
+	return [
+		...result,
+		...checkRequiredSections(note.body, type, p),
+		...checkSourceExtracted(note.body, note.meta, p),
+		...lengthIssues,
+	];
 }
 
-export async function lintNotes(knowledgeDir: string): Promise<{issues: Issue[]; noteCount: number}> {
-	const notes = await allNotes(knowledgeDir);
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
-	const perNoteIssues = await Promise.all(notes.map(async n => {
-		const p = n.path;
-		if (n.err) {
-			return [issue('error', `parse error: ${n.err}`, p)];
-		}
+/**
+ * Validate a single note by path. Reads the file directly (does not load all notes).
+ * Runs per-note checks only — no cross-note checks (use lintNotes for project-wide lint).
+ */
+export async function validateNote(notePath: string, knowledgeDir: string): Promise<Issue[]> {
+	const file = Bun.file(notePath);
+	if (!await file.exists()) {
+		return [issue('error', `file not found: ${notePath}`, notePath)];
+	}
 
-		const result: Issue[] = [...checkFrontmatter(n.meta, p, knowledgeDir)];
+	const text = await file.text();
+	let note: Note;
+	try {
+		const {data, content} = matter(text);
+		note = {body: content, meta: data, path: notePath};
+	} catch (error) {
+		note = {
+			body: '',
+			err: error instanceof Error ? error.message : String(error),
+			meta: {},
+			path: notePath,
+		};
+	}
 
-		// If type is unknown skip structural checks that depend on it
-		const type = n.meta.type ?? '';
-		if (!TYPE_DIRS[type]) {
-			return result;
-		}
+	return runPerNoteChecks(note, knowledgeDir);
+}
 
-		return [
-			...result,
-			...checkRequiredSections(n.body, type, p),
-			...await checkLength(p, type),
-			...checkSourceExtracted(n.body, n.meta, p),
-		];
-	}));
+/**
+ * Lint all or specific notes in a knowledge directory.
+ * Runs per-note checks + cross-note checks (duplicate ids).
+ *
+ * @param knowledgeDir - Root knowledge directory
+ * @param paths - Optional array of note paths to lint. Empty/absent = all notes.
+ */
+export async function lintNotes(knowledgeDir: string, paths?: string[]): Promise<{issues: Issue[]; noteCount: number}> {
+	const all = await allNotes(knowledgeDir);
 
+	// Filter to requested paths if provided and non-empty
+	const notes = paths?.length
+		? all.filter(n => paths.includes(n.path))
+		: all;
+
+	const perNoteIssues = await Promise.all(notes.map(async n => runPerNoteChecks(n, knowledgeDir)));
+
+	// Cross-note checks always fire on the full note set (duplicate ids are project-wide)
 	const issues: Issue[] = [
 		...perNoteIssues.flat(),
-		...checkUniqueIds(notes.filter(n => !n.err)),
+		...checkUniqueIds(all.filter(n => !n.err)),
 	];
 
 	return {issues, noteCount: notes.length};

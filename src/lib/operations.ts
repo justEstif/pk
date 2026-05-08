@@ -5,6 +5,14 @@ import {validateNote, type Issue} from './lint.ts';
 import {commitKnowledgeFile, commitDelete} from './git.ts';
 
 /**
+ * Derive the knowledge root from a note path.
+ * Notes live at <knowledgeDir>/<typeDir>/<file>.md — two levels up.
+ */
+function knowledgeDirForNote(notePath: string): string {
+	return path.dirname(path.dirname(notePath));
+}
+
+/**
  * Create a new knowledge note and commit it to git.
  */
 export async function createKnowledgeNote(
@@ -33,7 +41,8 @@ export async function updateKnowledgeNote(
 	await $`${editorCmd} ${notePath}`;
 
 	// Validate
-	const issues = await validateNote(notePath);
+	const knowledgeDir = knowledgeDirForNote(notePath);
+	const issues = await validateNote(notePath, knowledgeDir);
 	if (issues.some((i: Issue) => i.level === 'error')) {
 		console.error('Validation failed:');
 		for (const issue of issues) {
@@ -53,7 +62,7 @@ export async function updateKnowledgeNote(
  * Delete a knowledge note and commit the deletion.
  */
 export async function deleteKnowledgeNote(notePath: string): Promise<void> {
-	const knowledgeDir = path.dirname(notePath);
+	const knowledgeDir = knowledgeDirForNote(notePath);
 
 	// Delete file
 	await $`rm ${notePath}`;
