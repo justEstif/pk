@@ -181,6 +181,23 @@ export async function applyHarnesses(harnesses: Harness[], ctx: HarnessContext):
 	return installed;
 }
 
+/**
+ * Ensure git repo exists in the knowledge directory.
+ * Runs on first creation and on re-init if .git is missing.
+ */
+async function ensureGitRepo(created: boolean, knowledgeDir: string): Promise<void> {
+	if (!created && existsSync(path.join(knowledgeDir, '.git'))) {
+		return;
+	}
+
+	try {
+		const {initRepo} = await import('../lib/git.ts');
+		await initRepo(knowledgeDir);
+	} catch (error) {
+		console.warn(`[pk] Failed to initialize git repo: ${String(error)}`);
+	}
+}
+
 // ─── registerInit ─────────────────────────────────────────────────────────────
 
 export function registerInit(program: Command): void {
@@ -211,16 +228,7 @@ export function registerInit(program: Command): void {
 			// ── Non-interactive path: both args supplied ───────────────────────
 			if (nameArg && flagHarnesses) {
 				const {created, knowledgeDir} = await ensureProject(nameArg);
-
-				// Initialize git repo for new projects
-				if (created) {
-					try {
-						const {initRepo} = await import('../lib/git.ts');
-						await initRepo(knowledgeDir);
-					} catch (error) {
-						console.warn(`[pk] Failed to initialize git repo: ${String(error)}`);
-					}
-				}
+				await ensureGitRepo(created, knowledgeDir);
 
 				const ctx = {
 					home, knowledgeDir, name: nameArg, projectRoot,
@@ -294,16 +302,7 @@ export function registerInit(program: Command): void {
 
 			// ── Apply ──────────────────────────────────────────────────────────
 			const {created, knowledgeDir} = await ensureProject(name);
-
-			// Initialize git repo for new projects
-			if (created) {
-				try {
-					const {initRepo} = await import('../lib/git.ts');
-					await initRepo(knowledgeDir);
-				} catch (error) {
-					console.warn(`[pk] Failed to initialize git repo: ${String(error)}`);
-				}
-			}
+			await ensureGitRepo(created, knowledgeDir);
 
 			const ctx = {
 				home, knowledgeDir, name, projectRoot,
