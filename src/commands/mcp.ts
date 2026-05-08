@@ -2,7 +2,7 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {z} from 'zod';
 import type {Command} from 'commander';
-import {search} from '../lib/db.ts';
+import {search, rebuild} from '../lib/db.ts';
 import {lintNotes} from '../lib/lint.ts';
 import {createNote, validNotes} from '../lib/notes.ts';
 import {selectNotes, formatSynthesizeOutput} from '../lib/synthesize.ts';
@@ -89,6 +89,7 @@ export function createPkMcpServer(): McpServer {
 			const dir = requireKnowledgeDir();
 			try {
 				const outPath = await createNote(dir, type, title, tags ?? '');
+				await rebuild(dir);
 				return {content: [{type: 'text', text: outPath}]};
 			} catch (error) {
 				return {
