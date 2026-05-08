@@ -45,27 +45,27 @@ Available harnesses: `claude` (Claude Code & Claude Desktop), `codex` (Codex), `
 
 | Harness | Files written |
 |---|---|
-| `claude` | `.mcp.json`, `CLAUDE.md`, `.claude/hooks/pk-eval.ts`, `.claude/settings.json` | (also works for Claude Desktop) |
+| `claude` | `.mcp.json`, `CLAUDE.md`, `.claude/hooks/pk-eval.ts`, `.claude/settings.json` |
 | `codex` | `.codex/config.toml`, `AGENTS.md`, `.codex/hooks/pk-eval.sh`, `.codex/hooks.json` |
 | `opencode` | `opencode.json`, `AGENTS.md`, `CLAUDE.md`, `.opencode/plugins/pk-eval.ts` |
 
-## How it works
+## MCP
 
-`pk mcp` runs a stdio MCP server that exposes tools to any connected agent:
+`pk mcp` starts an MCP server on stdio. It runs in-process — tools call the same lib functions as the CLI, no subprocess overhead.
 
-| Tool | What it does |
-|---|---|
-| `pk_search` | Full-text search over the knowledge base (BM25, porter stemming) |
-| `pk_synthesize` | Ranked context dump — by query, session start, or all notes |
-| `pk_read` | Read the full content of a note by path |
-| `pk_new` | Create a new typed note skeleton, returns path to fill in |
-| `pk_lint` | Validate all notes for schema and quality rules |
-| `pk_history` | View knowledge history (git commits and notes) with filtering |
-| `pk_vocab` | List all tags by frequency — orient before searching |
-| `pk_edit` | Edit an existing note (opens in $EDITOR, validates, commits) |
-| `pk_delete` | Delete a note (requires confirmation, commits deletion) |
+For Claude Desktop, add to `claude_desktop_config.json`:
 
-The agent calls these tools directly — no hooks, no shell extensions, no prompt injection. Agents should never read or write knowledge files directly.
+```json
+{
+  "mcpServers": {
+    "pk": {
+      "command": "pk",
+      "args": ["mcp"],
+      "env": { "PK_KNOWLEDGE_DIR": "/Users/you/.pk/my-project" }
+    }
+  }
+}
+```
 
 ## Commands
 
@@ -111,7 +111,7 @@ pk synthesize
 ## Knowledge structure
 
 Notes live in `~/.pk/<name>/` as plain markdown files — human-editable and git-diffable.
-Agents access them exclusively through the MCP tools; humans can read and edit them directly.
+Agents access them exclusively through MCP tools; humans can read and edit them directly.
 
 ```
 ~/.pk/

@@ -10,13 +10,6 @@ import {writeClaudeConfig, writeClaudeHook} from './harnesses/claude.ts';
 import {writeCodexConfig, writeCodexHook} from './harnesses/codex.ts';
 import {writeOpenCodeConfig, writeOpenCodePlugin} from './harnesses/opencode.ts';
 
-// Re-export for test convenience
-export {resolvePkCommand} from './harnesses/shared.ts';
-export {writeClaudeConfig, writeClaudeHook} from './harnesses/claude.ts';
-export {writeCodexConfig, writeCodexHook} from './harnesses/codex.ts';
-export {writeOpenCodeConfig, writeOpenCodePlugin} from './harnesses/opencode.ts';
-export {writeClaudeMd, writeAgentsMd} from './harnesses/shared.ts';
-
 export type Harness = 'claude' | 'codex' | 'opencode';
 
 const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
@@ -140,7 +133,7 @@ export async function ensureProject(name: string): Promise<{created: boolean; kn
 
 type HarnessContext = {name: string; knowledgeDir: string; projectRoot: string; home: string};
 
-export async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void> {
+async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void> {
 	const {knowledgeDir, projectRoot} = ctx;
 	switch (harness) {
 		case 'claude': {

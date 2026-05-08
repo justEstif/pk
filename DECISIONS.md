@@ -2,8 +2,8 @@
 
 ## Principles
 
-1. **CLI is the primary interface.** `--json` flag is the integration seam. MCPB is a thin shell-out adapter for Claude Desktop only.
-2. **Every CLI command gets `--json` output.** That's the contract MCPB parses.
+1. **CLI is the primary interface.** `--json` flag is the integration seam.
+2. **Every CLI command gets `--json` output.** That's the contract for programmatic consumers.
 3. **Every MCP tool has a CLI equivalent.** The inverse does not hold — some CLI commands are human-only (edit, init).
 
 ## Decisions Made
@@ -11,53 +11,54 @@
 1. **Git commit failure = hard error** (not silent warning)
 2. **Single PR** removes Cursor, Gemini, `auto_commit` flag
 3. **Three harnesses only:** Claude Code, Codex, OpenCode (no OMP)
-4. **`src/commands/mcp.ts` kept as reference**, removed when MCPB replaces it
-5. **MCPB is a separate Node.js package**, done after deepening
-6. **`pk_edit` is CLI-only** (opens `$EDITOR`). No MCP equivalent. Agents use `pk_read` + file edit tools + `pk_lint`.
-7. **Add `pk_read` CLI command** and **`pk_vocab` MCP tool** to complete symmetry
-8. **`pk_lint` accepts optional `paths` array.** No args = all notes. No type/filter — agents chain `pk_search` → `pk_lint`.
-9. **Harness setup is context file + skill + eval hook.** No per-harness MCP config.
-10. **Project creation extracted from harness wiring** in init.ts
-11. **`--json` uses shared `writeJson()` helper and typed output shapes.** All JSON schemas are defined in `src/lib/json-output.ts`. MCPB parses these stable schemas.
-12. **`lint --json` exits 0 even with errors.** Errors are in the JSON payload (`issues` array with `level: "error"` entries). Human mode still exits 1 on errors.
-13. **`delete --json` implies `--yes`.** Machine-readable mode skips confirmation prompts.
-14. **`search --json` and `vocab --json` wrap results in objects.** `search` returns `{results: [...]}` not bare array. `vocab` returns `{tags: [...]}` not bare array. Consistency across all commands.
-15. **CLI/MCP symmetry is complete.** Every MCP tool has a CLI equivalent. CLI-only commands: `edit`, `init`, `index`, `config`. `pk_read` is new CLI command; `pk_vocab` is new MCP tool.
-16. **`pk read` validates path is inside knowledge directory.** Rejects paths outside the knowledge root to prevent arbitrary file reads.
-17. **No formal builder pattern for harnesses.** Three harnesses with switch-case dispatch in `applyHarness`. Each harness in its own module under `src/commands/harnesses/`. No `HarnessDefinition` interface — the indirection doesn't earn its keep with only 3 implementations.
-18. **Per-harness module extraction over monolithic init.ts.** `init.ts` is orchestration only (~250 lines). Each harness module is self-contained and independently testable. Shared utilities (MCP config, instruction writers) in `harnesses/shared.ts`.
-19. **MCPB is a standalone npm package** (`@justestif/pk-mcp`). Shells out to `pk` CLI via `--json`. Zero imports from pk internals. Self-contained bundle (~1 MB). `PK_COMMAND` env var overrides binary path for testing.
-20. **MCPB excludes `pk_edit`.** Edit is CLI-only (opens `$EDITOR`). Agents use `pk_read` + file edit tools + `pk_lint`.
-21. **MCPB bundles all dependencies.** `bun build --target node` produces a single self-contained JS file. No `node_modules` needed at runtime.
+4. **`pk_edit` is CLI-only** (opens `$EDITOR`). No MCP equivalent. Agents use `pk_read` + file edit tools + `pk_lint`.
+5. **Add `pk_read` CLI command** and **`pk_vocab` MCP tool** to complete symmetry
+6. **`pk_lint` accepts optional `paths` array.** No args = all notes. No type/filter — agents chain `pk_search` → `pk_lint`.
+7. **Harness setup is context file + skill + eval hook.** No per-harness MCP config.
+8. **Project creation extracted from harness wiring** in init.ts
+9. **`--json` uses shared `writeJson()` helper and typed output shapes.** All JSON schemas are defined in `src/lib/json-output.ts`.
+10. **`lint --json` exits 0 even with errors.** Errors are in the JSON payload.
+11. **`delete --json` implies `--yes`.** Machine-readable mode skips confirmation prompts.
+12. **`search --json` and `vocab --json` wrap results in objects.** `search` returns `{results: [...]}`, `vocab` returns `{tags: [...]}`.
+13. **CLI/MCP symmetry is complete.** CLI-only commands: `edit`, `init`, `index`, `config`.
+14. **`pk read` validates path is inside knowledge directory.** Prevents arbitrary file reads.
+15. **No formal builder pattern for harnesses.** Switch-case dispatch with per-harness modules.
+16. **Per-harness module extraction over monolithic init.ts.** init.ts is orchestration only.
+17. **MCP server runs in-process.** `pk mcp` starts the MCP server directly — tools call the same lib functions as CLI commands. No subprocess overhead, no separate package, no version alignment problem.
+18. **`pk_edit` excluded from MCP.** Agents use `pk_read` + file edit tools + `pk_lint`.
+19. **Dead exports removed.** File-local functions unexported. Re-exports removed from init.ts.
+
+## Reverted Decisions
+
+- **MCPB as separate package** — `@justestif/pk-mcp` was created as a standalone package that shelled out to `pk` CLI. Reverted because: MCPB couldn't work without pk on PATH anyway, pk depended on MCPB (circular dependency in practice), the two-package structure added version alignment complexity without benefit. Folded MCP server back into pk as a single package.
 
 ## Assumptions
 
-- Claude Desktop users are non-devs who need MCPB; all other users have shell access
+- Claude Desktop users install pk globally; `pk mcp` works as their MCP server
 - `pk` is on PATH for all agent environments
 - Cross-note lint checks (duplicate IDs) only fire when scanning all or multiple notes
 - Agents can chain tool calls (search → lint) without built-in filters
 
 ## Open Questions
 
-- **MCPB project picker (#17)** — `user_config` manifest vs runtime `pk_project_switch`. Deferred to MCPB work.
+- **Multi-project support (#17)** — `pk mcp` could accept a project picker or `PK_KNOWLEDGE_DIR` could be switched at runtime. In-process MCP makes this simpler (no cross-process state).
 - **Synthesis architecture (#16)** — deferred, not blocking current work
 
 ## Sequencing
 
-1. ~~**Removal PR:** Drop Cursor, Gemini, `auto_commit` (#18)~~ ✅ commit `1b38a70`
-2. ~~**Deepen Candidate 1:** Note Validator (lint consolidation)~~ ✅ commit `bdcf03e`
-3. ~~**Add `--json` flag** to all CLI commands (new seam contract)~~ ✅
-4. ~~**Add `pk_read` CLI, `pk_vocab` MCP tool** (complete symmetry)~~ ✅
-5. ~~**Revisit Harness Builder** — extracted per-harness modules~~ ✅
-6. ~~**MCPB package** — `@justestif/pk-mcp` standalone package~~ ✅
-7. **Update docs, skill, stale references** — README still lists removed harnesses
-8. **MCPB package** (separate, after CLI is stable)
+1. ~~**Removal PR:** Drop Cursor, Gemini, `auto_commit` (#18)~~ ✅
+2. ~~**Deepen Note Validator**~~ ✅
+3. ~~**Add `--json` flag**~~ ✅
+4. ~~**Add `pk_read` CLI, `pk_vocab` MCP tool**~~ ✅
+5. ~~**Revisit Harness Builder**~~ ✅
+6. ~~**MCPB package**~~ ✅ then reverted
+7. ~~**Architecture and code quality**~~ ✅
+8. ~~**Fold MCP back into pk**~~ ✅ — removed MCPB, in-process MCP server
 
 ## Related Issues
 
 - #3 — embedding/semantic search
 - #13 — profile system for non-project use cases
-- #14 — git auto-commit (always-on, no opt-out)
 - #16 — synthesis architecture design question
 - #17 — Claude Desktop multi-project support
 - #18 — remove Cursor and Gemini harness support

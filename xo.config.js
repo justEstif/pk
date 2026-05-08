@@ -1,7 +1,7 @@
 /** @type {import('xo').FlatXoConfig} */
 const xoConfig = [
 	{
-		ignores: ['docs/**', '.claude/**', 'packages/**'],
+		ignores: ['docs/**', '.claude/**'],
 	},
 	{
 		rules: {

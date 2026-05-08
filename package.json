@@ -33,7 +33,7 @@
    },
    "devDependencies": {
       "@types/bun": "latest",
-      "ajv": "6",
+      "fallow": "^2.67.0",
       "typescript": "latest",
       "xo": "^2.0.2"
    }

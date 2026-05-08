@@ -36,17 +36,17 @@ export async function writeJson(filePath: string, data: unknown): Promise<void> 
 
 // ─── Instruction file writers ─────────────────────────────────────────────────
 
-export const PK_SECTION_START = '<!-- pk:start -->';
-export const PK_SECTION_END = '<!-- pk:end -->';
+const PK_SECTION_START = '<!-- pk:start -->';
+const PK_SECTION_END = '<!-- pk:end -->';
 
-export const PK_INSTRUCTION = `\
+const PK_INSTRUCTION = `\
 ## pk — project knowledge
 
 Use the pk skill and its MCP tools (pk_synthesize, pk_search, pk_read, pk_new, pk_lint) \
 to manage project knowledge for this project. \
 Run pk_synthesize({ sessionStart: true }) at the start of every session.`;
 
-export async function writeInstructionSection(filePath: string, content: string): Promise<void> {
+async function writeInstructionSection(filePath: string, content: string): Promise<void> {
 	const section = `${PK_SECTION_START}\n${content}\n${PK_SECTION_END}\n`;
 	let existing = '';
 	try {

@@ -2,15 +2,14 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {z} from 'zod';
 import type {Command} from 'commander';
-import {search, rebuild, vocab} from '../lib/db.ts';
+import {search, vocab} from '../lib/db.ts';
 import {lintNotes} from '../lib/lint.ts';
-import {validNotes} from '../lib/notes.ts';
 import {selectNotes, formatSynthesizeOutput} from '../lib/synthesize.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
 import {createKnowledgeNote, updateKnowledgeNote, deleteKnowledgeNote} from '../lib/operations.ts';
 import {getHistory, formatHistory} from '../lib/git.ts';
 
-export function createPkMcpServer(): McpServer {
+function createPkMcpServer(): McpServer {
 	const server = new McpServer({
 		name: 'pk',
 		version: '0.1.0',
@@ -91,7 +90,6 @@ export function createPkMcpServer(): McpServer {
 			const dir = requireKnowledgeDir();
 			try {
 				const outPath = await createKnowledgeNote(dir, type, title, tags ?? '');
-				await rebuild(dir);
 				return {content: [{type: 'text', text: outPath}]};
 			} catch (error) {
 				return {
@@ -191,32 +189,6 @@ export function createPkMcpServer(): McpServer {
 
 				const text = formatHistory(history);
 				return {content: [{type: 'text', text}]};
-			} catch (error) {
-				return {
-					content: [{type: 'text', text: String(error)}],
-					isError: true,
-				};
-			}
-		},
-	);
-
-	// Tool: pk_edit
-	server.registerTool(
-		'pk_edit',
-		{
-			description: 'Edit an existing knowledge note. Opens the note in $EDITOR, validates after save, and commits changes.',
-			inputSchema: {
-				path: z.string().describe('Path to the note file'),
-				editor: z.string().optional().describe('Editor command to use (defaults to $EDITOR or vim)'),
-			},
-		},
-		async ({path: notePath, editor}) => {
-			const dir = requireKnowledgeDir();
-			const fullPath = notePath.startsWith('/') ? notePath : `${dir}/${notePath}`;
-
-			try {
-				const resultPath = await updateKnowledgeNote(fullPath, editor);
-				return {content: [{type: 'text', text: `Edited: ${resultPath}`}]};
 			} catch (error) {
 				return {
 					content: [{type: 'text', text: String(error)}],
