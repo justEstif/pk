@@ -208,7 +208,7 @@ export async function writeClaudeHook(projectRoot: string): Promise<void> {
 			&& 'type' in hook
 			&& hook.type === 'command'
 			&& 'command' in hook
-      	&& hook.command === hookCmd);
+			&& hook.command === hookCmd);
 	if (!ups.some(hasPkEval)) {
 		ups.push(wrappedHook);
 	}
