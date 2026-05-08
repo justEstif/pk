@@ -1,25 +1,7 @@
 import {mkdirSync} from 'node:fs';
 import path from 'node:path';
 
-// ─── MCP utilities ────────────────────────────────────────────────────────────
-
-export type McpEntry = {
-	command: string;
-	args: string[];
-	env: Record<string, string>;
-};
-
-export function resolvePkCommand(): string {
-	return Bun.which('pk') ?? 'pk';
-}
-
-export function pkMcpEntry(knowledgeDir: string): McpEntry {
-	return {
-		args: ['mcp'],
-		command: resolvePkCommand(),
-		env: {PK_KNOWLEDGE_DIR: knowledgeDir},
-	};
-}
+// ─── JSON helpers ─────────────────────────────────────────────────────────────
 
 export async function readJson(filePath: string): Promise<Record<string, unknown>> {
 	try {
@@ -39,7 +21,7 @@ export async function writeJson(filePath: string, data: unknown): Promise<void> 
 const PK_SECTION_START = '<!-- pk:start -->';
 const PK_SECTION_END = '<!-- pk:end -->';
 
-function pkInstruction(knowledgeDir: string): string {
+export function pkInstruction(knowledgeDir: string): string {
 	return `\
 ## pk — project knowledge
 
@@ -71,10 +53,6 @@ async function writeInstructionSection(filePath: string, content: string): Promi
 
 	mkdirSync(path.dirname(filePath), {recursive: true});
 	await Bun.write(filePath, updated);
-}
-
-export async function writeClaudeMd(projectRoot: string, knowledgeDir: string): Promise<void> {
-	await writeInstructionSection(path.join(projectRoot, 'CLAUDE.md'), pkInstruction(knowledgeDir));
 }
 
 export async function writeAgentsMd(projectRoot: string, knowledgeDir: string): Promise<void> {
