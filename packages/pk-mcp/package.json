@@ -1,0 +1,29 @@
+{
+	"name": "@justestif/pk-mcp",
+	"type": "module",
+	"version": "0.1.0",
+	"description": "MCP server for pk — shells out to the pk CLI",
+	"bin": {
+		"pk-mcp": "dist/index.js"
+	},
+	"files": [
+		"dist/"
+	],
+	"scripts": {
+		"build": "bun build src/index.ts --outfile dist/index.js --target node && printf '#!/usr/bin/env node\\n' | cat - dist/index.js > dist/tmp.js && mv dist/tmp.js dist/index.js && chmod +x dist/index.js",
+		"typecheck": "bunx tsc --noEmit",
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"@types/bun": "latest",
+		"typescript": "latest",
+		"zod": "^4"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/justEstif/pk.git",
+		"directory": "packages/pk-mcp"
+	},
+	"license": "MIT"
+}
