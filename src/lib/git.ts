@@ -139,69 +139,133 @@ export async function getHistory(
 	opts: HistoryOptions,
 ): Promise<HistoryEntry[]> {
 	const limit = opts.limit ?? 20;
+	const lines = await getGitLog(knowledgeDir, limit * 2);
+	return parseHistoryEntries(lines, limit, opts);
+}
 
-	// Get raw git log with notes
+async function getGitLog(knowledgeDir: string, limit: number): Promise<string[]> {
 	const format = '%H|%ai|%s';
-	const result = await $`git -C ${knowledgeDir} log --show-notes=refs/notes/commits -n ${limit * 2} --format=${format}`.quiet();
-	const lines = result.stdout.toString().trim().split('\n');
+	const result = await $`git -C ${knowledgeDir} log --show-notes=refs/notes/commits -n ${limit} --format=${format}`.quiet();
+	return result.stdout.toString().trim().split('\n');
+}
 
+function parseHistoryEntries(
+	lines: string[],
+	limit: number,
+	opts: HistoryOptions,
+): HistoryEntry[] {
 	const entries: HistoryEntry[] = [];
+
 	for (const line of lines) {
 		if (entries.length >= limit) {
 			break;
 		}
 
-		const parts = line.split('|');
-		if (parts.length < 3) {
+		if (!shouldIncludeLine(line)) {
 			continue;
 		}
 
-		const hash = parts[0];
-		const timestamp = parts[1];
-		const message = parts[2];
-		if (!hash || !timestamp || !message) {
-			continue;
-		}
-
-		const parsed = parseCommitMessage(message);
-
-		if (parsed) {
-			// Apply filters
-			if (opts.filterType && parsed.noteType !== opts.filterType) {
-				continue;
-			}
-
-			if (opts.filterTag && !parsed.tags?.includes(opts.filterTag)) {
-				continue;
-			}
-
-			if (opts.filterOperation && parsed.operation !== opts.filterOperation) {
-				continue;
-			}
-
-			entries.push({
-				hash,
-				timestamp,
-				message,
-				type: 'commit',
-				...parsed,
-			});
-		} else if (message.startsWith('pk synthesize')) {
-			// Git note (synthesize operation)
-			if (opts.type === 'commits') {
-				continue;
-			}
-
-			entries.push({
-				hash,
-				timestamp,
-				message,
-				type: 'note',
-			});
+		const entry = parseHistoryLine(line, opts);
+		if (entry) {
+			entries.push(entry);
 		}
 	}
 
 	return entries;
+}
+
+function shouldIncludeLine(line: string): boolean {
+	const parts = line.split('|');
+	return parts.length >= 3 && Boolean(parts[0]) && Boolean(parts[1]) && Boolean(parts[2]);
+}
+
+function parseHistoryLine(line: string, opts: HistoryOptions): HistoryEntry | undefined {
+	const parts = line.split('|');
+	if (parts.length < 3) {
+		return undefined;
+	}
+
+	const [hash, timestamp, message] = parts;
+	if (!hash || !timestamp || !message) {
+		return undefined;
+	}
+
+	const parsed = parseCommitMessage(message);
+	if (parsed) {
+		return parseCommitEntry({
+			hash, timestamp, message, parsed, opts,
+		});
+	}
+
+	return parseSynthesizeEntry({
+		hash, timestamp, message, opts,
+	});
+}
+
+type CommitEntryParams = {
+	hash: string;
+	timestamp: string;
+	message: string;
+	parsed: ParsedCommit;
+	opts: HistoryOptions;
+};
+
+function parseCommitEntry({hash, timestamp, message, parsed, opts}: CommitEntryParams): HistoryEntry | undefined {
+	if (!passesFilters(parsed, opts)) {
+		return undefined;
+	}
+
+	return {
+		hash,
+		timestamp,
+		message,
+		type: 'commit',
+		...parsed,
+	};
+}
+
+type SynthesizeEntryParams = {
+	hash: string;
+	timestamp: string;
+	message: string;
+	opts: HistoryOptions;
+};
+
+function parseSynthesizeEntry({hash, timestamp, message, opts}: SynthesizeEntryParams): HistoryEntry | undefined {
+	if (!message.startsWith('pk synthesize')) {
+		return undefined;
+	}
+
+	if (opts.type === 'commits') {
+		return undefined;
+	}
+
+	return {
+		hash,
+		timestamp,
+		message,
+		type: 'note',
+	};
+}
+
+function passesFilters(parsed: ParsedCommit | undefined, opts: HistoryOptions): boolean {
+	if (!parsed) {
+		return true;
+	}
+
+	if (opts.filterType && parsed.noteType !== opts.filterType) {
+		return false;
+	}
+
+	if (opts.filterTag && !parsed.tags?.includes(opts.filterTag)) {
+		return false;
+	}
+
+	if (opts.filterOperation && parsed.operation !== opts.filterOperation) {
+		return false;
+	}
+
+	return true;
 }
 
 /**

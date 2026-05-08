@@ -71,10 +71,3 @@ export async function deleteKnowledgeNote(notePath: string): Promise<void> {
 		await commitDelete(knowledgeDir, notePath, config);
 	}
 }
-
-/**
- * Extract title from a knowledge note file path.
- * Exported for use in other modules.
- */
-
-export {extractTitleFromPath} from './git.ts';
