@@ -3,7 +3,6 @@ import {$} from 'bun';
 import {createNote} from './notes.ts';
 import {validateNote, type Issue} from './lint.ts';
 import {commitKnowledgeFile, commitDelete} from './git.ts';
-import {loadConfig} from './config.ts';
 
 /**
  * Create a new knowledge note and commit it to git.
@@ -15,11 +14,8 @@ export async function createKnowledgeNote(
 	tags: string,
 ): Promise<string> {
 	const filePath = await createNote(knowledgeDir, type, title, tags);
-	const config = await loadConfig();
 
-	if (config.auto_commit) {
-		await commitKnowledgeFile(filePath, 'intake', config);
-	}
+	await commitKnowledgeFile(filePath, 'intake');
 
 	return filePath;
 }
@@ -31,7 +27,6 @@ export async function updateKnowledgeNote(
 	notePath: string,
 	editor?: string,
 ): Promise<string> {
-	const config = await loadConfig();
 	const editorCmd = editor ?? process.env.EDITOR ?? 'vim';
 
 	// Open editor
@@ -49,9 +44,7 @@ export async function updateKnowledgeNote(
 	}
 
 	// Commit
-	if (config.auto_commit) {
-		await commitKnowledgeFile(notePath, 'update', config);
-	}
+	await commitKnowledgeFile(notePath, 'update');
 
 	return notePath;
 }
@@ -60,14 +53,11 @@ export async function updateKnowledgeNote(
  * Delete a knowledge note and commit the deletion.
  */
 export async function deleteKnowledgeNote(notePath: string): Promise<void> {
-	const config = await loadConfig();
 	const knowledgeDir = path.dirname(notePath);
 
 	// Delete file
 	await $`rm ${notePath}`;
 
 	// Commit deletion
-	if (config.auto_commit) {
-		await commitDelete(knowledgeDir, notePath, config);
-	}
+	await commitDelete(knowledgeDir, notePath);
 }

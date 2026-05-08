@@ -3,11 +3,10 @@ import path from 'node:path';
 import os from 'node:os';
 
 export type Config = {
-	auto_commit: boolean;
 	embedding: string;
 };
 
-const DEFAULT: Config = {auto_commit: true, embedding: ''};
+const DEFAULT: Config = {embedding: ''};
 
 function configPath(): string {
 	return path.join(os.homedir(), '.pk', 'config.json');

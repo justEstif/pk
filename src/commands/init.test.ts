@@ -13,12 +13,6 @@ import {
 	writeClaudeConfig,
 	writeClaudeHook,
 	writeClaudeMd,
-	writeCursorConfig,
-	writeCursorRules,
-	writeCursorHook,
-	writeGeminiConfig,
-	writeGeminiMd,
-	writeGeminiHook,
 	writeCodexConfig,
 	writeCodexHook,
 	writeOpenCodeConfig,
@@ -79,18 +73,10 @@ describe('ensureProject', () => {
 // ─── installSkill ────────────────────────────────────────────────────────────
 
 describe('installSkill', () => {
-	test('returns target path for cursor when skill source exists', () => {
-		const result = installSkill('cursor', tmpDir);
-		if (result) {
-			expect(result).toBe(path.join(tmpDir, '.agents', 'skills', 'pk'));
-			expect(existsSync(result)).toBe(true);
-		}
-	});
-
 	test('skips reinstall if target already exists', () => {
 		const target = path.join(tmpDir, '.agents', 'skills', 'pk');
 		mkdirSync(target, {recursive: true});
-		const result = installSkill('cursor', tmpDir);
+		const result = installSkill('opencode', tmpDir);
 		if (result) {
 			expect(result).toBe(target);
 		}
@@ -104,9 +90,9 @@ describe('applyHarnesses', () => {
 		const ctx = {
 			home: fakeHome, knowledgeDir: KNOWLEDGE_DIR, name: 'myproject', projectRoot: tmpDir,
 		};
-		await applyHarnesses(['claude', 'cursor'], ctx);
+		await applyHarnesses(['claude', 'codex'], ctx);
 		expect(existsSync(path.join(tmpDir, '.mcp.json'))).toBe(true);
-		expect(existsSync(path.join(tmpDir, '.cursor', 'mcp.json'))).toBe(true);
+		expect(existsSync(path.join(tmpDir, '.codex', 'config.toml'))).toBe(true);
 		expect(existsSync(path.join(tmpDir, 'CLAUDE.md'))).toBe(true);
 	});
 });
@@ -203,22 +189,6 @@ describe('writeClaudeHook', () => {
 // ─── Skill installation for new harnesses ────────────────────────────────────
 
 describe('installSkill', () => {
-	test('cursor uses .agents/skills/pk', () => {
-		const result = installSkill('cursor', tmpDir);
-		if (result) {
-			expect(result).toBe(path.join(tmpDir, '.agents', 'skills', 'pk'));
-			expect(existsSync(result)).toBe(true);
-		}
-	});
-
-	test('gemini uses .agents/skills/pk', () => {
-		const result = installSkill('gemini', tmpDir);
-		if (result) {
-			expect(result).toBe(path.join(tmpDir, '.agents', 'skills', 'pk'));
-			expect(existsSync(result)).toBe(true);
-		}
-	});
-
 	test('opencode uses .agents/skills/pk', () => {
 		const result = installSkill('opencode', tmpDir);
 		if (result) {
@@ -233,134 +203,6 @@ describe('installSkill', () => {
 			expect(result).toBe(path.join(fakeHome, '.codex', 'skills', 'pk'));
 			expect(existsSync(result)).toBe(true);
 		}
-	});
-});
-
-// ─── Cursor (.cursor/mcp.json) ─────────────────────────────────────────────────
-
-describe('writeCursorConfig', () => {
-	test('creates .cursor/mcp.json with mcpServers.pk entry', async () => {
-		await writeCursorConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = await readMcpConfig(path.join(tmpDir, '.cursor', 'mcp.json'));
-
-		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
-		expect(cfg.mcpServers.pk!.args).toEqual(['mcp']);
-		expect(cfg.mcpServers.pk!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
-	});
-
-	test('merges with existing .cursor/mcp.json', async () => {
-		const existing = {mcpServers: {other: {command: 'other', args: [], env: {}}}};
-		mkdirSync(path.join(tmpDir, '.cursor'), {recursive: true});
-		await Bun.write(path.join(tmpDir, '.cursor', 'mcp.json'), JSON.stringify(existing));
-		await writeCursorConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = await readMcpConfig(path.join(tmpDir, '.cursor', 'mcp.json'));
-
-		expect(cfg.mcpServers.other!.command).toBe('other');
-		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
-	});
-});
-
-describe('writeCursorRules', () => {
-	test('creates .cursor/rules/pk.mdc with frontmatter', async () => {
-		await writeCursorRules(tmpDir);
-		const rulesPath = path.join(tmpDir, '.cursor', 'rules', 'pk.mdc');
-		expect(existsSync(rulesPath)).toBe(true);
-		const content = await Bun.file(rulesPath).text();
-		expect(content).toContain('---');
-		expect(content).toContain('alwaysApply: true');
-		expect(content).toContain('pk_synthesize');
-	});
-});
-
-describe('writeCursorHook', () => {
-	test('creates pk-eval.sh hook and registers in hooks.json', async () => {
-		await writeCursorHook(tmpDir);
-		const hookPath = path.join(tmpDir, '.cursor', 'hooks', 'pk-eval.sh');
-		expect(existsSync(hookPath)).toBe(true);
-		const hook = await Bun.file(hookPath).text();
-		expect(hook).toContain('#!/bin/bash');
-		expect(hook).toContain('additionalContext');
-
-		const hooks = JSON.parse(await Bun.file(path.join(tmpDir, '.cursor', 'hooks.json')).text()) as {
-			hooks: {beforeSubmitPrompt: Array<{command: string}>};
-		};
-		expect(hooks.hooks.beforeSubmitPrompt.some(h => h.command.includes('pk-eval.sh'))).toBe(true);
-	});
-
-	test('does not duplicate hook registration', async () => {
-		await writeCursorHook(tmpDir);
-		await writeCursorHook(tmpDir);
-		const hooks = JSON.parse(await Bun.file(path.join(tmpDir, '.cursor', 'hooks.json')).text()) as {
-			hooks: {beforeSubmitPrompt: Array<{command: string}>};
-		};
-		expect(hooks.hooks.beforeSubmitPrompt.length).toBe(1);
-	});
-});
-
-// ─── Gemini CLI (.gemini/settings.json) ───────────────────────────────────────
-
-describe('writeGeminiConfig', () => {
-	test('creates .gemini/settings.json with mcpServers.pk entry', async () => {
-		await writeGeminiConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = await readMcpConfig(path.join(tmpDir, '.gemini', 'settings.json'));
-
-		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
-		expect(cfg.mcpServers.pk!.args).toEqual(['mcp']);
-		expect(cfg.mcpServers.pk!.env.PK_KNOWLEDGE_DIR).toBe(KNOWLEDGE_DIR);
-	});
-
-	test('merges with existing .gemini/settings.json', async () => {
-		const existing = {mcpServers: {other: {command: 'other', args: [], env: {}}}};
-		mkdirSync(path.join(tmpDir, '.gemini'), {recursive: true});
-		await Bun.write(path.join(tmpDir, '.gemini', 'settings.json'), JSON.stringify(existing));
-		await writeGeminiConfig(tmpDir, 'myproject', KNOWLEDGE_DIR);
-		const cfg = await readMcpConfig(path.join(tmpDir, '.gemini', 'settings.json'));
-
-		expect(cfg.mcpServers.other!.command).toBe('other');
-		expect(cfg.mcpServers.pk!.command).toBe(resolvePkCommand());
-	});
-});
-
-describe('writeGeminiMd', () => {
-	test('creates GEMINI.md with pk section', async () => {
-		await writeGeminiMd(tmpDir);
-		const content = await Bun.file(path.join(tmpDir, 'GEMINI.md')).text();
-		expect(content).toContain('<!-- pk:start -->');
-		expect(content).toContain('<!-- pk:end -->');
-		expect(content).toContain('pk_synthesize');
-	});
-
-	test('replaces existing pk section without duplicating', async () => {
-		await writeGeminiMd(tmpDir);
-		await writeGeminiMd(tmpDir);
-		const content = await Bun.file(path.join(tmpDir, 'GEMINI.md')).text();
-		const count = (content.match(/<!-- pk:start -->/gv) ?? []).length;
-		expect(count).toBe(1);
-	});
-});
-
-describe('writeGeminiHook', () => {
-	test('creates pk-eval.sh hook and registers in settings.json hooks', async () => {
-		await writeGeminiHook(tmpDir);
-		const hookPath = path.join(tmpDir, '.gemini', 'hooks', 'pk-eval.sh');
-		expect(existsSync(hookPath)).toBe(true);
-		const hook = await Bun.file(hookPath).text();
-		expect(hook).toContain('#!/bin/bash');
-		expect(hook).toContain('BeforeAgent');
-
-		const settings = JSON.parse(await Bun.file(path.join(tmpDir, '.gemini', 'settings.json')).text()) as {
-			hooks: {BeforeAgent: Array<{command: string}>};
-		};
-		expect(settings.hooks.BeforeAgent.some(h => h.command.includes('pk-eval.sh'))).toBe(true);
-	});
-
-	test('does not duplicate hook registration', async () => {
-		await writeGeminiHook(tmpDir);
-		await writeGeminiHook(tmpDir);
-		const settings = JSON.parse(await Bun.file(path.join(tmpDir, '.gemini', 'settings.json')).text()) as {
-			hooks: {BeforeAgent: Array<{command: string}>};
-		};
-		expect(settings.hooks.BeforeAgent.length).toBe(1);
 	});
 });
 

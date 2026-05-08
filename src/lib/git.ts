@@ -1,6 +1,5 @@
 import path from 'node:path';
 import {$} from 'bun';
-import type {Config} from './config.ts';
 
 export type HistoryOptions = {
 	limit?: number;
@@ -66,12 +65,7 @@ export async function initRepo(knowledgeDir: string): Promise<void> {
 export async function commitKnowledgeFile(
 	filePath: string,
 	operation: 'intake' | 'update',
-	config: Config,
 ): Promise<void> {
-	if (!config.auto_commit) {
-		return;
-	}
-
 	const knowledgeDir = path.dirname(filePath);
 	const title = extractTitleFromPath(filePath);
 	const noteType = extractTypeFromPath(filePath);
@@ -91,12 +85,7 @@ export async function commitKnowledgeFile(
 export async function commitDelete(
 	knowledgeDir: string,
 	notePath: string,
-	config: Config,
 ): Promise<void> {
-	if (!config.auto_commit) {
-		return;
-	}
-
 	const title = extractTitleFromPath(notePath);
 	const noteType = extractTypeFromPath(notePath);
 	const message = `knowledge: delete ${noteType} ${title}`;
@@ -115,12 +104,7 @@ export async function commitDelete(
 export async function addSynthesizeNote(
 	knowledgeDir: string,
 	query: string,
-	config: Config,
 ): Promise<void> {
-	if (!config.auto_commit) {
-		return;
-	}
-
 	const timestamp = new Date().toISOString();
 	const noteContent = `pk synthesize\nQuery: ${query}\nTimestamp: ${timestamp}`;
 
