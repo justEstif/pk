@@ -35,43 +35,24 @@ pk init my-project --harness claude,codex   # multiple harnesses
 
 **Git integration:** `pk init` creates a git repository in `~/.pk/<name>/.git` and tracks all knowledge operations via commits and git notes.
 
-Available harnesses: `claude` (Claude Code & Claude Desktop), `codex` (Codex), `opencode` (OpenCode).
+Available harnesses: `claude` (Claude Code), `codex` (Codex), `opencode` (OpenCode).
 
 `pk init` does three things:
 
 1. Creates `~/.pk/<name>/` as the knowledge home for this project
-2. Writes an MCP server config so your harness discovers `pk mcp`
-3. Installs a harness adapter that calls `pk prime` at session start to inject the skill into context
+2. Installs a hook or plugin that calls `pk prime` at session start to inject context into your agent
+3. Installs the pk skill so your agent knows how to use the CLI
 
-| Harness | Files written |
-|---|---|
-| `claude` | `.mcp.json`, `CLAUDE.md`, `.claude/hooks/pk-eval.ts`, `.claude/settings.json` |
-| `codex` | `.codex/config.toml`, `AGENTS.md`, `.codex/hooks/pk-eval.sh`, `.codex/hooks.json` |
-| `opencode` | `opencode.json`, `AGENTS.md`, `CLAUDE.md`, `.opencode/plugins/pk-eval.ts` |
-
-## MCP
-
-`pk mcp` starts an MCP server on stdio. It runs in-process — tools call the same lib functions as the CLI, no subprocess overhead.
-
-For Claude Desktop, add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "pk": {
-      "command": "pk",
-      "args": ["mcp"],
-      "env": { "PK_KNOWLEDGE_DIR": "/Users/you/.pk/my-project" }
-    }
-  }
-}
-```
+| Harness | Files written | Mechanism |
+|---|---|---|
+| `claude` | `.claude/hooks/pk-eval.ts`, `.claude/settings.json` | Hook spawns `pk prime` on every prompt |
+| `codex` | `AGENTS.md` | Codex reads AGENTS.md natively |
+| `opencode` | `.opencode/plugins/pk-eval.ts` | Plugin spawns `pk prime` at session start |
 
 ## Commands
 
 ```bash
-pk init [name] [--harness h1,h2,…]   # set up project + MCP config
-pk mcp                                 # start MCP server (stdio)
+pk init [name] [--harness h1,h2,…]   # set up project + hooks
 
 pk new <type> <title> [--tags t1,t2]
 pk edit <path> [--editor <cmd>]      # edit existing note
@@ -83,9 +64,12 @@ pk read <path> [--json]
 pk vocab [--json]
 pk rebuild
 pk lint [paths...] [--json]
+pk prime                               # output priming context for hooks
 pk instructions <command>
 pk config
 ```
+
+Every command supports `--json` for machine-readable output.
 
 ### Note types
 
@@ -111,7 +95,7 @@ pk synthesize
 ## Knowledge structure
 
 Notes live in `~/.pk/<name>/` as plain markdown files — human-editable and git-diffable.
-Agents access them exclusively through MCP tools; humans can read and edit them directly.
+Agents access them exclusively through the CLI; humans can read and edit them directly.
 
 ```
 ~/.pk/
@@ -127,7 +111,7 @@ Agents access them exclusively through MCP tools; humans can read and edit them 
 Search is powered by SQLite FTS5 with BM25 ranking and porter stemming.
 Partial word matching works — `pk search migr` matches "migration", "migrate", etc.
 
-`pk vocab` lists all tags by frequency — useful for orienting an agent before searching, without loading full note content.
+`pk vocab` lists all tags by frequency — useful for orienting before searching.
 
 `pk history` shows all knowledge operations (create, update, delete) as git commits and synthesize operations as git notes. Supports filtering by type, tag, and operation.
 
