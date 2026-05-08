@@ -155,6 +155,38 @@ function checkUniqueIds(notes: Note[]): Issue[] {
 // lintNotes — full lint pass
 // ---------------------------------------------------------------------------
 
+export async function validateNote(notePath: string): Promise<Issue[]> {
+	const knowledgeDir = path.dirname(notePath);
+	const all = await allNotes(knowledgeDir);
+	const note = all.find(n => n.path === notePath);
+	if (!note) {
+		return [{level: 'error', message: 'Note not found', path: notePath}];
+	}
+
+	const issues: Issue[] = [];
+
+	// Check frontmatter
+	const {meta} = note;
+	const frontmatterIssues = checkFrontmatter(meta, notePath, knowledgeDir);
+	issues.push(...frontmatterIssues);
+
+	// Check required sections
+	const {body} = note;
+	const noteType = meta.type ?? 'note'; // Default to 'note' if type is missing
+	const sectionIssues = checkRequiredSections(body, noteType, notePath);
+	issues.push(...sectionIssues);
+
+	// Check length
+	const lengthIssues = await checkLength(notePath, noteType);
+	issues.push(...lengthIssues);
+
+	// Check source extracted
+	const sourceIssues = checkSourceExtracted(body, meta, notePath);
+	issues.push(...sourceIssues);
+
+	return issues;
+}
+
 export async function lintNotes(knowledgeDir: string): Promise<{issues: Issue[]; noteCount: number}> {
 	const notes = await allNotes(knowledgeDir);
 

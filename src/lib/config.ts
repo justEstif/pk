@@ -2,7 +2,7 @@ import {mkdirSync} from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-type Config = {
+export type Config = {
 	auto_commit: boolean;
 	embedding: string;
 };
