@@ -7,48 +7,48 @@ description: "Load when maintaining project knowledge, capturing decisions or qu
 
 Structured project knowledge — intake, search, recall, and audit.
 
-**Search, synthesis, creation, and validation go through MCP tools. Writing note body content uses your standard file Edit tool — but only on paths returned by `pk_new` or `pk_search`, never by navigating the filesystem yourself.**
+Use the `pk` CLI for all knowledge operations. Every command supports `--json` for machine-readable output. Never read or write knowledge files directly — always go through `pk`.
 
-## Tools
+## Commands
 
-### `pk_synthesize` — orient before any investigation
+### `pk synthesize` — orient before any investigation
 
-```
-pk_synthesize({ sessionStart: true })                          # open questions + accepted decisions + active notes
-pk_synthesize({ query: "auth flow" })                         # ranked context for a topic
-pk_synthesize({ query: "auth", type: "decision", limit: 5 })
-```
-
-Returns formatted markdown with title, type, status, tags, and an excerpt per note. Use `sessionStart: true` at the start of every session.
-
-### `pk_search` — locate notes by content
-
-```
-pk_search({ query: "database schema" })
-pk_search({ query: "api", type: "question", status: "open" })
-pk_search({ query: "deploy", tag: "infra", limit: 5 })
+```bash
+pk synthesize --session-start            # open questions + accepted decisions + active notes
+pk synthesize "auth flow"                # ranked context for a topic
+pk synthesize "auth" --type decision --limit 5
 ```
 
-Returns `[{ path, type, status, title, tags, snippet }]`. Always call before `pk_new` — duplicates erode trust faster than gaps do.
+Returns formatted markdown with title, type, status, tags, and an excerpt per note. Run `--session-start` at the start of every session.
 
-### `pk_read` — full note body
+### `pk search` — locate notes by content
 
-```
-pk_read({ path: "/abs/path/returned/by/pk_search" })
-```
-
-Returns complete file contents including frontmatter. Use paths from `pk_search` or `pk_synthesize` output.
-
-### `pk_new` — create a typed note skeleton
-
-```
-pk_new({ type: "note", title: "Auth token expiry behaviour", tags: "auth,security" })
-pk_new({ type: "decision", title: "Use JWT over sessions" })
-pk_new({ type: "question", title: "Should we rate-limit the search endpoint?" })
-pk_new({ type: "source", title: "Meeting notes 2024-06-01" })
+```bash
+pk search "database schema"
+pk search "api" --type question --status open
+pk search "deploy" --tag infra --limit 5
 ```
 
-Returns the absolute path. Frontmatter (id, dates, status, tags as YAML array) is generated automatically from your inputs — you don't edit frontmatter after creation. After receiving the path: call `pk_read` to see the skeleton, then use your standard file Edit tool to fill in the required sections.
+Returns path, type, status, title, tags, and snippet per match. Always search before creating — duplicates erode trust faster than gaps do.
+
+### `pk read` — full note body
+
+```bash
+pk read /abs/path/from/search
+```
+
+Returns complete file contents including frontmatter. Use paths from `pk search` or `pk synthesize` output.
+
+### `pk new` — create a typed note skeleton
+
+```bash
+pk new note "Auth token expiry behaviour" --tags auth,security
+pk new decision "Use JWT over sessions"
+pk new question "Should we rate-limit the search endpoint?"
+pk new source "Meeting notes 2024-06-01"
+```
+
+Prints the absolute path. Frontmatter (id, dates, status, tags) is generated automatically — don't edit frontmatter after creation. After receiving the path: `pk read` to see the skeleton, then edit the file to fill in the required sections.
 
 **Required sections by type:**
 - `note` → `## Summary`, `## Details`, `## Evidence`, `## Related`
@@ -58,58 +58,58 @@ Returns the absolute path. Frontmatter (id, dates, status, tags as YAML array) i
 
 **`source` vs `note`:** `source` = raw/provenance-heavy input (meeting notes, transcripts, external docs, unprocessed data). `note` = stable synthesised fact or constraint you've derived. When synthesising across multiple sources into one insight: create a `note` and put source paths in `## Evidence`.
 
-### `pk_lint` — validate before committing
+### `pk lint` — validate before committing
 
-```
-pk_lint({})
-```
-
-**Errors block commits** (missing frontmatter, duplicate id, wrong folder, missing required sections, broken links). **Warnings are advisory** (empty tags, note too long, source marked processed with no extracted items) — fix when practical, not required to commit.
-
-### `pk_history` — view knowledge operations
-
-```
-pk_history({})                                          # last 20 operations
-pk_history({ limit: 50, type: 'commits' })              # only CUD operations
-pk_history({ filterType: 'decision' })                 # only decisions
-pk_history({ filterTag: 'important' })                  # only tagged 'important'
-pk_history({ filterOperation: 'update' })               # only updates
+```bash
+pk lint              # all notes
+pk lint path1 path2  # specific notes
 ```
 
-Returns formatted history of all knowledge operations (create, update, delete) with git commits and synthesize operations as git notes.
+**Errors block commits** (missing frontmatter, duplicate id, wrong folder, missing required sections). **Warnings are advisory** (empty tags, note too long) — fix when practical.
 
-### `pk_delete` — delete a note
+### `pk history` — view knowledge operations
 
-```
-pk_delete({ path: '/abs/path/to/note.md' })
-```
-
-Deletes a knowledge note and commits the deletion. No confirmation step in MCP mode.
-
-### `pk_vocab` — list tags by frequency
-
-```
-pk_vocab({})
+```bash
+pk history                                    # last 20 operations
+pk history --limit 50 --type commits           # only CUD operations
+pk history --filter-type decision              # only decisions
+pk history --filter-tag important              # only tagged 'important'
+pk history --filter-operation update           # only updates
 ```
 
-Returns `{tags: [{tag, count}]}`. Useful for orienting before searching.
+### `pk delete` — delete a note
 
-### Editing notes
+```bash
+pk delete /abs/path/to/note.md --yes
+```
 
-There is no `pk_edit` MCP tool. To edit a note:
-1. `pk_read` to get current content
-2. Use your standard file Edit tool on the path
-3. `pk_lint` to validate after editing
+Deletes and commits. `--yes` skips confirmation (required in non-interactive mode).
+
+### `pk vocab` — list tags by frequency
+
+```bash
+pk vocab
+```
+
+Useful for orienting before searching.
+
+### `pk edit` — edit a note in $EDITOR
+
+```bash
+pk edit /abs/path/to/note.md
+```
+
+Opens the note in `$EDITOR`, validates after save, commits changes. For agents: use `pk read` + file edit + `pk lint` instead.
 
 ### Status transitions
 
-No MCP tool for status changes. Use your file Edit tool directly on the frontmatter, fill in the resolution section, then lint.
+No command for status changes. Edit the frontmatter `status` field directly, then `pk lint` to validate.
 
-**MANDATORY READ `references/knowledge-model.md`** when: creating a note type you haven't used before, unsure which folder a type belongs in, validating frontmatter fields, or unsure which status values are valid for a given type. (Read with your standard file Read tool — these are local skill files, not MCP-accessible.)
+**MANDATORY READ `references/knowledge-model.md`** when: creating a note type you haven't used before, unsure which folder a type belongs in, validating frontmatter fields, or unsure which status values are valid for a given type.
 
 ## NEVER
 
-- **NEVER skip `pk_search` before `pk_new`**
+- **NEVER skip `pk search` before `pk new`**
   **Why:** Duplicates silently fragment knowledge — two notes on the same topic never get reconciled, and future searches return noise.
   **Instead:** Search first; update the existing note if found, or create and link if genuinely different.
 
@@ -121,6 +121,6 @@ No MCP tool for status changes. Use your file Edit tool directly on the frontmat
   **Why:** Silent overwrites destroy the rationale trail — you lose why the old claim existed.
   **Instead:** Create a new note explaining the conflict, link both, and use `status: superseded` on the old one.
 
-- **NEVER commit when `pk_lint` returns errors or unrelated files are staged**
+- **NEVER commit when `pk lint` returns errors or unrelated files are staged**
   **Why:** Lint errors mean required structure is broken; mixed commits make knowledge changes unauditable.
   **Instead:** Fix errors, unstage unrelated files, then commit.

@@ -38,15 +38,15 @@ Expect ~6 2FA prompts across these steps.
 
 ## Knowledge Capture
 
-If the pk MCP tools are available (`pk_search`, `pk_read`, `pk_new`, `pk_synthesize`, `pk_lint`), use them:
+If pk is available on PATH, use the CLI for all knowledge operations:
 
-- Session start: `pk_synthesize({ sessionStart: true })` — orient before diving in
-- Before any investigation: `pk_search` — don't re-derive what's already known
-- After reading 3+ files to answer a question or build a proposal: `pk_new({ type: "source" })` or `pk_new({ type: "note" })`
-- After producing a recommendation or architectural decision: `pk_new({ type: "decision" })`
-- When hitting genuine uncertainty that blocks work: `pk_new({ type: "question" })`
-- Call `pk_lint({})` before yielding if you wrote any knowledge notes
-- Never read or write knowledge files directly — use MCP tools only
+- Session start: `pk synthesize --session-start` — orient before diving in
+- Before any investigation: `pk search <query>` — don't re-derive what's already known
+- After reading 3+ files to answer a question or build a proposal: `pk new source <title>` or `pk new note <title>`
+- After producing a recommendation or architectural decision: `pk new decision <title>`
+- When hitting genuine uncertainty that blocks work: `pk new question <title>`
+- Run `pk lint` before yielding if you wrote any knowledge notes
+- Never read or write knowledge files directly — use `pk` CLI commands
 
 ## Rules
 
