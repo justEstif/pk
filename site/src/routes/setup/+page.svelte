@@ -34,11 +34,17 @@
 		brew: 'brew install justEstif/tap/pk'
 	};
 
-	const harnessInstall: Record<AITool, { label: string; cmd: string; docs: string }> = {
+	const harnessInstall: Record<AITool, { label: string; cmd: string | null; platformCmds?: Partial<Record<OS, string>>; note?: string; docs: string }> = {
 		'claude-code': {
 			label: 'Claude Code',
-			cmd: 'npm install -g @anthropic-ai/claude-code',
-			docs: 'https://docs.anthropic.com/en/docs/claude-code'
+			cmd: null,
+			platformCmds: {
+				mac:     'curl -fsSL https://claude.ai/install.sh | bash',
+				linux:   'curl -fsSL https://claude.ai/install.sh | bash',
+				windows: 'irm https://claude.ai/install.ps1 | iex'
+			},
+			note: 'Then run `claude` to log in on first use.',
+			docs: 'https://code.claude.com/docs/en/quickstart'
 		},
 		codex: {
 			label: 'Codex CLI',
@@ -295,12 +301,22 @@
 						<div class="rounded-lg overflow-hidden mb-4" style="background:#1C1917">
 							<div class="flex items-center justify-between px-4 py-2" style="border-bottom:1px solid #292524">
 								<span class="font-mono text-xs" style="color:#57534E">install {harnessInstall[aiTool].label.toLowerCase()}</span>
-								<button class="font-mono text-xs {copiedMap['harness'] ? 'text-success' : 'text-base-content/40'}" onclick={() => copy('harness', harnessInstall[aiTool].cmd)}>{copiedMap['harness'] ? 'copied!' : 'copy'}</button>
+								<button class="font-mono text-xs {copiedMap['harness'] ? 'text-success' : 'text-base-content/40'}"
+									onclick={() => copy('harness', harnessInstall[aiTool].cmd ?? harnessInstall[aiTool].platformCmds?.[os!] ?? '')}
+								>{copiedMap['harness'] ? 'copied!' : 'copy'}</button>
 							</div>
 							<div class="font-mono text-sm px-4 py-3">
-								<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">{harnessInstall[aiTool].cmd}</span>
+								{#if os === 'windows' && aiTool === 'claude-code'}
+									<div class="font-mono text-xs mb-2" style="color:#57534E">PowerShell:</div>
+									<div><span style="color:#44403C" class="mr-3">></span><span style="color:#A8A29E">irm https://claude.ai/install.ps1 | iex</span></div>
+								{:else}
+									<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">{harnessInstall[aiTool].cmd ?? harnessInstall[aiTool].platformCmds?.[os!] ?? ''}</span></div>
+								{/if}
 							</div>
 						</div>
+						{#if harnessInstall[aiTool].note}
+							<p class="text-base-content/60 text-sm mb-3">{harnessInstall[aiTool].note}</p>
+						{/if}
 						<a href={harnessInstall[aiTool].docs} target="_blank" rel="noopener" class="link text-sm text-base-content/50 mb-4 block">{harnessInstall[aiTool].label} docs →</a>
 						<label class="flex items-center gap-3 cursor-pointer">
 							<input type="checkbox" class="checkbox checkbox-primary" bind:checked={doneHarness} />
