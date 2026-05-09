@@ -1,6 +1,6 @@
 import type {Command} from 'commander';
 import {formatSynthesizeOutput, selectNotes} from '../lib/synthesize.ts';
-import {addSynthesizeNote} from '../lib/git.ts';
+import {writeEvent, getRecentEvents} from '../lib/git.ts';
 import {runDir, writeJson} from '../lib/runner.ts';
 import {excerpt} from '../lib/notes.ts';
 
@@ -36,14 +36,11 @@ export function registerSynthesize(program: Command): void {
 			const label = opts.sessionStart ? 'session context' : (query ?? 'all');
 
 			if (opts.pretty) {
-				console.log(formatSynthesizeOutput(notes, label));
+				const events = await getRecentEvents(dir, 10).catch(() => []);
+				console.log(formatSynthesizeOutput(notes, label, events));
 
-				// Add git note for synthesize operation
-				try {
-					await addSynthesizeNote(dir, query ?? 'session-start');
-				} catch {
-					// Silently ignore git note errors - synthesize is the primary operation
-				}
+				// Record synthesize event
+				await writeEvent(dir, 'synthesize', {query: query ?? 'session-start', notes: String(notes.length)}).catch(() => {/* best-effort */});
 
 				return;
 			}

@@ -1,53 +1,49 @@
-# pk v1 Hardening Plan
+# pk v1 Plan
 
-## 1. Fix the website — remove phantom harnesses
+## 1. Episodic store — git as event log
 
-The website (`docs/index.html`) lists **Cursor** and **Gemini CLI** as supported harnesses. Neither exists in `src/commands/init.ts` — actual harnesses are `claude`, `codex`, `opencode`. Shipping false claims burns trust on first contact.
+Git currently records only file mutations. Extend it to capture all pk operations.
 
-- Remove Cursor and Gemini CLI from `docs/index.html` harness list, or implement them
-- Verify the harness list in README matches reality
+- Add `writeEvent(tag, metadata)` to `git.ts` — appends a git note to HEAD
+- Wire into `prime.ts` (session-open event), `search.ts` (search+result count), `synthesize.ts` (enrich existing note format)
+- Extend `getHistory()` to parse the new note formats and interleave with commit entries
+- `git log` stays clean (mutations only). `pk history` shows the full timeline
 
-## 2. Document prerequisites
+No harness changes. Events are side effects of pk CLI calls the agent already makes.
 
-README says "Requires Bun." Actual dependency chain:
+## 2. Synthesis — two-store assembly
 
-- **Git** — hard dependency for init, new, edit, delete, history, synthesize
-- **Git notes** — used by history and synthesize; not a feature most devs think about
-- **GPG signing** — `commit.gpgsign=true` globally causes `pk init` to hang (PR #32 worked around it, but the prerequisite isn't documented)
-- **Bun** — only listed requirement
+`pk synthesize` currently reads only the semantic store. Extend it to pull recent episodic events.
 
-Deliverables:
-- Add prerequisites section to README: git, bun
-- Add GPG signing note/caveat
-- Surface prerequisites on the website or in `pk init` output
+- Add `selectEvents(knowledgeDir, query, opts)` — queries git history matching a topic
+- `formatSynthesizeOutput` gains a "Recent activity" section from the episodic store
+- `--session-start` includes recent events alongside open questions and active decisions
 
-## 3. `pk init` validation — guard the front door
+## 3. Hybrid search — embeddings in the semantic store
 
-`pk init` is the first command every user runs. It currently doesn't verify:
+FTS-only search misses paraphrase. Add vector embeddings alongside FTS5.
 
-- Git is installed and on PATH
-- Target directory is writable
-- What the user should do next
+- Add `note_vectors` table to `.index.db` (id, path, vector as BLOB)
+- Define `EmbeddingProvider` interface: `embed(text) → float[]`, `dimensions() → int`
+- Implement `OllamaProvider` (nomic-embed-text) and `OpenAIProvider` (text-embedding-3-small)
+- `pk rebuild` gains embedding pass: FTS insert → embed → vector insert, with progress output
+- `pk search` runs hybrid when vectors exist: FTS BM25 + cosine similarity, fused. FTS-only when unconfigured
+- No `--semantic` flag — hybrid is automatic when embeddings are present
+- `pk config --embedding` already exists as placeholder; make it functional
 
-Deliverables:
-- Check `git` is available; fail with a clear message if not
-- Verify `~/.pk/` is writable
-- Print actionable "next steps" in the outro (e.g., `pk new note "First note"`, `pk search <query>`)
-- Add e2e test for `pk init` re-run on existing project
+## 4. Hardening
 
-## 4. Gap tests — cover the edges that pager at 3am
+Trustworthy for a teammate who's never seen pk before.
 
-E2E surface coverage is good but critical edge cases are missing:
-
-- **`pk init` when git is not installed** — does it fail clearly or silently?
-- **Duplicate note titles** — `pk new` with a title that already exists. Documented flow is search-then-create, but no enforcement.
-- **Corrupted frontmatter** — one lint test exists (missing fields). Add: non-UTF8, missing `---` delimiters, YAML parse errors, completely empty file.
-- **Concurrent access** — two agents running `pk new` simultaneously. What happens to git commits?
-- **`pk init` re-run on existing project** — `ensureGitRepo` handles it, but no e2e proof.
-- **`pk edit`** — command exists, zero e2e coverage.
-
-Not 50 more tests — just the ones that catch real failures.
+- Fix website harness list — remove phantom entries (Cursor, Gemini CLI)
+- Document prerequisites (git, bun, GPG signing caveat)
+- `pk init` validation — verify git on PATH, writable target, actionable next steps
+- Edge case tests — duplicate titles, corrupted frontmatter, concurrent access, `pk init` re-run
 
 ## Scope boundary
 
-Everything else is v2+: profiles (#13), semantic search (#3), synthesis architecture (#16). This plan is about making what exists trustworthy for a teammate who's never seen pk before.
+Not v1: profiles (#13), multi-agent scoping, incremental embedding at `pk new` time, explicit session markers, LLM-powered synthesis.
+
+## Dependency order
+
+Items 1 and 3 are independent — can be built in parallel. Item 2 depends on item 1 (needs episodic events to exist). Item 4 is independent throughout.

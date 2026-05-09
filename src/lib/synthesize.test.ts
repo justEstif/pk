@@ -1,6 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 import type {Note} from './schema.ts';
 import {formatSynthesizeOutput} from './synthesize.ts';
+import type {ParsedEvent} from './git.ts';
 
 function makeNote(overrides: Partial<Note['meta']> = {}, body = ''): Note {
 	return {
@@ -58,5 +59,30 @@ describe('formatSynthesizeOutput', () => {
 		const out = formatSynthesizeOutput(notes, 'all');
 		expect(out).toContain('[A]');
 		expect(out).toContain('[B]');
+	});
+
+	test('includes recent activity section when events provided', () => {
+		const notes = [makeNote()];
+		const events: ParsedEvent[] = [
+			{tag: 'search', meta: {query: 'auth', results: '3', Timestamp: '2026-05-09T10:00:00Z'}},
+			{tag: 'session-open', meta: {Timestamp: '2026-05-09T09:00:00Z'}},
+		];
+		const out = formatSynthesizeOutput(notes, 'session context', events);
+		expect(out).toContain('## Recent activity');
+		expect(out).toContain('search');
+		expect(out).toContain('auth');
+		expect(out).toContain('session-open');
+	});
+
+	test('omits recent activity section when no events', () => {
+		const notes = [makeNote()];
+		const out = formatSynthesizeOutput(notes, 'all');
+		expect(out).not.toContain('## Recent activity');
+	});
+
+	test('omits recent activity section when events is empty', () => {
+		const notes = [makeNote()];
+		const out = formatSynthesizeOutput(notes, 'all', []);
+		expect(out).not.toContain('## Recent activity');
 	});
 });

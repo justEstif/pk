@@ -161,6 +161,18 @@ describe('pk CLI e2e tests', () => {
 			expect(output).toContain('intake note');
 			expect(output).toMatch(/\d+\/\d+\/\d+/v);
 		});
+
+		test('prime and search create events visible in history', async () => {
+			await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} prime`.quiet();
+			await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} index`.quiet();
+			await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} search "History Test"`.quiet();
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} history --limit 20 --pretty`.quiet();
+			expect(result.exitCode).toBe(0);
+			const output = result.stdout.toString();
+			expect(output).toContain('session-open');
+			expect(output).toContain('search');
+			expect(output).toContain('History Test');
+		});
 	});
 
 	describe('integration workflow', () => {

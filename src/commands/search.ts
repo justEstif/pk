@@ -1,5 +1,6 @@
 import type {Command} from 'commander';
 import {search} from '../lib/db.ts';
+import {writeEvent} from '../lib/git.ts';
 import {runDir, writeJson} from '../lib/runner.ts';
 
 export function registerSearch(program: Command): void {
@@ -19,6 +20,8 @@ export function registerSearch(program: Command): void {
 				filterType: opts.type,
 				limit: Number.parseInt(opts.limit, 10),
 			});
+
+			await writeEvent(dir, 'search', {query, results: String(results.length)}).catch(() => {/* best-effort */});
 
 			if (!opts.pretty) {
 				writeJson({results});

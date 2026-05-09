@@ -1,12 +1,13 @@
 import {search} from './db.ts';
 import {allNotes, excerpt, validNotes} from './notes.ts';
+import type {ParsedEvent} from './git.ts';
 import type {Note} from './schema.ts';
 
 /**
  * Format notes into a markdown context block suitable for agent injection.
  * Returns the full string (caller decides whether to print or return to caller).
  */
-export function formatSynthesizeOutput(notes: Note[], label: string): string {
+export function formatSynthesizeOutput(notes: Note[], label: string, events?: ParsedEvent[]): string {
 	const today = new Date().toISOString().slice(0, 10);
 	const lines: string[] = [`# Knowledge: ${label} (${notes.length} notes · ${today})`];
 	for (const n of notes) {
@@ -15,6 +16,18 @@ export function formatSynthesizeOutput(notes: Note[], label: string): string {
 		const ex = excerpt(n);
 		if (ex) {
 			lines.push(ex);
+		}
+	}
+
+	if (events && events.length > 0) {
+		lines.push('\n---\n## Recent activity\n');
+		for (const event of events) {
+			const metaParts = Object.entries(event.meta)
+				.filter(([k]) => k !== 'Timestamp')
+				.map(([k, v]) => `${k}: ${v}`)
+				.join(', ');
+			const time = event.meta.Timestamp ? new Date(event.meta.Timestamp).toLocaleString() : '';
+			lines.push(`- **${event.tag}**${metaParts ? ' — ' + metaParts : ''}${time ? ' · ' + time : ''}`);
 		}
 	}
 
