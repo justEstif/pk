@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en" data-theme="pk-light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>pk — design system</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@900&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/daisyui.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    [data-theme="pk-light"] {
+      --color-base-100: #F8F6F1;
+      --color-base-200: #F0EDE6;
+      --color-base-300: #E8E4DB;
+      --color-base-content: #1C1917;
+      --color-primary: #B45309;
+      --color-primary-content: #ffffff;
+      --color-secondary: #78716C;
+      --color-secondary-content: #F8F6F1;
+      --rounded-box: 0.75rem;
+      --rounded-btn: 0.5rem;
+      --rounded-badge: 999px;
+    }
+    [data-theme="pk-dark"] {
+      --color-base-100: #1C1917;
+      --color-base-200: #292524;
+      --color-base-300: #312E2B;
+      --color-base-content: #F5F5F4;
+      --color-primary: #D97706;
+      --color-primary-content: #ffffff;
+      --color-secondary: #A8A29E;
+      --color-secondary-content: #1C1917;
+      --rounded-box: 0.75rem;
+      --rounded-btn: 0.5rem;
+      --rounded-badge: 999px;
+    }
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .font-brand { font-family: 'Unbounded', sans-serif; }
+    .font-mono-pk { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="min-h-screen bg-base-100 text-base-content">
+
+  <div class="fixed top-4 right-4 z-50">
+    <button class="btn btn-sm btn-ghost font-mono-pk border border-base-300"
+      onclick="const h=document.documentElement;h.dataset.theme=h.dataset.theme==='pk-dark'?'pk-light':'pk-dark'">
+      toggle dark / light
+    </button>
+  </div>
+
+  <div class="mx-auto max-w-3xl px-6 py-16 space-y-14">
+
+    <!-- Header -->
+    <div>
+      <h1 class="font-brand font-black text-5xl mb-3">pk <span class="text-primary">design system</span></h1>
+      <p class="text-base-content/60 text-lg">Bear warmth · Linear precision</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Colors -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Color tokens</p>
+      <div class="flex flex-wrap gap-4">
+        {["bg-base-100 border border-base-300:base-100","bg-base-200 border border-base-300:base-200","bg-base-300 border border-base-300:base-300","bg-primary:primary","bg-base-content:content","bg-base-content/40:muted"].map(t => '')}
+        <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-base-100 border border-base-300"></div><span class="font-mono-pk text-[10px] text-base-content/40">base-100</span></div>
+        <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-base-200 border border-base-300"></div><span class="font-mono-pk text-[10px] text-base-content/40">base-200</span></div>
+        <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-base-300 border border-base-300"></div><span class="font-mono-pk text-[10px] text-base-content/40">base-300</span></div>
+        <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-primary"></div><span class="font-mono-pk text-[10px] text-base-content/40">primary</span></div>
+        <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-base-content"></div><span class="font-mono-pk text-[10px] text-base-content/40">content</span></div>
+        <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-base-content/30"></div><span class="font-mono-pk text-[10px] text-base-content/40">muted</span></div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Typography -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Typography</p>
+      <div class="space-y-6">
+        <div>
+          <p class="font-mono-pk text-xs text-base-content/30 mb-1">display — Unbounded 900</p>
+          <p class="font-brand font-black text-5xl">pk</p>
+        </div>
+        <div>
+          <p class="font-mono-pk text-xs text-base-content/30 mb-1">h1 — DM Sans 600</p>
+          <p class="text-3xl font-semibold">Structured bookkeeping for every project.</p>
+        </div>
+        <div>
+          <p class="font-mono-pk text-xs text-base-content/30 mb-1">h2 — DM Sans 600</p>
+          <p class="text-2xl font-semibold">Get started in two steps</p>
+        </div>
+        <div>
+          <p class="font-mono-pk text-xs text-base-content/30 mb-1">body — DM Sans 400</p>
+          <p class="text-base text-base-content/60 max-w-prose leading-relaxed">Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't answered yet. Your agent organizes it.</p>
+        </div>
+        <div>
+          <p class="font-mono-pk text-xs text-base-content/30 mb-1">mono — JetBrains Mono</p>
+          <p class="font-mono-pk text-sm text-base-content/60">npm install -g @justestif/pk &amp;&amp; pk init</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Buttons -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Buttons</p>
+      <div class="flex flex-wrap gap-3 items-center">
+        <button class="btn btn-primary btn-lg">Get started</button>
+        <button class="btn btn-ghost btn-lg border border-base-300">View on GitHub</button>
+        <button class="btn btn-ghost btn-lg">npm</button>
+        <button class="btn btn-ghost btn-md">copy</button>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Badges -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Badges</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="badge badge-warning badge-soft font-mono-pk">decision</span>
+        <span class="badge badge-success badge-soft font-mono-pk">resolved</span>
+        <span class="badge badge-error badge-soft font-mono-pk">open</span>
+        <span class="badge badge-info badge-soft font-mono-pk">source</span>
+        <span class="badge badge-ghost font-mono-pk border border-base-300">note</span>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Cards -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Cards</p>
+      <div class="space-y-3">
+        <div class="card card-border bg-base-200">
+          <div class="card-body">
+            <h2 class="card-title">Default card</h2>
+            <p class="text-base-content/60">Used for feature sections, info blocks, and general content grouping.</p>
+          </div>
+        </div>
+        <div class="card bg-primary text-primary-content">
+          <div class="card-body">
+            <h2 class="card-title">Highlighted card</h2>
+            <p class="opacity-80">For the most important action or callout on the page.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Install widget -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Install widget</p>
+      <div class="rounded-xl overflow-hidden border border-base-300 border-l-4 border-l-primary">
+        <div class="flex bg-base-200 border-b border-base-300">
+          <button class="font-mono-pk text-sm px-5 py-3 border-r border-base-300 bg-base-300 text-primary">npm</button>
+          <button class="font-mono-pk text-sm px-5 py-3 border-r border-base-300 text-base-content/30 hover:text-base-content/60 transition-colors">bun</button>
+          <button class="font-mono-pk text-sm px-5 py-3 text-base-content/30 hover:text-base-content/60 transition-colors">brew</button>
+          <div class="flex-1"></div>
+          <button class="font-mono-pk text-xs px-5 py-3 text-base-content/30 hover:text-base-content/60 transition-colors">copy</button>
+        </div>
+        <div class="mockup-code rounded-none bg-base-300">
+          <pre data-prefix="$"><code class="font-mono-pk">npm install -g @justestif/pk</code></pre>
+          <pre data-prefix="$"><code class="font-mono-pk">pk init</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Terminal demo -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Terminal demo</p>
+      <!--
+        Always dark regardless of page theme.
+        "You" lines: bright white text, amber "You >" prefix
+        "Claude" lines: muted text, dim "Claude" prefix
+        lookup lines: very dim, no prefix weight
+      -->
+      <div class="rounded-xl overflow-hidden" style="background:#1C1917">
+        <!-- Window bar -->
+        <div style="background:#292524; padding:10px 16px; display:flex; align-items:center; gap:6px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#FF5F57;display:inline-block"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#FEBC2E;display:inline-block"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#28C840;display:inline-block"></span>
+          <span class="font-mono-pk" style="font-size:11px;color:#57534E;margin-left:8px">Claude Code · ~/projects/acme</span>
+        </div>
+        <!-- Lines -->
+        <div class="font-mono-pk text-sm leading-loose p-5 space-y-0.5">
+          <div style="display:flex;gap:12px">
+            <span style="color:#D97706;font-weight:600;min-width:52px">You</span>
+            <span style="color:#F5F5F4;font-weight:500">why did we push the v2 launch back?</span>
+          </div>
+          <div style="display:flex;gap:12px">
+            <span style="color:#44403C;min-width:52px">·</span>
+            <span style="color:#44403C;font-size:12px">searched decisions · v2-launch-delay.md</span>
+          </div>
+          <div style="display:flex;gap:12px">
+            <span style="color:#78716C;font-weight:600;min-width:52px">Claude</span>
+            <span style="color:#A8A29E">You pushed v2 back 6 weeks to ship enterprise SSO first.</span>
+          </div>
+          <div style="display:flex;gap:12px">
+            <span style="min-width:52px"></span>
+            <span style="color:#A8A29E">Three customer calls in October confirmed it as a blocker.</span>
+          </div>
+          <div style="border-top:1px dashed #292524;margin:10px 0"></div>
+          <div style="display:flex;gap:12px">
+            <span style="color:#D97706;font-weight:600;min-width:52px">You</span>
+            <span style="color:#F5F5F4;font-weight:500">log that we decided SSO is included, not an add-on.</span>
+          </div>
+          <div style="display:flex;gap:12px">
+            <span style="color:#44403C;min-width:52px">·</span>
+            <span style="color:#44403C;font-size:12px">created decisions/sso-pricing.md</span>
+          </div>
+          <div style="display:flex;gap:12px">
+            <span style="color:#78716C;font-weight:600;min-width:52px">Claude</span>
+            <span style="color:#A8A29E">Saved. Marked enterprise-pricing.md as answered. <span style="color:#D97706">▌</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Navbar -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Navbar</p>
+      <div class="navbar bg-base-100/90 backdrop-blur border border-base-300 rounded-xl px-5">
+        <div class="navbar-start">
+          <span class="font-brand font-black text-base text-primary">pk</span>
+        </div>
+        <div class="navbar-end gap-1">
+          <button class="btn btn-ghost font-mono-pk text-sm text-base-content/40">npm</button>
+          <button class="btn btn-ghost font-mono-pk text-sm text-base-content/40">GitHub</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Hero preview -->
+    <section>
+      <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Hero preview</p>
+      <div class="rounded-xl border border-base-300 bg-base-100 px-10 py-14">
+        <h1 class="font-brand font-black text-[clamp(2rem,4.5vw,3rem)] leading-[1.06] tracking-tight mb-5 max-w-[14ch]">
+          Structured bookkeeping<br/>for every project.
+        </h1>
+        <p class="text-lg text-base-content/60 mb-9 max-w-xl leading-relaxed">
+          Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't answered yet. Your agent organizes it.
+        </p>
+        <div class="flex flex-wrap gap-3 items-center">
+          <button class="btn btn-primary btn-lg">Get started</button>
+          <span class="font-mono-pk text-sm text-base-content/30">Claude Code · Codex · OpenCode</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
