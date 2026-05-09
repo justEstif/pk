@@ -9,6 +9,7 @@
 	const modes: ThemeMode[] = ['system', 'light', 'dark'];
 
 	let mode = $state<ThemeMode>('system');
+	let dropdownOpen = $state(false);
 
 	function applyTheme(m: ThemeMode) {
 		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -20,6 +21,7 @@
 	function setMode(m: ThemeMode) {
 		mode = m;
 		applyTheme(m);
+		dropdownOpen = false;
 	}
 
 	const icons: Record<ThemeMode, string> = {
@@ -27,6 +29,8 @@
 		light:  `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
 		dark:   `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
 	};
+
+	const modeLabel: Record<ThemeMode, string> = { system: 'System', light: 'Light', dark: 'Dark' };
 
 	$effect(() => {
 		const saved = (localStorage.getItem('pk-theme') as ThemeMode | null) ?? 'system';
@@ -46,25 +50,42 @@
 <nav class="fixed top-0 left-0 right-0 z-50 border-b border-base-300 bg-base-100/90 backdrop-blur-md">
 	<div class="mx-auto max-w-5xl flex items-center justify-between px-8 py-2.5">
 		<a href="{base}/" style="font-family:'Unbounded',sans-serif" class="text-base font-black text-primary">pk</a>
-		<div class="flex gap-1">
+		<div class="flex items-center gap-1">
 			<a href="{base}/docs/how-it-works" class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono text-base-content/50">Docs</a>
+
+			<!-- Theme dropdown -->
+			<div class="relative">
+				<button
+					class="btn bg-base-200 hover:bg-base-300 px-3 py-2 text-base-content/50"
+					onclick={() => (dropdownOpen = !dropdownOpen)}
+					title="Theme"
+				>
+					{@html icons[mode]}
+				</button>
+				{#if dropdownOpen}
+					<!-- Backdrop to close on outside click -->
+					<button
+						class="fixed inset-0 z-10"
+						onclick={() => (dropdownOpen = false)}
+						aria-label="Close menu"
+					></button>
+					<div class="absolute right-0 top-full mt-1 z-20 bg-base-100 border border-base-300 rounded-xl shadow-lg overflow-hidden min-w-[120px]">
+						{#each modes as m}
+							<button
+								class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors
+									{mode === m ? 'bg-base-200 text-base-content font-medium' : 'text-base-content/60 hover:bg-base-200'}"
+								onclick={() => setMode(m)}
+							>
+								<span class="text-base-content/50">{@html icons[m]}</span>
+								{modeLabel[m]}
+							</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 </nav>
-
-<!-- Theme toggle — fixed bottom-right -->
-<div class="fixed bottom-5 right-5 z-50 flex items-center gap-0.5 bg-base-200 border border-base-300 rounded-lg p-1 shadow-md">
-	{#each modes as m}
-		<button
-			class="flex items-center justify-center w-7 h-7 rounded-md transition-colors
-				{mode === m ? 'bg-base-300 text-base-content' : 'text-base-content/30 hover:text-base-content/60'}"
-			onclick={() => setMode(m)}
-			title={m}
-		>
-			{@html icons[m]}
-		</button>
-	{/each}
-</div>
 
 {@render children()}
 

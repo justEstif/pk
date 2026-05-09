@@ -6,7 +6,8 @@
 
 	const nav = [
 		{ href: `${base}/docs/how-it-works`, label: 'How it works' },
-		{ href: `${base}/docs/setup`, label: 'Setup guide' },
+		{ href: `${base}/docs/setup/engineers`, label: 'Quick setup' },
+		{ href: `${base}/docs/setup/newcomers`, label: 'Full setup guide' },
 	];
 </script>
 

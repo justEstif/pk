@@ -150,7 +150,7 @@
 
 		<!-- CTA -->
 		<div class="flex flex-col items-start gap-1.5 mb-12">
-			<a href="{base}/docs/setup" class="btn btn-primary px-8 py-3 text-base">Get started →</a>
+			<a href="{base}/docs/setup/newcomers" class="btn btn-primary px-8 py-3 text-base">Get started →</a>
 			<span class="font-mono text-xs text-base-content/30">step-by-step setup guide</span>
 		</div>
 
