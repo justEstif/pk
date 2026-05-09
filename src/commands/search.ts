@@ -11,8 +11,8 @@ export function registerSearch(program: Command): void {
 		.option('--tag <tag>', 'Filter by tag')
 		.option('--limit <n>', 'Max results', '10')
 		.option('--context', 'Include full note body in output')
-		.option('--json', 'JSON output')
-		.action(runDir(async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; json: boolean; context: boolean}) => {
+		.option('--pretty', 'Human-readable output')
+		.action(runDir(async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; pretty?: boolean; context: boolean}) => {
 			const results = search(dir, query, {
 				filterStatus: opts.status,
 				filterTag: opts.tag,
@@ -20,7 +20,7 @@ export function registerSearch(program: Command): void {
 				limit: Number.parseInt(opts.limit, 10),
 			});
 
-			if (opts.json) {
+			if (!opts.pretty) {
 				writeJson({results});
 				return;
 			}

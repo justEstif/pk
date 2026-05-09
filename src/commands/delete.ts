@@ -11,16 +11,16 @@ export function registerDelete(program: Command): void {
 		.description('Delete a knowledge note')
 		.argument('<path>', 'Path to the note file')
 		.option('-y, --yes', 'Skip confirmation prompt')
-		.option('--json', 'JSON output')
-		.action(runDir(async (dir, notePath: string, options: {yes?: boolean; json?: boolean}) => {
+		.option('--pretty', 'Human-readable output')
+		.action(runDir(async (dir, notePath: string, options: {yes?: boolean; pretty?: boolean}) => {
 			const fullPath = resolveFullPath(notePath, dir);
 
 			if (!checkFileExists(fullPath)) {
 				throw new Error(`Note not found: ${fullPath}`);
 			}
 
-			// --json implies --yes (skip confirmation in machine-readable mode)
-			if (!(await confirmDeletion(fullPath, options.yes ?? options.json))) {
+			// Default (JSON/machine mode) skips confirmation; --pretty restores the prompt
+			if (!(await confirmDeletion(fullPath, options.pretty ? options.yes : true))) {
 				console.log('Aborted.');
 				process.exit(0);
 			}
@@ -28,10 +28,10 @@ export function registerDelete(program: Command): void {
 			await $`rm ${fullPath}`;
 			await commitDelete(dir, fullPath);
 
-			if (options.json) {
-				writeJson({path: fullPath, status: 'deleted'});
-			} else {
+			if (options.pretty) {
 				console.log(`Deleted: ${fullPath}`);
+			} else {
+				writeJson({path: fullPath, status: 'deleted'});
 			}
 		}));
 }

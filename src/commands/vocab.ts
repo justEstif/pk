@@ -6,22 +6,23 @@ export function registerVocab(program: Command): void {
 	program
 		.command('vocab')
 		.description('List tags in the knowledge base by frequency')
-		.option('--json', 'JSON output')
-		.action(runDir((dir, opts: {json: boolean}) => {
+		.option('--pretty', 'Human-readable output')
+		.action(runDir((dir, opts: {pretty?: boolean}) => {
 			const tags = vocab(dir);
 
-			if (opts.json) {
-				writeJson({tags});
+			if (opts.pretty) {
+				if (tags.length === 0) {
+					console.log('No tags found.');
+					return;
+				}
+
+				for (const {tag, count} of tags) {
+					console.log(`${tag} (${count})`);
+				}
+
 				return;
 			}
 
-			if (tags.length === 0) {
-				console.log('No tags found.');
-				return;
-			}
-
-			for (const {tag, count} of tags) {
-				console.log(`${tag} (${count})`);
-			}
+			writeJson({tags});
 		}));
 }

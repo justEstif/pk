@@ -11,14 +11,14 @@ export function registerHistory(program: Command): void {
 		.option('--filter-type <type>', 'Filter by note type: note, decision, question, source')
 		.option('--filter-tag <tag>', 'Filter by tag')
 		.option('--filter-operation <operation>', 'Filter by operation: create, update, delete')
-		.option('--json', 'JSON output')
+		.option('--pretty', 'Human-readable output')
 		.action(runDir(async (dir, options: {
 			limit: string;
 			type: string;
 			filterType?: string;
 			filterTag?: string;
 			filterOperation?: string;
-			json?: boolean;
+			pretty?: boolean;
 		}) => {
 			const limit = Number.parseInt(options.limit, 10);
 			const history = await getHistory(dir, {
@@ -29,16 +29,16 @@ export function registerHistory(program: Command): void {
 				filterOperation: options.filterOperation as 'create' | 'update' | 'delete' | undefined,
 			});
 
-			if (options.json) {
-				writeJson({entries: history});
+			if (options.pretty) {
+				if (history.length === 0) {
+					console.log('No history found.');
+					return;
+				}
+
+				console.log(formatHistory(history));
 				return;
 			}
 
-			if (history.length === 0) {
-				console.log('No history found.');
-				return;
-			}
-
-			console.log(formatHistory(history));
+			writeJson({entries: history});
 		}));
 }
