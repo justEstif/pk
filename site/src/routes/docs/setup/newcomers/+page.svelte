@@ -57,14 +57,16 @@
 	</div>
 
 	<!-- Shortcut callout -->
-	<div class="rounded-xl border border-primary/20 bg-primary/5 px-5 py-4">
-		<p class="font-mono text-xs uppercase tracking-widest text-primary/60 mb-2">Shortcut — macOS / Linux</p>
-		<p class="text-sm text-base-content/70 mb-3">
-			One command installs Git, Bun, and pk for you — skipping steps 3–5 below. You'll still need to install your AI tool and run <code class="font-mono bg-base-300 px-1.5 py-0.5 rounded text-xs">pk init</code>.
-		</p>
-		<div class="rounded-lg overflow-hidden" style="background:#1C1917">
-			<div class="font-mono text-sm px-4 py-3">
-				<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">curl -fsSL https://justestif.github.io/pk/install.sh | bash</span>
+	<div class="card card-border bg-base-200 border-l-4 border-l-primary">
+		<div class="card-body gap-3">
+			<p class="font-mono text-xs uppercase tracking-widest text-primary">Shortcut — macOS / Linux</p>
+			<p class="text-base-content/70 text-sm leading-relaxed">
+				One command installs Git, Bun, and pk for you — skipping steps 3–5. You'll still need to install your AI tool and run <code class="font-mono bg-base-300 px-1.5 py-0.5 rounded text-xs">pk init</code>.
+			</p>
+			<div class="rounded-lg overflow-hidden" style="background:#1C1917">
+				<div class="font-mono text-sm px-4 py-3">
+					<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">curl -fsSL https://justestif.github.io/pk/install.sh | bash</span>
+				</div>
 			</div>
 		</div>
 	</div>
