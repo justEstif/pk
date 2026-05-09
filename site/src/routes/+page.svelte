@@ -74,17 +74,18 @@
 	};
 
 	let activeTab = $state<'acme' | 'nova' | 'atlas'>('acme');
-	let activePkg = $state<'npm' | 'bun' | 'brew'>('npm');
+	let activePkg = $state<'curl' | 'bun' | 'npm' | 'brew'>('curl');
 	let copied = $state(false);
 
-	const pkgCmds = {
-		npm: 'npm install -g @justestif/pk',
-		bun: 'bun install -g @justestif/pk',
-		brew: 'brew install justEstif/tap/pk'
+	const pkgCmds: Record<'curl' | 'bun' | 'npm' | 'brew', string[]> = {
+		curl: ['curl -fsSL https://justestif.github.io/pk/install.sh | bash', 'pk init'],
+		bun:  ['bun install -g @justestif/pk', 'pk init'],
+		npm:  ['npm install -g @justestif/pk', 'pk init'],
+		brew: ['brew install justEstif/tap/pk', 'pk init'],
 	};
 
 	function copyInstall() {
-		navigator.clipboard.writeText(pkgCmds[activePkg] + ' && pk init').then(() => {
+		navigator.clipboard.writeText(pkgCmds[activePkg].join('\n')).then(() => {
 			copied = true;
 			setTimeout(() => (copied = false), 2000);
 		});
@@ -118,7 +119,7 @@
 		<!-- Install widget -->
 		<div class="rounded-xl overflow-hidden border border-base-300 border-l-4 border-l-primary mb-1">
 			<div class="flex items-center bg-base-200 border-b border-base-300">
-				{#each (['npm', 'bun', 'brew'] as const) as pkg}
+				{#each (['curl', 'bun', 'npm', 'brew'] as const) as pkg}
 					<button
 						class="font-mono text-sm px-5 py-3 border-r border-base-300 transition-colors
 							{activePkg === pkg ? 'bg-base-300 text-primary' : 'text-base-content/30 hover:text-base-content/60'}"
@@ -134,8 +135,9 @@
 				</button>
 			</div>
 			<div class="font-mono text-sm px-5 py-4 leading-loose" style="background:#1C1917">
-				<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">{pkgCmds[activePkg]}</span></div>
-				<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init</span></div>
+				{#each pkgCmds[activePkg] as line}
+					<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">{line}</span></div>
+				{/each}
 			</div>
 		</div>
 
@@ -150,7 +152,7 @@
 
 		<!-- CTA -->
 		<div class="flex flex-col items-start gap-1.5 mb-12">
-			<a href="{base}/docs/setup/newcomers" class="btn btn-primary px-8 py-3 text-base">Get started →</a>
+			<a href="{base}/docs/setup" class="btn btn-primary px-8 py-3 text-base">Get started →</a>
 			<span class="font-mono text-xs text-base-content/30">step-by-step setup guide</span>
 		</div>
 

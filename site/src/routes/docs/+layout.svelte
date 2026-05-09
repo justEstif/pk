@@ -6,9 +6,25 @@
 
 	const nav = [
 		{ href: `${base}/docs/how-it-works`, label: 'How it works' },
-		{ href: `${base}/docs/setup/engineers`, label: 'Quick setup' },
-		{ href: `${base}/docs/setup/newcomers`, label: 'Full setup guide' },
+		{
+			href: `${base}/docs/setup`,
+			label: 'Setup',
+			children: [
+				{ href: `${base}/docs/setup/engineers`, label: 'Quick setup' },
+				{ href: `${base}/docs/setup/newcomers`, label: 'Full guide' },
+			]
+		},
 	];
+
+	function isActive(href: string) {
+		return $page.url.pathname === href || $page.url.pathname === href + '/';
+	}
+
+	function isParentActive(item: typeof nav[number]) {
+		if (isActive(item.href)) return true;
+		if ('children' in item) return item.children.some(c => isActive(c.href));
+		return false;
+	}
 </script>
 
 <div class="mx-auto max-w-5xl px-8 pt-28 pb-24 flex gap-12">
@@ -22,10 +38,23 @@
 					<a
 						href={item.href}
 						class="text-sm px-3 py-1.5 rounded-lg transition-colors
-							{$page.url.pathname === item.href || $page.url.pathname === item.href + '/'
+							{isActive(item.href)
 								? 'bg-base-200 text-base-content font-medium'
-								: 'text-base-content/50 hover:text-base-content/80'}"
+								: isParentActive(item)
+									? 'text-base-content/70 font-medium'
+									: 'text-base-content/50 hover:text-base-content/80'}"
 					>{item.label}</a>
+					{#if 'children' in item && isParentActive(item)}
+						{#each item.children as child}
+							<a
+								href={child.href}
+								class="text-sm px-3 py-1.5 pl-6 rounded-lg transition-colors
+									{isActive(child.href)
+										? 'bg-base-200 text-base-content font-medium'
+										: 'text-base-content/40 hover:text-base-content/70'}"
+							>{child.label}</a>
+						{/each}
+					{/if}
 				{/each}
 			</nav>
 		</div>
