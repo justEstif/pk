@@ -16,7 +16,11 @@ npm install -g @justestif/pk
 brew install justEstif/tap/pk
 ```
 
-Requires [Bun](https://bun.sh).
+Requires:
+- [Git](https://git-scm.com) — tracks all knowledge operations via commits and git notes
+- [Bun](https://bun.sh) — runtime
+
+> **Note:** If you have GPG commit signing enabled globally (`commit.gpgsign=true`), `pk init` bypasses it for the knowledge repo to avoid interactive prompts. No configuration needed.
 
 ## Setup
 
