@@ -108,18 +108,6 @@
 				href="{base}/docs/how-it-works"
 				class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono text-base-content/50"
 			>Docs</a>
-			<a
-				href="https://www.npmjs.com/package/@justestif/pk"
-				target="_blank"
-				rel="noopener"
-				class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono text-base-content/50"
-			>npm</a>
-			<a
-				href="https://github.com/justEstif/pk"
-				target="_blank"
-				rel="noopener"
-				class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono text-base-content/50"
-			>GitHub</a>
 		</div>
 	</div>
 </nav>
@@ -175,8 +163,8 @@
 
 		<!-- CTA -->
 		<div class="flex flex-col items-start gap-1.5 mb-12">
-			<a href="{base}/setup" class="btn btn-primary px-8 py-3 text-base">Step-by-step setup →</a>
-			<span class="font-mono text-xs text-base-content/30">guided · works even if you've never used a terminal</span>
+			<a href="{base}/docs/how-it-works" class="btn btn-primary px-8 py-3 text-base">Read the docs →</a>
+			<span class="font-mono text-xs text-base-content/30">includes a step-by-step setup guide</span>
 		</div>
 
 		<!-- Terminal demo -->

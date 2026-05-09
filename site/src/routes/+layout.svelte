@@ -59,3 +59,15 @@
 </div>
 
 {@render children()}
+
+<!-- Footer -->
+<footer class="border-t border-base-300 bg-base-100">
+	<div class="mx-auto max-w-3xl px-8 py-8 flex flex-wrap items-center justify-between gap-4">
+		<span style="font-family:'Unbounded',sans-serif" class="text-sm font-black text-primary">pk</span>
+		<div class="flex items-center gap-6">
+			<a href="https://www.npmjs.com/package/@justestif/pk" target="_blank" rel="noopener" class="font-mono text-xs text-base-content/40 hover:text-base-content/70 transition-colors">npm</a>
+			<a href="https://github.com/justEstif/pk" target="_blank" rel="noopener" class="font-mono text-xs text-base-content/40 hover:text-base-content/70 transition-colors">GitHub</a>
+			<span class="font-mono text-xs text-base-content/20">MIT</span>
+		</div>
+	</div>
+</footer>
