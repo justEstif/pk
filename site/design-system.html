@@ -43,11 +43,19 @@
 </head>
 <body class="min-h-screen bg-base-100 text-base-content">
 
+  <!-- Theme toggle — sun/moon icon using DaisyUI swap -->
   <div class="fixed top-4 right-4 z-50">
-    <button class="btn btn-sm btn-ghost font-mono-pk border border-base-300"
-      onclick="const h=document.documentElement;h.dataset.theme=h.dataset.theme==='pk-dark'?'pk-light':'pk-dark'">
-      toggle dark / light
-    </button>
+    <label class="swap swap-rotate btn btn-ghost btn-circle border border-base-300">
+      <input type="checkbox" onchange="document.documentElement.dataset.theme=this.checked?'pk-dark':'pk-light'" />
+      <!-- sun (light mode) -->
+      <svg class="swap-off w-5 h-5 fill-none stroke-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <!-- moon (dark mode) -->
+      <svg class="swap-on w-5 h-5 fill-none stroke-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </label>
   </div>
 
   <div class="mx-auto max-w-3xl px-6 py-16 space-y-14">
@@ -64,7 +72,6 @@
     <section>
       <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Color tokens</p>
       <div class="flex flex-wrap gap-4">
-        {["bg-base-100 border border-base-300:base-100","bg-base-200 border border-base-300:base-200","bg-base-300 border border-base-300:base-300","bg-primary:primary","bg-base-content:content","bg-base-content/40:muted"].map(t => '')}
         <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-base-100 border border-base-300"></div><span class="font-mono-pk text-[10px] text-base-content/40">base-100</span></div>
         <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-base-200 border border-base-300"></div><span class="font-mono-pk text-[10px] text-base-content/40">base-200</span></div>
         <div class="flex flex-col items-center gap-1"><div class="w-16 h-16 rounded-xl bg-base-300 border border-base-300"></div><span class="font-mono-pk text-[10px] text-base-content/40">base-300</span></div>
@@ -108,11 +115,15 @@
     <!-- Buttons -->
     <section>
       <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Buttons</p>
+      <!-- Decision: 3 button roles only
+           primary  — filled amber, px-8, for main CTA
+           outline  — border + ghost, px-6, for nav links (npm, GitHub)
+           ghost-sm — no border, smaller, for inline utilities (copy) -->
       <div class="flex flex-wrap gap-3 items-center">
-        <button class="btn btn-primary btn-lg">Get started</button>
-        <button class="btn btn-ghost btn-lg border border-base-300">View on GitHub</button>
-        <button class="btn btn-ghost btn-lg">npm</button>
-        <button class="btn btn-ghost btn-md">copy</button>
+        <button class="btn btn-primary px-8">Get started</button>
+        <button class="btn btn-ghost border border-base-300 px-6">View on GitHub</button>
+        <button class="btn btn-ghost border border-base-300 px-6">npm</button>
+        <button class="btn btn-ghost btn-sm px-4 text-base-content/40">copy</button>
       </div>
     </section>
 
@@ -156,17 +167,17 @@
     <!-- Install widget -->
     <section>
       <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Install widget</p>
-      <div class="rounded-xl overflow-hidden border border-base-300 border-l-4 border-l-primary">
-        <div class="flex bg-base-200 border-b border-base-300">
+      <div class="rounded-xl overflow-hidden border border-base-300" style="border-left: 4px solid oklch(var(--color-primary, var(--p)))">
+        <div class="flex items-center bg-base-200 border-b border-base-300">
           <button class="font-mono-pk text-sm px-5 py-3 border-r border-base-300 bg-base-300 text-primary">npm</button>
           <button class="font-mono-pk text-sm px-5 py-3 border-r border-base-300 text-base-content/30 hover:text-base-content/60 transition-colors">bun</button>
           <button class="font-mono-pk text-sm px-5 py-3 text-base-content/30 hover:text-base-content/60 transition-colors">brew</button>
           <div class="flex-1"></div>
-          <button class="font-mono-pk text-xs px-5 py-3 text-base-content/30 hover:text-base-content/60 transition-colors">copy</button>
+          <button class="btn btn-ghost btn-sm px-4 font-mono-pk text-xs text-base-content/40">copy</button>
         </div>
-        <div class="mockup-code rounded-none bg-base-300">
-          <pre data-prefix="$"><code class="font-mono-pk">npm install -g @justestif/pk</code></pre>
-          <pre data-prefix="$"><code class="font-mono-pk">pk init</code></pre>
+        <div class="bg-base-300 font-mono-pk text-sm px-5 py-4 leading-loose">
+          <div><span class="text-base-content/30 mr-3">$</span><span class="text-base-content/70">npm install -g @justestif/pk</span></div>
+          <div><span class="text-base-content/30 mr-3">$</span><span class="text-base-content/70">pk init</span></div>
         </div>
       </div>
     </section>
@@ -230,13 +241,13 @@
     <!-- Navbar -->
     <section>
       <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Navbar</p>
-      <div class="navbar bg-base-100/90 backdrop-blur border border-base-300 rounded-xl px-5">
+      <div class="navbar bg-base-100/90 backdrop-blur border border-base-300 rounded-xl px-5 min-h-0 py-2.5">
         <div class="navbar-start">
           <span class="font-brand font-black text-base text-primary">pk</span>
         </div>
-        <div class="navbar-end gap-1">
-          <button class="btn btn-ghost font-mono-pk text-sm text-base-content/40">npm</button>
-          <button class="btn btn-ghost font-mono-pk text-sm text-base-content/40">GitHub</button>
+        <div class="navbar-end flex gap-1">
+          <button class="btn btn-ghost border border-base-300 px-6 font-mono-pk text-sm text-base-content/50">npm</button>
+          <button class="btn btn-ghost border border-base-300 px-6 font-mono-pk text-sm text-base-content/50">GitHub</button>
         </div>
       </div>
     </section>
@@ -254,7 +265,7 @@
           Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't answered yet. Your agent organizes it.
         </p>
         <div class="flex flex-wrap gap-3 items-center">
-          <button class="btn btn-primary btn-lg">Get started</button>
+          <button class="btn btn-primary px-8">Get started</button>
           <span class="font-mono-pk text-sm text-base-content/30">Claude Code · Codex · OpenCode</span>
         </div>
       </div>
