@@ -141,6 +141,18 @@
 			</div>
 		</div>
 
+		<!-- Prerequisites note -->
+		<div class="flex flex-wrap gap-x-5 gap-y-1 mb-2">
+			{#if activePkg === 'curl'}
+				<span class="font-mono text-xs text-base-content/30">installs Git · Bun · pk automatically</span>
+			{:else}
+				<span class="font-mono text-xs text-base-content/30">requires</span>
+				{#each ['Git', 'Bun'] as req}
+					<span class="font-mono text-xs text-base-content/30 flex items-center gap-1"><span class="text-[6px] text-base-content/20">●</span>{req}</span>
+				{/each}
+			{/if}
+		</div>
+
 		<!-- Supported harnesses -->
 		<div class="flex flex-wrap gap-x-6 gap-y-1 mb-8">
 			{#each ['Claude Code', 'Codex', 'OpenCode'] as harness}

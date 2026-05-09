@@ -37,6 +37,23 @@
 		<p class="text-base-content/60 text-lg">Already using Claude Code, Codex, or OpenCode? Two commands.</p>
 	</div>
 
+	<!-- Prerequisites -->
+	<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4">
+		<p class="font-mono text-xs uppercase tracking-widest text-base-content/30 mb-3">Prerequisites</p>
+		<div class="space-y-2">
+			{#each [
+				{ name: 'Git', note: 'tracks knowledge operations' },
+				{ name: 'Bun', note: 'runtime and package manager' },
+			] as req}
+				<div class="flex items-center justify-between">
+					<span class="font-mono text-sm text-base-content/70">{req.name}</span>
+					<span class="font-mono text-xs text-base-content/30">{req.note}</span>
+				</div>
+			{/each}
+		</div>
+		<p class="font-mono text-xs text-primary/60 mt-3">The curl installer handles all of these automatically.</p>
+	</div>
+
 	<div class="card card-border bg-base-200">
 		<div class="card-body">
 			<h2 class="font-semibold text-lg mb-1">Install pk</h2>
