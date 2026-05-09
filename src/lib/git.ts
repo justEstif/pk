@@ -42,6 +42,9 @@ export async function initRepo(knowledgeDir: string): Promise<void> {
 	await $`git -C ${knowledgeDir} config user.email "pk@local"`.quiet();
 
 	// Create .gitignore if it doesn't exist
+
+	// Disable GPG signing for this repo — avoids hanging on passphrase prompt
+	await $`git -C ${knowledgeDir} config commit.gpgsign false`.quiet();
 	const gitignorePath = path.join(knowledgeDir, '.gitignore');
 	const ignoreContent = '*.db\n*.db-shm\n*.db-wal\nnode_modules\n';
 	await Bun.write(gitignorePath, ignoreContent);
@@ -53,8 +56,8 @@ export async function initRepo(knowledgeDir: string): Promise<void> {
 		throw new Error(`Git commit failed: ${commitResult.stderr.toString()}`);
 	}
 
-	// Initialize git notes ref (will fail if no HEAD, but we just committed)
-	await $`git -C ${knowledgeDir} notes add`.quiet().catch(() => {
+	// Seed the notes ref so it exists for later use
+	await $`git -C ${knowledgeDir} notes add -m "pk: initialize notes ref"`.quiet().catch(() => {
 		// Ignore failure - notes ref will be created on first use
 	});
 }
