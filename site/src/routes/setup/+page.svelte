@@ -71,6 +71,10 @@
 
 <div class="mx-auto max-w-2xl px-8 pt-28 pb-24">
 
+	<a href="{base}/" class="inline-flex items-center gap-1.5 font-mono text-sm text-base-content/40 hover:text-base-content/70 transition-colors mb-8">
+		← pk
+	</a>
+
 	<div class="mb-10">
 		<h1 style="font-family:'Unbounded',sans-serif" class="font-black text-3xl mb-3">Get started</h1>
 		<p class="text-base-content/60 text-lg">Let's get pk running in your project. Takes about 5 minutes.</p>
