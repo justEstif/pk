@@ -97,35 +97,25 @@
 		name="description"
 		content="Structured bookkeeping for every project. Decisions, questions, notes, and sources — organized, searchable, stored locally."
 	/>
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Unbounded:wght@900&family=JetBrains+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500&display=swap"
-		rel="stylesheet"
-	/>
 </svelte:head>
 
 <!-- Nav -->
 <nav class="fixed top-0 left-0 right-0 z-50 border-b border-base-300 bg-base-100/90 backdrop-blur-md">
-	<div class="mx-auto max-w-3xl flex items-center justify-between px-8 py-3.5">
-		<span class="font-[Unbounded] text-base font-black text-amber-400">pk</span>
-		<div class="flex gap-2">
+	<div class="mx-auto max-w-3xl flex items-center justify-between px-8 py-2.5">
+		<span style="font-family:'Unbounded',sans-serif" class="text-base font-black text-primary">pk</span>
+		<div class="flex gap-1">
 			<a
 				href="https://www.npmjs.com/package/@justestif/pk"
 				target="_blank"
 				rel="noopener"
-				class="font-mono text-xs px-3 py-1.5 border border-base-300 rounded text-base-content/40 hover:text-base-content hover:border-base-content/30 transition-colors"
-			>
-				npm ↗
-			</a>
+				class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono text-base-content/50"
+			>npm</a>
 			<a
 				href="https://github.com/justEstif/pk"
 				target="_blank"
 				rel="noopener"
-				class="font-mono text-xs px-3 py-1.5 border border-base-300 rounded text-base-content/40 hover:text-base-content hover:border-base-content/30 transition-colors"
-			>
-				GitHub ↗
-			</a>
+				class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono text-base-content/50"
+			>GitHub</a>
 		</div>
 	</div>
 </nav>
@@ -133,11 +123,11 @@
 <!-- Hero -->
 <div
 	class="pt-28 pb-16"
-	style="background-image: linear-gradient(oklch(var(--bc)/0.06) 1px, transparent 1px), linear-gradient(90deg, oklch(var(--bc)/0.06) 1px, transparent 1px); background-size: 48px 48px;"
+	style="background-image: linear-gradient(oklch(var(--bc)/0.04) 1px, transparent 1px), linear-gradient(90deg, oklch(var(--bc)/0.04) 1px, transparent 1px); background-size: 48px 48px;"
 >
 	<div class="mx-auto max-w-3xl px-8">
 
-		<h1 class="font-[Unbounded] font-black text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.06] tracking-tight mb-5">
+		<h1 style="font-family:'Unbounded',sans-serif" class="font-black text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.06] tracking-tight mb-5">
 			Structured bookkeeping<br />for every project.
 		</h1>
 
@@ -147,48 +137,40 @@
 		</p>
 
 		<!-- Install widget -->
-		<div class="bg-base-200 border border-base-300 border-l-4 border-l-amber-400 rounded-md mb-1">
-			<div class="flex items-center justify-between border-b border-base-300 pr-3">
-				<div class="flex">
-					{#each (['npm', 'bun', 'brew'] as const) as pkg}
-						<button
-							class="font-mono text-sm px-4 py-2.5 border-r border-base-300 transition-colors
-								{activePkg === pkg ? 'text-amber-400 bg-base-300' : 'text-base-content/40 hover:text-base-content/60'}"
-							onclick={() => (activePkg = pkg)}
-						>
-							{pkg}
-						</button>
-					{/each}
-				</div>
+		<div class="rounded-xl overflow-hidden border border-base-300 border-l-4 border-l-primary mb-1">
+			<div class="flex items-center bg-base-200 border-b border-base-300">
+				{#each (['npm', 'bun', 'brew'] as const) as pkg}
+					<button
+						class="font-mono text-sm px-5 py-3 border-r border-base-300 transition-colors
+							{activePkg === pkg ? 'bg-base-300 text-primary' : 'text-base-content/30 hover:text-base-content/60'}"
+						onclick={() => (activePkg = pkg)}
+					>{pkg}</button>
+				{/each}
+				<div class="flex-1"></div>
 				<button
-					class="flex items-center gap-1.5 font-mono text-xs transition-colors {copied ? 'text-emerald-400' : 'text-base-content/40 hover:text-base-content/60'}"
+					class="btn btn-ghost btn-sm px-3 font-mono text-xs text-base-content/40 transition-colors {copied ? 'text-success' : ''}"
 					onclick={copyInstall}
 				>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-					</svg>
 					{copied ? 'copied!' : 'copy'}
 				</button>
 			</div>
-			<div class="font-mono text-[15px] px-4 py-3.5 text-base-content/60 leading-loose">
-				<div><span class="text-base-content/30">$</span> {pkgCmds[activePkg]}</div>
-				<div><span class="text-base-content/30">$</span> pk init</div>
+			<div class="font-mono text-sm px-5 py-4 leading-loose" style="background:#1C1917">
+				<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">{pkgCmds[activePkg]}</span></div>
+				<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init</span></div>
 			</div>
 		</div>
 
-		<div class="font-mono text-xs text-emerald-400 h-4 mb-1">{copied ? 'Copied!' : ''}</div>
-
 		<!-- Supported harnesses -->
-		<div class="flex flex-wrap justify-between gap-y-1 mb-7">
+		<div class="flex flex-wrap gap-x-6 gap-y-1 mb-8">
 			{#each ['Claude Code', 'Codex', 'OpenCode'] as harness}
-				<span class="font-mono text-sm text-base-content/50 flex items-center gap-1.5">
-					<span class="text-[6px] text-amber-400/60">●</span>{harness}
+				<span class="font-mono text-sm text-base-content/40 flex items-center gap-1.5">
+					<span class="text-[6px] text-primary/50">●</span>{harness}
 				</span>
 			{/each}
 		</div>
 
-		<!-- Get started -->
-		<a href="{base}/setup" class="btn btn-primary mb-10">Get started ↗</a>
+		<!-- CTA -->
+		<a href="{base}/setup" class="btn btn-primary px-8 py-3 text-base mb-12">Get started</a>
 
 		<!-- Terminal demo -->
 		<div class="font-mono text-[11px] uppercase tracking-widest text-base-content/30 mb-2.5">
@@ -201,38 +183,49 @@
 					role="tab"
 					aria-selected={activeTab === id}
 					class="font-mono text-sm py-2.5 text-center bg-base-200 border border-base-300 border-b-0 rounded-t transition-colors
-						{activeTab === id ? 'text-amber-400 border-b-base-200 relative z-[1]' : 'text-base-content/40 hover:text-base-content/60'}"
+						{activeTab === id ? 'text-primary border-b-base-200 relative z-[1]' : 'text-base-content/40 hover:text-base-content/60'}"
 					onclick={() => (activeTab = id as typeof activeTab)}
 				>
-					{id} <span class="text-[11px] {activeTab === id ? 'text-amber-400/50' : 'text-base-content/30'} ml-1">{hint}</span>
+					{id} <span class="text-[11px] {activeTab === id ? 'text-primary/50' : 'text-base-content/30'} ml-1">{hint}</span>
 				</button>
 			{/each}
 		</div>
 
-		<div class="bg-base-200 border border-base-300 rounded-b rounded-tr overflow-hidden">
-			<div class="bg-base-300 border-b border-base-300 px-3.5 py-2 flex items-center gap-1.5">
-				<span class="w-2.5 h-2.5 rounded-full bg-[#ff5f57]"></span>
-				<span class="w-2.5 h-2.5 rounded-full bg-[#febc2e]"></span>
-				<span class="w-2.5 h-2.5 rounded-full bg-[#28c840]"></span>
-				<span class="font-mono text-[11px] text-base-content/30 ml-1.5">
+		<!-- Terminal window -->
+		<div class="rounded-b rounded-tr overflow-hidden border border-base-300" style="background:#1C1917">
+			<div style="background:#292524; padding:10px 14px; display:flex; align-items:center; gap:6px; border-bottom:1px solid #312E2B">
+				<span style="width:10px;height:10px;border-radius:50%;background:#FF5F57;display:inline-block"></span>
+				<span style="width:10px;height:10px;border-radius:50%;background:#FEBC2E;display:inline-block"></span>
+				<span style="width:10px;height:10px;border-radius:50%;background:#28C840;display:inline-block"></span>
+				<span class="font-mono" style="font-size:11px;color:#57534E;margin-left:8px">
 					Claude Code · {scenarios[activeTab].label}
 				</span>
 			</div>
-			<div class="font-mono text-sm leading-[1.85] p-5 max-h-[400px] overflow-y-auto">
+			<div class="font-mono text-sm leading-loose p-5 max-h-[400px] overflow-y-auto" style="color:#A8A29E">
 				{#each scenarios[activeTab].lines as line}
 					{#if line.type === 'divider'}
-						<div class="border-t border-dashed border-base-300 my-3"></div>
+						<div style="border-top:1px dashed #292524; margin:10px 0"></div>
 					{:else if line.type === 'you'}
-						<div class="text-base-content font-medium border-l-2 border-amber-400 pl-2.5 -ml-3">{line.text}</div>
-					{:else if line.type === 'agent'}
-						<div class="text-base-content/60">{line.text}</div>
-					{:else if line.type === 'cont'}
-						<div class="text-base-content/60 pl-12">
-							{line.text}{#if line.cursor} <span class="text-amber-400">▌</span>{/if}
+						<div style="display:flex;gap:12px">
+							<span style="color:#D97706;font-weight:600;min-width:52px">You</span>
+							<span style="color:#F5F5F4;font-weight:500">{line.text?.replace('You: ', '')}</span>
 						</div>
 					{:else if line.type === 'lookup'}
-						<div class="text-[12px] text-base-content/30 my-0.5">
-							<span class="text-amber-400/50 mr-0.5">·</span>{line.text}
+						<div style="display:flex;gap:12px">
+							<span style="color:#44403C;min-width:52px">·</span>
+							<span style="color:#44403C;font-size:12px">{line.text}</span>
+						</div>
+					{:else if line.type === 'agent'}
+						<div style="display:flex;gap:12px">
+							<span style="color:#57534E;font-weight:600;min-width:52px">Claude</span>
+							<span style="color:#A8A29E">{line.text?.replace('Claude: ', '')}</span>
+						</div>
+					{:else if line.type === 'cont'}
+						<div style="display:flex;gap:12px">
+							<span style="min-width:52px"></span>
+							<span style="color:#A8A29E">
+								{line.text}{#if line.cursor} <span style="color:#D97706">▌</span>{/if}
+							</span>
 						</div>
 					{/if}
 				{/each}

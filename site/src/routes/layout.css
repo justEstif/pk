@@ -1,4 +1,47 @@
 @import 'tailwindcss';
 @plugin 'daisyui' {
-  themes: dim --default;
+  themes: pk-light --default, pk-dark;
 }
+
+@theme {
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-brand: 'Unbounded', sans-serif;
+}
+
+@plugin "daisyui/theme" {
+  name: "pk-light";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #F8F6F1;
+  --color-base-200: #F0EDE6;
+  --color-base-300: #E8E4DB;
+  --color-base-content: #1C1917;
+  --color-primary: #B45309;
+  --color-primary-content: #ffffff;
+  --color-secondary: #78716C;
+  --color-secondary-content: #F8F6F1;
+  --rounded-box: 0.75rem;
+  --rounded-btn: 0.5rem;
+  --rounded-badge: 999px;
+}
+
+@plugin "daisyui/theme" {
+  name: "pk-dark";
+  color-scheme: dark;
+  --color-base-100: #1C1917;
+  --color-base-200: #292524;
+  --color-base-300: #312E2B;
+  --color-base-content: #F5F5F4;
+  --color-primary: #D97706;
+  --color-primary-content: #ffffff;
+  --color-secondary: #A8A29E;
+  --color-secondary-content: #1C1917;
+  --rounded-box: 0.75rem;
+  --rounded-btn: 0.5rem;
+  --rounded-badge: 999px;
+}
+
+/* Button hierarchy */
+.btn { box-shadow: none; }
+.btn-primary { box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.1); }
