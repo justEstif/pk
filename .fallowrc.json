@@ -2,5 +2,9 @@
    "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
    "entry": [
       "src/**/*.test.ts"
+   ],
+   "ignore": [
+      "xo.config.js",
+      "docs/**"
    ]
 }

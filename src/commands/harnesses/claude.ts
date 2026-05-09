@@ -1,6 +1,18 @@
 import {mkdirSync} from 'node:fs';
 import path from 'node:path';
-import {readJson, writeJson} from './shared.ts';
+
+async function readJson(filePath: string): Promise<Record<string, unknown>> {
+	try {
+		return JSON.parse(await Bun.file(filePath).text()) as Record<string, unknown>;
+	} catch {
+		return {};
+	}
+}
+
+async function writeJson(filePath: string, data: unknown): Promise<void> {
+	mkdirSync(path.dirname(filePath), {recursive: true});
+	await Bun.write(filePath, JSON.stringify(data, null, 2) + '\n');
+}
 
 function claudeHookScript(knowledgeDir: string): string {
 	return `\

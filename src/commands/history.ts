@@ -1,7 +1,6 @@
 import type {Command} from 'commander';
 import {getHistory, formatHistory} from '../lib/git.ts';
-import {writeJson} from '../lib/json-output.ts';
-import {requireKnowledgeDir} from '../lib/paths.ts';
+import {runDir, writeJson} from '../lib/runner.ts';
 
 export function registerHistory(program: Command): void {
 	program
@@ -13,7 +12,7 @@ export function registerHistory(program: Command): void {
 		.option('--filter-tag <tag>', 'Filter by tag')
 		.option('--filter-operation <operation>', 'Filter by operation: create, update, delete')
 		.option('--json', 'JSON output')
-		.action(async (options: {
+		.action(runDir(async (dir, options: {
 			limit: string;
 			type: string;
 			filterType?: string;
@@ -21,35 +20,25 @@ export function registerHistory(program: Command): void {
 			filterOperation?: string;
 			json?: boolean;
 		}) => {
-			const knowledgeDir = requireKnowledgeDir();
+			const limit = Number.parseInt(options.limit, 10);
+			const history = await getHistory(dir, {
+				limit,
+				type: options.type as 'commits' | 'notes' | 'all',
+				filterType: options.filterType as 'note' | 'decision' | 'question' | 'source' | undefined,
+				filterTag: options.filterTag,
+				filterOperation: options.filterOperation as 'create' | 'update' | 'delete' | undefined,
+			});
 
-			try {
-				const limit = Number.parseInt(options.limit, 10);
-				const history = await getHistory(knowledgeDir, {
-					limit,
-					type: options.type as 'commits' | 'notes' | 'all',
-					filterType: options.filterType as 'note' | 'decision' | 'question' | 'source' | undefined,
-					filterTag: options.filterTag,
-					filterOperation: options.filterOperation as 'create' | 'update' | 'delete' | undefined,
-				});
-
-				if (options.json) {
-					writeJson({entries: history});
-					return;
-				}
-
-				if (history.length === 0) {
-					console.log('No history found.');
-					return;
-				}
-
-				console.log(formatHistory(history));
-			} catch (error) {
-				if (error instanceof Error) {
-					console.error(`Error: ${error.message}`);
-				}
-
-				process.exit(1);
+			if (options.json) {
+				writeJson({entries: history});
+				return;
 			}
-		});
+
+			if (history.length === 0) {
+				console.log('No history found.');
+				return;
+			}
+
+			console.log(formatHistory(history));
+		}));
 }

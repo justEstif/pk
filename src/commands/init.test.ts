@@ -8,8 +8,8 @@ import {
 	applyHarnesses,
 	ensureProject,
 	installSkill,
-} from './init.ts';
-import {writeAgentsMd} from './harnesses/shared.ts';
+} from '../lib/project.ts';
+import {writeAgentsMd} from './harnesses/codex.ts';
 import {writeClaudeHook} from './harnesses/claude.ts';
 import {writeOpenCodePlugin} from './harnesses/opencode.ts';
 

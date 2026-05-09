@@ -14,7 +14,7 @@ import type {
 	JsonVocabOutput,
 	JsonSearchOutput,
 	JsonReadOutput,
-} from '../lib/json-output.ts';
+} from '../lib/runner.ts';
 
 const CLI_PATH = path.resolve(import.meta.dir, '../../dist/index.js');
 const PK_HOME = path.join(os.tmpdir(), `pk-home-${Date.now()}`);

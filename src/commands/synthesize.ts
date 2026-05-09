@@ -1,8 +1,7 @@
 import type {Command} from 'commander';
 import {formatSynthesizeOutput, selectNotes} from '../lib/synthesize.ts';
-import {requireKnowledgeDir} from '../lib/paths.ts';
 import {addSynthesizeNote} from '../lib/git.ts';
-import {writeJson} from '../lib/json-output.ts';
+import {runDir, writeJson} from '../lib/runner.ts';
 import {excerpt} from '../lib/notes.ts';
 
 export function registerSynthesize(program: Command): void {
@@ -15,28 +14,14 @@ export function registerSynthesize(program: Command): void {
 		.option('--limit <n>', 'Max notes', '10')
 		.option('--session-start', 'Open questions + recent decisions + active notes')
 		.option('--json', 'JSON output')
-		.action(async (query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string; json: boolean}) => {
-			let dir: string;
-			try {
-				dir = requireKnowledgeDir();
-			} catch (error) {
-				console.error(String(error));
-				process.exit(1);
-			}
-
-			let notes;
-			try {
-				notes = await selectNotes(dir, query, {
-					all: opts.all,
-					limit: Number.parseInt(opts.limit, 10),
-					sessionStart: opts.sessionStart,
-					tag: opts.tag,
-					type: opts.type,
-				});
-			} catch (error) {
-				console.error(String(error));
-				process.exit(1);
-			}
+		.action(runDir(async (dir, query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string; json: boolean}) => {
+			const notes = await selectNotes(dir, query, {
+				all: opts.all,
+				limit: Number.parseInt(opts.limit, 10),
+				sessionStart: opts.sessionStart,
+				tag: opts.tag,
+				type: opts.type,
+			});
 
 			if (notes.length === 0) {
 				if (opts.json) {
@@ -71,5 +56,5 @@ export function registerSynthesize(program: Command): void {
 			} catch {
 				// Silently ignore git note errors - synthesize is the primary operation
 			}
-		});
+		}));
 }
