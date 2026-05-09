@@ -1,9 +1,9 @@
 import path from 'node:path';
 import {existsSync} from 'node:fs';
+import {$} from 'bun';
 import type {Command} from 'commander';
-import {deleteKnowledgeNote} from '../lib/operations.ts';
-import {requireKnowledgeDir} from '../lib/paths.ts';
-import {writeJson} from '../lib/json-output.ts';
+import {commitDelete} from '../lib/git.ts';
+import {runDir, writeJson} from '../lib/runner.ts';
 
 export function registerDelete(program: Command): void {
 	program
@@ -12,33 +12,28 @@ export function registerDelete(program: Command): void {
 		.argument('<path>', 'Path to the note file')
 		.option('-y, --yes', 'Skip confirmation prompt')
 		.option('--json', 'JSON output')
-		.action(async (notePath: string, options: {yes?: boolean; json?: boolean}) => {
-			await handleDelete(notePath, options);
-		});
-}
+		.action(runDir(async (dir, notePath: string, options: {yes?: boolean; json?: boolean}) => {
+			const fullPath = resolveFullPath(notePath, dir);
 
-async function handleDelete(notePath: string, options: {yes?: boolean; json?: boolean}): Promise<void> {
-	const knowledgeDir = requireKnowledgeDir();
-	const fullPath = resolveFullPath(notePath, knowledgeDir);
+			if (!checkFileExists(fullPath)) {
+				throw new Error(`Note not found: ${fullPath}`);
+			}
 
-	if (!checkFileExists(fullPath)) {
-		console.error(`Error: Note not found: ${fullPath}`);
-		process.exit(1);
-	}
+			// --json implies --yes (skip confirmation in machine-readable mode)
+			if (!(await confirmDeletion(fullPath, options.yes ?? options.json))) {
+				console.log('Aborted.');
+				process.exit(0);
+			}
 
-	// --json implies --yes (skip confirmation in machine-readable mode)
-	if (!(await confirmDeletion(fullPath, options.yes ?? options.json))) {
-		console.log('Aborted.');
-		process.exit(0);
-	}
+			await $`rm ${fullPath}`;
+			await commitDelete(dir, fullPath);
 
-	await performDeletion(fullPath);
-
-	if (options.json) {
-		writeJson({path: fullPath, status: 'deleted'});
-	} else {
-		console.log(`Deleted: ${fullPath}`);
-	}
+			if (options.json) {
+				writeJson({path: fullPath, status: 'deleted'});
+			} else {
+				console.log(`Deleted: ${fullPath}`);
+			}
+		}));
 }
 
 function resolveFullPath(notePath: string, knowledgeDir: string): string {
@@ -58,18 +53,6 @@ async function confirmDeletion(fullPath: string, skipConfirm: boolean | undefine
 	console.log('This action cannot be undone (but you can recover from git).');
 	const confirm = await prompt('Delete this note? (y/N): ');
 	return confirm.toLowerCase() === 'y';
-}
-
-async function performDeletion(fullPath: string): Promise<void> {
-	try {
-		await deleteKnowledgeNote(fullPath);
-	} catch (error) {
-		if (error instanceof Error) {
-			console.error(`Error: ${error.message}`);
-		}
-
-		process.exit(1);
-	}
 }
 
 async function prompt(question: string): Promise<string> {

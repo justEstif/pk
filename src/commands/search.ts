@@ -1,7 +1,6 @@
 import type {Command} from 'commander';
 import {search} from '../lib/db.ts';
-import {requireKnowledgeDir} from '../lib/paths.ts';
-import {writeJson} from '../lib/json-output.ts';
+import {runDir, writeJson} from '../lib/runner.ts';
 
 export function registerSearch(program: Command): void {
 	program
@@ -13,27 +12,13 @@ export function registerSearch(program: Command): void {
 		.option('--limit <n>', 'Max results', '10')
 		.option('--context', 'Include full note body in output')
 		.option('--json', 'JSON output')
-		.action(async (query: string, opts: {status: string; tag: string; type: string; limit: string; json: boolean; context: boolean}) => {
-			let dir: string;
-			try {
-				dir = requireKnowledgeDir();
-			} catch (error) {
-				console.error(String(error));
-				process.exit(1);
-			}
-
-			let results;
-			try {
-				results = search(dir, query, {
-					filterStatus: opts.status,
-					filterTag: opts.tag,
-					filterType: opts.type,
-					limit: Number.parseInt(opts.limit, 10),
-				});
-			} catch (error) {
-				console.error(String(error));
-				process.exit(1);
-			}
+		.action(runDir(async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; json: boolean; context: boolean}) => {
+			const results = search(dir, query, {
+				filterStatus: opts.status,
+				filterTag: opts.tag,
+				filterType: opts.type,
+				limit: Number.parseInt(opts.limit, 10),
+			});
 
 			if (opts.json) {
 				writeJson({results});
@@ -62,5 +47,5 @@ export function registerSearch(program: Command): void {
 					console.log('---');
 				}
 			}
-		});
+		}));
 }

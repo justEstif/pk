@@ -1,29 +1,14 @@
 import type {Command} from 'commander';
 import {vocab} from '../lib/db.ts';
-import {writeJson} from '../lib/json-output.ts';
-import {requireKnowledgeDir} from '../lib/paths.ts';
+import {runDir, writeJson} from '../lib/runner.ts';
 
 export function registerVocab(program: Command): void {
 	program
 		.command('vocab')
 		.description('List tags in the knowledge base by frequency')
 		.option('--json', 'JSON output')
-		.action((opts: {json: boolean}) => {
-			let dir: string;
-			try {
-				dir = requireKnowledgeDir();
-			} catch (error) {
-				console.error(String(error));
-				process.exit(1);
-			}
-
-			let tags;
-			try {
-				tags = vocab(dir);
-			} catch (error) {
-				console.error(String(error));
-				process.exit(1);
-			}
+		.action(runDir((dir, opts: {json: boolean}) => {
+			const tags = vocab(dir);
 
 			if (opts.json) {
 				writeJson({tags});
@@ -38,5 +23,5 @@ export function registerVocab(program: Command): void {
 			for (const {tag, count} of tags) {
 				console.log(`${tag} (${count})`);
 			}
-		});
+		}));
 }
