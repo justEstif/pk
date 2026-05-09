@@ -4,15 +4,22 @@ Project knowledge CLI — structured intake, search, and recall.
 
 ## Install
 
-**npm:**
+**One-liner (macOS / Linux):**
 
 ```bash
-npm install -g @justestif/pk
+curl -fsSL https://justestif.github.io/pk/install.sh | bash
 ```
 
-**Homebrew:**
+**Or manually:**
 
 ```bash
+# npm
+npm install -g @justestif/pk
+
+# bun
+bun install -g @justestif/pk
+
+# Homebrew
 brew install justEstif/tap/pk
 ```
 
