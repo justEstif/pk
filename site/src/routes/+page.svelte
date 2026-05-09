@@ -99,19 +99,6 @@
 	/>
 </svelte:head>
 
-<!-- Nav -->
-<nav class="fixed top-0 left-0 right-0 z-50 border-b border-base-300 bg-base-100/90 backdrop-blur-md">
-	<div class="mx-auto max-w-3xl flex items-center justify-between px-8 py-2.5">
-		<span style="font-family:'Unbounded',sans-serif" class="text-base font-black text-primary">pk</span>
-		<div class="flex gap-1">
-			<a
-				href="{base}/docs/how-it-works"
-				class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono text-base-content/50"
-			>Docs</a>
-		</div>
-	</div>
-</nav>
-
 <!-- Hero -->
 <div
 	class="pt-28 pb-16"
@@ -163,8 +150,8 @@
 
 		<!-- CTA -->
 		<div class="flex flex-col items-start gap-1.5 mb-12">
-			<a href="{base}/docs/how-it-works" class="btn btn-primary px-8 py-3 text-base">Read the docs →</a>
-			<span class="font-mono text-xs text-base-content/30">includes a step-by-step setup guide</span>
+			<a href="{base}/docs/setup" class="btn btn-primary px-8 py-3 text-base">Get started →</a>
+			<span class="font-mono text-xs text-base-content/30">step-by-step setup guide</span>
 		</div>
 
 		<!-- Terminal demo -->

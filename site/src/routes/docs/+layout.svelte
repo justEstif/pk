@@ -6,7 +6,7 @@
 
 	const nav = [
 		{ href: `${base}/docs/how-it-works`, label: 'How it works' },
-		{ href: `${base}/setup`, label: 'Setup guide' },
+		{ href: `${base}/docs/setup`, label: 'Setup guide' },
 	];
 </script>
 
@@ -27,18 +27,11 @@
 					>{item.label}</a>
 				{/each}
 			</nav>
-			<div class="mt-8 pt-6 border-t border-base-300">
-				<a href="{base}/" class="font-mono text-xs text-base-content/30 hover:text-base-content/60 transition-colors">← pk</a>
-			</div>
 		</div>
 	</aside>
 
 	<!-- Content -->
 	<main class="min-w-0 flex-1">
-		<!-- Mobile back link -->
-		<a href="{base}/" class="md:hidden inline-flex items-center gap-1.5 font-mono text-sm text-base-content/40 hover:text-base-content/70 transition-colors mb-8">
-			← pk
-		</a>
 		{@render children()}
 	</main>
 

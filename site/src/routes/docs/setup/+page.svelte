@@ -69,11 +69,7 @@
 	<title>Get started — pk</title>
 </svelte:head>
 
-<div class="mx-auto max-w-2xl px-8 pt-28 pb-24">
-
-	<a href="{base}/docs/how-it-works" class="inline-flex items-center gap-1.5 font-mono text-sm text-base-content/40 hover:text-base-content/70 transition-colors mb-8">
-		← docs
-	</a>
+<div>
 
 	<div class="mb-10">
 		<h1 style="font-family:'Unbounded',sans-serif" class="font-black text-3xl mb-3">Get started</h1>
