@@ -135,7 +135,6 @@ export function buildOutro(
 	created: boolean,
 	knowledgeDir: string,
 	harnesses: Harness[],
-	skillPaths: string[],
 ): string[] {
 	const lines: string[] = [
 		created ? `Created project: ${knowledgeDir}` : `Connected to existing project: ${knowledgeDir}`,
@@ -144,16 +143,6 @@ export function buildOutro(
 	for (const h of harnesses) {
 		lines.push(`  ${h}: configured → ${HARNESS_ACTIVATION[h]}`);
 	}
-
-	for (const sp of skillPaths) {
-		lines.push(`  skill installed to ${sp}`);
-	}
-
-	lines.push(
-		'',
-		'Verify: pk search --help',
-		`export PK_KNOWLEDGE_DIR="${knowledgeDir}"`,
-	);
 
 	return lines;
 }

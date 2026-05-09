@@ -70,8 +70,8 @@ export function registerInit(program: Command): void {
 				const ctx = {
 					home, knowledgeDir, name: nameArg, projectRoot,
 				};
-				const skillPaths = await applyHarnesses(flagHarnesses, ctx);
-				console.log(buildOutro(created, knowledgeDir, flagHarnesses, skillPaths).join('\n'));
+				await applyHarnesses(flagHarnesses, ctx);
+				console.log(buildOutro(created, knowledgeDir, flagHarnesses).join('\n'));
 				return;
 			}
 
@@ -144,8 +144,8 @@ export function registerInit(program: Command): void {
 			const ctx = {
 				home, knowledgeDir, name, projectRoot,
 			};
-			const skillPaths = await applyHarnesses(harnesses, ctx);
+			await applyHarnesses(harnesses, ctx);
 
-			p.outro(buildOutro(created, knowledgeDir, harnesses, skillPaths).join('\n'));
+			p.outro(buildOutro(created, knowledgeDir, harnesses).join('\n'));
 		});
 }
