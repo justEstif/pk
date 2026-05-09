@@ -13,8 +13,8 @@ export function registerSynthesize(program: Command): void {
 		.option('--tag <tag>', 'Filter by tag')
 		.option('--limit <n>', 'Max notes', '10')
 		.option('--session-start', 'Open questions + recent decisions + active notes')
-		.option('--json', 'JSON output')
-		.action(runDir(async (dir, query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string; json: boolean}) => {
+		.option('--pretty', 'Human-readable output')
+		.action(runDir(async (dir, query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string; pretty?: boolean}) => {
 			const notes = await selectNotes(dir, query, {
 				all: opts.all,
 				limit: Number.parseInt(opts.limit, 10),
@@ -24,10 +24,10 @@ export function registerSynthesize(program: Command): void {
 			});
 
 			if (notes.length === 0) {
-				if (opts.json) {
-					writeJson({notes: [], label: opts.sessionStart ? 'session context' : (query ?? 'all')});
-				} else {
+				if (opts.pretty) {
 					console.log('No matching notes.');
+				} else {
+					writeJson({notes: [], label: opts.sessionStart ? 'session context' : (query ?? 'all')});
 				}
 
 				return;
@@ -35,26 +35,27 @@ export function registerSynthesize(program: Command): void {
 
 			const label = opts.sessionStart ? 'session context' : (query ?? 'all');
 
-			if (opts.json) {
-				const mappedNotes = notes.map(note => ({
-					path: note.path,
-					type: note.meta.type ?? '',
-					status: note.meta.status ?? '',
-					title: note.meta.title ?? '',
-					tags: Array.isArray(note.meta.tags) ? note.meta.tags : [],
-					excerpt: excerpt(note),
-				}));
-				writeJson({notes: mappedNotes, label});
+			if (opts.pretty) {
+				console.log(formatSynthesizeOutput(notes, label));
+
+				// Add git note for synthesize operation
+				try {
+					await addSynthesizeNote(dir, query ?? 'session-start');
+				} catch {
+					// Silently ignore git note errors - synthesize is the primary operation
+				}
+
 				return;
 			}
 
-			console.log(formatSynthesizeOutput(notes, label));
-
-			// Add git note for synthesize operation
-			try {
-				await addSynthesizeNote(dir, query ?? 'session-start');
-			} catch {
-				// Silently ignore git note errors - synthesize is the primary operation
-			}
+			const mappedNotes = notes.map(note => ({
+				path: note.path,
+				type: note.meta.type ?? '',
+				status: note.meta.status ?? '',
+				title: note.meta.title ?? '',
+				tags: Array.isArray(note.meta.tags) ? note.meta.tags : [],
+				excerpt: excerpt(note),
+			}));
+			writeJson({notes: mappedNotes, label});
 		}));
 }

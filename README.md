@@ -56,23 +56,23 @@ Available harnesses: `claude` (Claude Code), `codex` (Codex), `opencode` (OpenCo
 ## Commands
 
 ```bash
-pk init [name] [--harness h1,h2,…]   # set up project + hooks
+pk init [name] [--harness h1,h2,...]   # set up project + hooks
 
 pk new <type> <title> [--tags t1,t2]
-pk delete <path> [--yes]               # delete note with confirmation
+pk delete <path>                         # JSON output, skips confirmation
 pk search <query> [--limit 5] [--type] [--status] [--tag]
 pk synthesize [query] [--all]
 pk history [--limit 20] [--type <type>] [--filter-type <type>] [--filter-tag <tag>] [--filter-operation <op>]
-pk read <path> [--json]
-pk vocab [--json]
+pk read <path>
+pk vocab
 pk rebuild
-pk lint [paths...] [--json]
+pk lint [paths...]
 pk prime                               # output priming context for hooks
 pk instructions <command>
 pk config
 ```
 
-Every command supports `--json` for machine-readable output.
+All commands output JSON by default. Use `--pretty` for human-readable output.
 
 ### Note types
 

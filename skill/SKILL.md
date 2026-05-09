@@ -7,7 +7,7 @@ description: "Load when maintaining project knowledge, capturing decisions or qu
 
 Structured project knowledge — intake, search, recall, and audit.
 
-Use the `pk` CLI for all knowledge operations. Every command supports `--json` for machine-readable output. Never read or write knowledge files directly — always go through `pk`.
+Use the `pk` CLI for all knowledge operations. Every command outputs JSON by default. Use `--pretty` for human-readable output. Never read or write knowledge files directly — always go through `pk`.
 
 ## Commands
 

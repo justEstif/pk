@@ -6,16 +6,14 @@ export function registerLint(program: Command): void {
 	program
 		.command('lint [paths...]')
 		.description('Validate knowledge notes structure and frontmatter')
-		.option('--json', 'JSON output')
-		.action(runDir(async (dir, paths: string[] | undefined, opts: {json?: boolean}) => {
+		.option('--pretty', 'Human-readable output')
+		.action(runDir(async (dir, paths: string[] | undefined, opts: {pretty?: boolean}) => {
 			const resolved = paths?.length
 				? paths.map(p => p.startsWith('/') ? p : `${dir}/${p}`)
 				: undefined;
 			const {issues, noteCount} = await lintNotes(dir, resolved);
 
-			if (opts.json) {
-				writeJson({issues, noteCount});
-			} else {
+			if (opts.pretty) {
 				let hasError = false;
 				for (const {level, path: p, message} of issues) {
 					const prefix = level === 'error' ? 'ERROR' : 'WARN ';
@@ -31,6 +29,8 @@ export function registerLint(program: Command): void {
 				} else {
 					console.log(`lint passed (${noteCount} files, ${issues.filter(i => i.level === 'warn').length} warnings)`);
 				}
+			} else {
+				writeJson({issues, noteCount});
 			}
 		}));
 }
