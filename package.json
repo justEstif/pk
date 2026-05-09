@@ -30,6 +30,9 @@
       "type": "git",
       "url": "git+https://github.com/justEstif/pk.git"
    },
+   "xo": {
+      "ignores": ["site/**"]
+   },
    "devDependencies": {
       "@types/bun": "latest",
       "fallow": "^2.67.0",
