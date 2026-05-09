@@ -105,6 +105,10 @@
 		<span style="font-family:'Unbounded',sans-serif" class="text-base font-black text-primary">pk</span>
 		<div class="flex gap-1">
 			<a
+				href="{base}/docs/how-it-works"
+				class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono text-base-content/50"
+			>Docs</a>
+			<a
 				href="https://www.npmjs.com/package/@justestif/pk"
 				target="_blank"
 				rel="noopener"

@@ -1,42 +1,32 @@
-# sv
+# pk site
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Marketing and docs site for [pk](https://github.com/justEstif/pk) — deployed to GitHub Pages at [justestif.github.io/pk](https://justestif.github.io/pk/).
 
-## Creating a project
+Built with SvelteKit (static adapter), Tailwind CSS v4, and DaisyUI v5.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Routes
 
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.15.3 create --template minimal --types ts --add prettier eslint tailwindcss="plugins:none" mdsvex sveltekit-adapter="adapter:static" --install npm site
-```
+| Route | Description |
+|---|---|
+| `/` | Landing page |
+| `/setup` | Interactive setup wizard |
+| `/docs/how-it-works` | How the pk memory system works |
+| `/design-system` | Live design system reference |
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
 ```sh
+npm install
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
 ## Building
 
-To create a production version of your app:
-
 ```sh
 npm run build
+npm run preview   # preview production build locally
 ```
 
-You can preview the production build with `npm run preview`.
+## Deploy
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Pushing to `main` triggers the GitHub Actions workflow (`.github/workflows/deploy-site.yml`) which builds and deploys `site/build/` to the `gh-pages` branch.
