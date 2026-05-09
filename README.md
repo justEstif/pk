@@ -16,7 +16,11 @@ npm install -g @justestif/pk
 brew install justEstif/tap/pk
 ```
 
-Requires [Bun](https://bun.sh).
+Requires:
+- [Git](https://git-scm.com) — tracks all knowledge operations via commits and git notes
+- [Bun](https://bun.sh) — runtime
+
+> **Note:** If you have GPG commit signing enabled globally (`commit.gpgsign=true`), `pk init` bypasses it for the knowledge repo to avoid interactive prompts. No configuration needed.
 
 ## Setup
 
@@ -55,7 +59,6 @@ Available harnesses: `claude` (Claude Code), `codex` (Codex), `opencode` (OpenCo
 pk init [name] [--harness h1,h2,…]   # set up project + hooks
 
 pk new <type> <title> [--tags t1,t2]
-pk edit <path> [--editor <cmd>]      # edit existing note
 pk delete <path> [--yes]               # delete note with confirmation
 pk search <query> [--limit 5] [--type] [--status] [--tag]
 pk synthesize [query] [--all]

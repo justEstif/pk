@@ -52,6 +52,41 @@ describe('pk CLI e2e tests', () => {
 			expect(existsSync(knowledgeDir)).toBe(true);
 			expect(existsSync(path.join(knowledgeDir, '.git'))).toBe(true);
 		});
+
+		test('fails with clear error when git is not installed', async () => {
+			const result = await $`PATH=/usr/bin/nonexistent ${CLI_PATH} init ${projectName} --harness claude`.nothrow();
+			expect(result.exitCode).toBe(1);
+			expect(result.stderr.toString()).toContain('git');
+		});
+
+		test('re-init on existing project preserves data', async () => {
+			await $`${CLI_PATH} init ${projectName} --harness claude`.quiet();
+			const noteResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Re-init test"`.quiet();
+			expect(noteResult.exitCode).toBe(0);
+			// Re-init same project
+			const reResult = await $`${CLI_PATH} init ${projectName} --harness claude`.quiet();
+			expect(reResult.exitCode).toBe(0);
+			// Note should still exist
+			const notePath = noteResult.stdout.toString().trim();
+			expect(existsSync(notePath)).toBe(true);
+		});
+
+		test('fails with clear error when home directory is not writable', async () => {
+			const readOnlyHome = path.join(os.tmpdir(), `pk-readonly-${Date.now()}`);
+			mkdirSync(readOnlyHome, {recursive: true});
+			// Make the home directory read-only
+			await $`chmod 000 ${readOnlyHome}`.quiet();
+			try {
+				const result = await $`HOME=${readOnlyHome} ${CLI_PATH} init ${projectName} --harness claude`.nothrow();
+				expect(result.exitCode).toBe(1);
+				const stderr = result.stderr.toString();
+				expect(stderr).toContain('pk requires'); // Controlled pk error, not raw crash
+				expect(stderr.toLowerCase()).toMatch(/writ|perm|access/iv);
+			} finally {
+				await $`chmod 755 ${readOnlyHome}`.quiet();
+				rmSync(readOnlyHome, {recursive: true, force: true});
+			}
+		});
 	});
 
 	describe('pk new (with git integration)', () => {
@@ -66,6 +101,13 @@ describe('pk CLI e2e tests', () => {
 			expect(existsSync(notePath)).toBe(true);
 			const logResult = await $`git -C ${knowledgeDir} log --oneline -n 1`.quiet();
 			expect(logResult.stdout.toString()).toContain('knowledge: intake note');
+		});
+
+		test('rejects duplicate title with error', async () => {
+			await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Duplicate Test"`.quiet();
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Duplicate Test"`.nothrow();
+			expect(result.exitCode).toBe(1);
+			expect(result.stderr.toString()).toContain('Already exists');
 		});
 	});
 
@@ -164,6 +206,35 @@ describe('pk CLI e2e tests', () => {
 			await Bun.write(notePath, '---\ntype: note\n---\n\n## Summary\n\ntext.');
 			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} lint`.nothrow();
 			expect(result.exitCode).toBe(1);
+		});
+
+		test('reports errors for note with no frontmatter delimiters', async () => {
+			const createResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "No Delimiters" --tags lint`.quiet();
+			const notePath = createResult.stdout.toString().trim();
+			await Bun.write(notePath, 'Just some plain text with no frontmatter at all');
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} lint --json`.quiet();
+			const output = parseJson<JsonLintOutput>(result.stdout.toString().trim());
+			expect(output.issues.length).toBeGreaterThan(0);
+			expect(output.issues.some(i => i.level === 'error')).toBe(true);
+		});
+
+		test('reports errors for note with malformed YAML', async () => {
+			const createResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Bad YAML" --tags lint`.quiet();
+			const notePath = createResult.stdout.toString().trim();
+			await Bun.write(notePath, '---\ntype: note\nstatus: open\ntags: [unclosed\n---\n\n## Summary\n\nText.');
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} lint --json`.quiet();
+			const output = parseJson<JsonLintOutput>(result.stdout.toString().trim());
+			expect(output.issues.length).toBeGreaterThan(0);
+		});
+
+		test('reports errors for empty file', async () => {
+			const createResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Empty File" --tags lint`.quiet();
+			const notePath = createResult.stdout.toString().trim();
+			await Bun.write(notePath, '');
+			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} lint --json`.quiet();
+			const output = parseJson<JsonLintOutput>(result.stdout.toString().trim());
+			expect(output.issues.length).toBeGreaterThan(0);
+			expect(output.issues.some(i => i.level === 'error')).toBe(true);
 		});
 	});
 

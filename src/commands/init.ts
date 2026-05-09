@@ -1,6 +1,7 @@
 import {existsSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {$} from 'bun';
 import * as p from '@clack/prompts';
 import type {Command} from 'commander';
 import {listExistingProjects, pkHome} from '../lib/paths.ts';
@@ -19,6 +20,28 @@ import {
 export type {Harness, HarnessContext} from '../lib/project.ts';
 
 /**
+ * Check that git is available on PATH.
+ * Exits with error if not found.
+ */
+async function requireGit(): Promise<void> {
+	try {
+		await $`git --version`.quiet();
+	} catch {
+		console.error('pk requires git. Install it from https://git-scm.com and ensure it is on PATH.');
+		process.exit(1);
+	}
+}
+
+async function safeEnsureProject(name: string): Promise<{created: boolean; knowledgeDir: string}> {
+	try {
+		return await ensureProject(name);
+	} catch (error: unknown) {
+		console.error(String(error));
+		process.exit(1);
+	}
+}
+
+/**
  * Ensure git repo exists in the knowledge directory.
  * Runs on first creation and on re-init if .git is missing.
  */
@@ -31,7 +54,8 @@ async function ensureGitRepo(created: boolean, knowledgeDir: string): Promise<vo
 		const {initRepo} = await import('../lib/git.ts');
 		await initRepo(knowledgeDir);
 	} catch (error) {
-		console.warn(`[pk] Failed to initialize git repo: ${String(error)}`);
+		console.error(`[pk] Failed to initialize git repo: ${String(error)}`);
+		process.exit(1);
 	}
 }
 
@@ -46,6 +70,8 @@ export function registerInit(program: Command): void {
 			`Comma-separated harnesses: ${HARNESSES.map(h => h.value).join(', ')}`,
 		)
 		.action(async (nameArg: string | undefined, opts: {harness?: string}) => {
+			await requireGit();
+
 			const projectRoot = process.cwd();
 			const home = os.homedir();
 			const existing = listExistingProjects();
@@ -64,7 +90,7 @@ export function registerInit(program: Command): void {
 
 			// ── Non-interactive path: both args supplied ───────────────────────
 			if (nameArg && flagHarnesses) {
-				const {created, knowledgeDir} = await ensureProject(nameArg);
+				const {created, knowledgeDir} = await safeEnsureProject(nameArg);
 				await ensureGitRepo(created, knowledgeDir);
 
 				const ctx = {
@@ -138,7 +164,7 @@ export function registerInit(program: Command): void {
 			}
 
 			// ── Apply ──────────────────────────────────────────────────────────
-			const {created, knowledgeDir} = await ensureProject(name);
+			const {created, knowledgeDir} = await safeEnsureProject(name);
 			await ensureGitRepo(created, knowledgeDir);
 
 			const ctx = {

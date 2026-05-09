@@ -28,13 +28,22 @@ export const HARNESS_ACTIVATION: Record<Harness, string> = {
 export async function ensureProject(name: string): Promise<{created: boolean; knowledgeDir: string}> {
 	const kDir = projectDir(name);
 	const alreadyExists = existsSync(kDir);
-	for (const dir of Object.values(TYPE_DIRS)) {
-		mkdirSync(path.join(kDir, dir), {recursive: true});
-	}
+	try {
+		for (const dir of Object.values(TYPE_DIRS)) {
+			mkdirSync(path.join(kDir, dir), {recursive: true});
+		}
 
-	const gi = path.join(kDir, '.gitignore');
-	if (!existsSync(gi)) {
-		await Bun.write(gi, '.index.db\n');
+		const gi = path.join(kDir, '.gitignore');
+		if (!existsSync(gi)) {
+			await Bun.write(gi, '.index.db\n');
+		}
+	} catch (error: unknown) {
+		const {code} = (error as NodeJS.ErrnoException);
+		if (code === 'EACCES') {
+			throw new Error(`pk requires write access to ${kDir}. Check directory permissions.`, {cause: error});
+		}
+
+		throw error;
 	}
 
 	return {created: !alreadyExists, knowledgeDir: kDir};
