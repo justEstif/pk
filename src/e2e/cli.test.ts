@@ -238,34 +238,6 @@ describe('pk CLI e2e tests', () => {
 		});
 	});
 
-	describe('pk edit', () => {
-		beforeEach(async () => {
-			await $`${CLI_PATH} init ${projectName} --harness claude`.quiet();
-		});
-
-		test('edits a note and commits the update', async () => {
-			const createResult = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} new note "Edit Test"`.quiet();
-			const notePath = createResult.stdout.toString().trim();
-			// Write an editor script that appends a line to the note body
-			const editorScript = path.join(os.tmpdir(), `pk-editor-${Date.now()}.sh`);
-			await Bun.write(editorScript, '#!/bin/sh\necho "" >> "$1"');
-			await $`chmod +x ${editorScript}`.quiet();
-			try {
-				const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} EDITOR=${editorScript} ${CLI_PATH} edit ${notePath}`.quiet();
-				expect(result.exitCode).toBe(0);
-				const logResult = await $`git -C ${knowledgeDir} log --format=%s -n 1`.quiet();
-				expect(logResult.stdout.toString()).toContain('knowledge: update note');
-			} finally {
-				rmSync(editorScript, {force: true});
-			}
-		});
-
-		test('fails for nonexistent file', async () => {
-			const result = await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${CLI_PATH} edit /nonexistent/path.md`.nothrow();
-			expect(result.exitCode).not.toBe(0);
-		});
-	});
-
 	describe('pk --json flag', () => {
 		beforeEach(async () => {
 			await $`${CLI_PATH} init ${projectName} --harness claude`.quiet();

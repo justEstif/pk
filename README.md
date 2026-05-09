@@ -59,7 +59,6 @@ Available harnesses: `claude` (Claude Code), `codex` (Codex), `opencode` (OpenCo
 pk init [name] [--harness h1,h2,…]   # set up project + hooks
 
 pk new <type> <title> [--tags t1,t2]
-pk edit <path> [--editor <cmd>]      # edit existing note
 pk delete <path> [--yes]               # delete note with confirmation
 pk search <query> [--limit 5] [--type] [--status] [--tag]
 pk synthesize [query] [--all]

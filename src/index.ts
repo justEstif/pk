@@ -1,7 +1,6 @@
 import {createRequire} from 'node:module';
 import {Command} from 'commander';
 import {registerNew} from './commands/new.ts';
-import {registerEdit} from './commands/edit.ts';
 import {registerDelete} from './commands/delete.ts';
 import {registerSearch} from './commands/search.ts';
 import {registerHistory} from './commands/history.ts';
@@ -24,7 +23,6 @@ const program = new Command()
 	.version(pkg.version);
 
 registerNew(program);
-registerEdit(program);
 registerDelete(program);
 registerSearch(program);
 registerHistory(program);

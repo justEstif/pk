@@ -93,14 +93,6 @@ pk vocab
 
 Useful for orienting before searching.
 
-### `pk edit` — edit a note in $EDITOR
-
-```bash
-pk edit /abs/path/to/note.md
-```
-
-Opens the note in `$EDITOR`, validates after save, commits changes. For agents: use `pk read` + file edit + `pk lint` instead.
-
 ### Status transitions
 
 No command for status changes. Edit the frontmatter `status` field directly, then `pk lint` to validate.
