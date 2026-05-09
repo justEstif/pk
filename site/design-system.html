@@ -39,6 +39,12 @@
     body { font-family: 'DM Sans', system-ui, sans-serif; }
     .font-brand { font-family: 'Unbounded', sans-serif; }
     .font-mono-pk { font-family: 'JetBrains Mono', monospace; }
+    /* Kill DaisyUI's colored bottom-accent shadow globally */
+    .btn { box-shadow: none; }
+    /* Primary: lifted and substantial */
+    .btn-primary { box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.1); }
+    /* Secondary fill: flat, recedes behind primary */
+    .btn-secondary-fill { box-shadow: none; }
   </style>
 </head>
 <body class="min-h-screen bg-base-100 text-base-content">
@@ -120,10 +126,10 @@
            outline  — border + ghost, px-6, for nav links (npm, GitHub)
            ghost-sm — no border, smaller, for inline utilities (copy) -->
       <div class="flex flex-wrap gap-3 items-center">
-        <button class="btn btn-primary px-8">Get started</button>
-        <button class="btn btn-ghost border border-base-300 px-6">View on GitHub</button>
-        <button class="btn btn-ghost border border-base-300 px-6">npm</button>
-        <button class="btn btn-ghost btn-sm px-4 text-base-content/40">copy</button>
+        <button class="btn btn-primary px-8 py-3 text-base">Get started</button>
+        <button class="btn bg-base-200 hover:bg-base-300 px-6 py-2.5 text-sm text-base-content/60">View on GitHub</button>
+        <button class="btn bg-base-200 hover:bg-base-300 px-6 py-2.5 text-sm text-base-content/60">npm</button>
+        <button class="btn btn-ghost btn-sm px-3 text-xs text-base-content/40">copy</button>
       </div>
     </section>
 
@@ -167,17 +173,18 @@
     <!-- Install widget -->
     <section>
       <p class="font-mono-pk text-xs uppercase tracking-widest text-base-content/30 mb-5">Install widget</p>
-      <div class="rounded-xl overflow-hidden border border-base-300" style="border-left: 4px solid oklch(var(--color-primary, var(--p)))">
+      <div class="rounded-xl overflow-hidden border border-base-300 border-l-4 border-l-primary">
         <div class="flex items-center bg-base-200 border-b border-base-300">
           <button class="font-mono-pk text-sm px-5 py-3 border-r border-base-300 bg-base-300 text-primary">npm</button>
           <button class="font-mono-pk text-sm px-5 py-3 border-r border-base-300 text-base-content/30 hover:text-base-content/60 transition-colors">bun</button>
           <button class="font-mono-pk text-sm px-5 py-3 text-base-content/30 hover:text-base-content/60 transition-colors">brew</button>
           <div class="flex-1"></div>
-          <button class="btn btn-ghost btn-sm px-4 font-mono-pk text-xs text-base-content/40">copy</button>
+          <button class="btn btn-ghost btn-sm px-4 font-mono-pk text-xs text-base-content/40 shadow-none">copy</button>
         </div>
-        <div class="bg-base-300 font-mono-pk text-sm px-5 py-4 leading-loose">
-          <div><span class="text-base-content/30 mr-3">$</span><span class="text-base-content/70">npm install -g @justestif/pk</span></div>
-          <div><span class="text-base-content/30 mr-3">$</span><span class="text-base-content/70">pk init</span></div>
+        <!-- Code area: always dark, no theme clash -->
+        <div class="font-mono-pk text-sm px-5 py-4 leading-loose" style="background:#1C1917">
+          <div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">npm install -g @justestif/pk</span></div>
+          <div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init</span></div>
         </div>
       </div>
     </section>
@@ -246,8 +253,8 @@
           <span class="font-brand font-black text-base text-primary">pk</span>
         </div>
         <div class="navbar-end flex gap-1">
-          <button class="btn btn-ghost border border-base-300 px-6 font-mono-pk text-sm text-base-content/50">npm</button>
-          <button class="btn btn-ghost border border-base-300 px-6 font-mono-pk text-sm text-base-content/50">GitHub</button>
+          <button class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono-pk text-base-content/50">npm</button>
+          <button class="btn bg-base-200 hover:bg-base-300 px-5 py-2 text-sm font-mono-pk text-base-content/50">GitHub</button>
         </div>
       </div>
     </section>
@@ -265,7 +272,7 @@
           Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't answered yet. Your agent organizes it.
         </p>
         <div class="flex flex-wrap gap-3 items-center">
-          <button class="btn btn-primary px-8">Get started</button>
+          <button class="btn btn-primary px-8 py-3 text-base">Get started</button>
           <span class="font-mono-pk text-sm text-base-content/30">Claude Code · Codex · OpenCode</span>
         </div>
       </div>
