@@ -170,7 +170,10 @@
 		</div>
 
 		<!-- CTA -->
-		<a href="{base}/setup" class="btn btn-primary px-8 py-3 text-base mb-12">Get started</a>
+		<div class="flex flex-col items-start gap-1.5 mb-12">
+			<a href="{base}/setup" class="btn btn-primary px-8 py-3 text-base">Step-by-step setup →</a>
+			<span class="font-mono text-xs text-base-content/30">guided · works even if you've never used a terminal</span>
+		</div>
 
 		<!-- Terminal demo -->
 		<div class="font-mono text-[11px] uppercase tracking-widest text-base-content/30 mb-2.5">
