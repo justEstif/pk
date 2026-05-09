@@ -17,6 +17,8 @@ export type HistoryEntry = {
 	noteType?: string;
 	operation?: string;
 	tags?: string[];
+	tag?: string;
+	meta?: EventMeta;
 };
 
 type ParsedCommit = {
@@ -101,8 +103,80 @@ export async function commitDelete(
 	}
 }
 
+export type EventMeta = Record<string, string>;
+
+/**
+ * Write a git note on HEAD recording a pk event (search, session-open, etc.).
+ * Does not create a commit — notes are append-only annotations.
+ */
+export async function writeEvent(
+	knowledgeDir: string,
+	tag: string,
+	meta?: EventMeta,
+): Promise<void> {
+	const timestamp = new Date().toISOString();
+	const lines = [`pk event:${tag}`, `Timestamp: ${timestamp}`];
+	if (meta) {
+		for (const [key, value] of Object.entries(meta)) {
+			lines.push(`${key}: ${value}`);
+		}
+	}
+
+	const noteContent = lines.join('\n');
+
+	try {
+		await $`git -C ${knowledgeDir} notes append -m ${noteContent}`.quiet();
+	} catch (error) {
+		console.warn(`[pk] Failed to write event: ${String(error)}`);
+	}
+}
+
+export type EventEntry = {timestamp: string; tag: string; meta: EventMeta};
+
+/**
+ * Get recent event entries from git notes.
+ * Returns events in reverse-chronological order (most recent first).
+ */
+export async function getRecentEvents(knowledgeDir: string, limit = 10): Promise<EventEntry[]> {
+	const entries = await getHistory(knowledgeDir, {limit: limit * 3, type: 'all'});
+	const events = entries
+		.filter((e): e is HistoryEntry & {tag: string; meta: EventMeta} => e.tag !== undefined && e.meta !== undefined)
+		.map(e => ({
+			timestamp: e.timestamp,
+			tag: e.tag,
+			meta: e.meta,
+		}))
+		.slice(0, limit);
+	return events;
+}
+
+export type ParsedEvent = {tag: string; meta: EventMeta};
+
+/**
+ * Parse a git note written by writeEvent.
+ * Returns undefined if the note is not an event note.
+ */
+export function parseEventNote(note: string): ParsedEvent | undefined {
+	const match = /^pk event:(\S+)/v.exec(note);
+	if (!match?.[1]) {
+		return undefined;
+	}
+
+	const tag = match[1];
+	const meta: EventMeta = {};
+	for (const line of note.split('\n').slice(1)) {
+		const colon = line.indexOf(': ');
+		if (colon > 0) {
+			meta[line.slice(0, colon)] = line.slice(colon + 2);
+		}
+	}
+
+	return {tag, meta};
+}
+
 /**
  * Add a git note for a synthesize operation.
+ * @deprecated Use writeEvent(knowledgeDir, 'synthesize', {query}) instead.
  */
 export async function addSynthesizeNote(
 	knowledgeDir: string,
@@ -126,113 +200,133 @@ export async function getHistory(
 	opts: HistoryOptions,
 ): Promise<HistoryEntry[]> {
 	const limit = opts.limit ?? 20;
-	const lines = await getGitLog(knowledgeDir, limit * 2);
-	return parseHistoryEntries(lines, limit, opts);
+	const raw = await getGitLog(knowledgeDir, limit * 2);
+	const commits = splitLogEntries(raw);
+	return parseCommits(commits, limit, opts);
 }
 
-async function getGitLog(knowledgeDir: string, limit: number): Promise<string[]> {
-	const format = '%H|%ai|%s';
+async function getGitLog(knowledgeDir: string, limit: number): Promise<string> {
+	const format = '%H|%ai|%s%n%N';
 	const result = await $`git -C ${knowledgeDir} log --show-notes=refs/notes/commits -n ${limit} --format=${format}`.quiet();
-	return result.stdout.toString().trim().split('\n');
+	return result.stdout.toString().trim();
 }
 
-function parseHistoryEntries(
-	lines: string[],
-	limit: number,
-	opts: HistoryOptions,
-): HistoryEntry[] {
+type RawCommit = {hash: string; timestamp: string; subject: string; note: string};
+
+/**
+ * Split raw git log output (with %N notes) into structured commit blocks.
+ * Entries are separated by blank lines; each starts with hash|timestamp|subject.
+ */
+function splitLogEntries(raw: string): RawCommit[] {
+	const commits: RawCommit[] = [];
+	let current: Partial<RawCommit> | undefined;
+	const noteLines: string[] = [];
+	let inNote = false;
+
+	for (const line of raw.split('\n')) {
+		const pipeParts = line.split('|');
+		if (pipeParts.length >= 3 && pipeParts[0]?.length === 40 && /^[0-9a-f]+$/v.test(pipeParts[0])) {
+			// New commit entry — flush previous
+			if (current?.hash) {
+				commits.push({
+					...current as RawCommit,
+					note: noteLines.join('\n'),
+				});
+			}
+
+			current = {hash: pipeParts[0], timestamp: pipeParts[1]!, subject: pipeParts.slice(2).join('|')};
+			noteLines.length = 0;
+			inNote = false;
+		} else if (current?.hash) {
+			// Part of the note (or blank line after subject)
+			if (line === '' && noteLines.length === 0) {
+				// Blank between subject and note start — skip
+				inNote = true;
+			} else if (line === '' && noteLines.length > 0) {
+				// Blank line within note — keep as separator
+				noteLines.push('');
+				inNote = true;
+			} else {
+				noteLines.push(line);
+				inNote = true;
+			}
+		}
+	}
+
+	// Flush last
+	if (current?.hash) {
+		commits.push({
+			...current as RawCommit,
+			note: noteLines.join('\n'),
+		});
+	}
+
+	return commits;
+}
+
+function parseCommits(commits: RawCommit[], limit: number, opts: HistoryOptions): HistoryEntry[] {
 	const entries: HistoryEntry[] = [];
 
-	for (const line of lines) {
+	for (const commit of commits) {
 		if (entries.length >= limit) {
 			break;
 		}
 
-		if (!shouldIncludeLine(line)) {
-			continue;
+		// Parse commit entry
+		const parsed = parseCommitMessage(commit.subject);
+		if (parsed && passesFilters(parsed, opts)) {
+			entries.push({
+				hash: commit.hash,
+				timestamp: commit.timestamp,
+				message: commit.subject,
+				type: 'commit',
+				...parsed,
+			});
 		}
 
-		const entry = parseHistoryLine(line, opts);
-		if (entry) {
-			entries.push(entry);
+		// Parse events from notes
+		if (commit.note && opts.type !== 'commits') {
+			const events = parseNoteEvents(commit.note, commit.hash);
+			for (const event of events) {
+				if (entries.length >= limit) {
+					break;
+				}
+
+				entries.push(event);
+			}
 		}
 	}
 
 	return entries;
 }
 
-function shouldIncludeLine(line: string): boolean {
-	const parts = line.split('|');
-	return parts.length >= 3 && Boolean(parts[0]) && Boolean(parts[1]) && Boolean(parts[2]);
-}
+/**
+ * Parse events from a git note blob. Splits on `pk event:` boundaries.
+ */
+function parseNoteEvents(note: string, hash: string): HistoryEntry[] {
+	const events: HistoryEntry[] = [];
+	// Split into blocks starting with 'pk event:'
+	const blocks = note.split(/(?=^pk event:)/vm);
+	for (const block of blocks) {
+		const trimmed = block.trim();
+		if (!trimmed.startsWith('pk event:')) {
+			continue;
+		}
 
-function parseHistoryLine(line: string, opts: HistoryOptions): HistoryEntry | undefined {
-	const parts = line.split('|');
-	if (parts.length < 3) {
-		return undefined;
+		const parsed = parseEventNote(trimmed);
+		if (parsed) {
+			events.push({
+				hash,
+				timestamp: parsed.meta.Timestamp ?? '',
+				message: trimmed,
+				type: 'note',
+				tag: parsed.tag,
+				meta: parsed.meta,
+			});
+		}
 	}
 
-	const [hash, timestamp, message] = parts;
-	if (!hash || !timestamp || !message) {
-		return undefined;
-	}
-
-	const parsed = parseCommitMessage(message);
-	if (parsed) {
-		return parseCommitEntry({
-			hash, timestamp, message, parsed, opts,
-		});
-	}
-
-	return parseSynthesizeEntry({
-		hash, timestamp, message, opts,
-	});
-}
-
-type CommitEntryParams = {
-	hash: string;
-	timestamp: string;
-	message: string;
-	parsed: ParsedCommit;
-	opts: HistoryOptions;
-};
-
-function parseCommitEntry({hash, timestamp, message, parsed, opts}: CommitEntryParams): HistoryEntry | undefined {
-	if (!passesFilters(parsed, opts)) {
-		return undefined;
-	}
-
-	return {
-		hash,
-		timestamp,
-		message,
-		type: 'commit',
-		...parsed,
-	};
-}
-
-type SynthesizeEntryParams = {
-	hash: string;
-	timestamp: string;
-	message: string;
-	opts: HistoryOptions;
-};
-
-function parseSynthesizeEntry({hash, timestamp, message, opts}: SynthesizeEntryParams): HistoryEntry | undefined {
-	if (!message.startsWith('pk synthesize')) {
-		return undefined;
-	}
-
-	if (opts.type === 'commits') {
-		return undefined;
-	}
-
-	return {
-		hash,
-		timestamp,
-		message,
-		type: 'note',
-	};
+	return events;
 }
 
 function passesFilters(parsed: ParsedCommit | undefined, opts: HistoryOptions): boolean {
@@ -320,10 +414,19 @@ export function formatHistory(entries: HistoryEntry[]): string {
 	return entries
 		.map(e => {
 			const date = new Date(e.timestamp).toLocaleDateString();
+			if (e.tag) {
+				// Event entry — show tag and key metadata
+				const metaParts = Object.entries(e.meta ?? {})
+					.filter(([k]) => k !== 'Timestamp')
+					.map(([k, v]) => `${k}: ${v}`)
+					.join(' ');
+				return `${date} | ${e.hash.slice(0, 7)} | \u{1F50D} ${e.tag}${metaParts ? ' | ' + metaParts : ''}`;
+			}
+
 			if (e.type === 'note') {
 				// Replace newlines with spaces for single-line display
 				const cleanMessage = e.message.replaceAll('\n', ' ');
-				return `${date} | ${e.hash.slice(0, 7)} | 📋 ${cleanMessage}`;
+				return `${date} | ${e.hash.slice(0, 7)} | \u{1F4CB} ${cleanMessage}`;
 			}
 
 			return `${date} | ${e.hash.slice(0, 7)} | ${e.operation} ${e.noteType} | ${e.message.replace(/^knowledge: [^ ]+ [^ ]+ /v, '')}`;
