@@ -2,6 +2,7 @@ import {existsSync} from 'node:fs';
 import path from 'node:path';
 import {Database} from 'bun:sqlite';
 import {validNotes} from './notes.ts';
+import {cosineSimilarity, type EmbeddingProvider} from './embedding.ts';
 
 const DB_NAME = '.index.db';
 
@@ -32,10 +33,30 @@ function openDb(knowledgeDir: string): Database {
     body,
     tokenize = 'porter unicode61'
   )`);
+	db.run(`CREATE TABLE IF NOT EXISTS note_vectors (
+    id   TEXT PRIMARY KEY,
+    path TEXT NOT NULL,
+    vec  BLOB NOT NULL
+  )`);
 	return db;
 }
 
-export async function rebuild(knowledgeDir: string): Promise<number> {
+function encodeVector(v: number[]): Uint8Array {
+	const buf = new DataView(new ArrayBuffer(v.length * 4));
+	for (const [i, val] of v.entries()) {
+		buf.setFloat32(i * 4, val, true);
+	}
+
+	return new Uint8Array(buf.buffer);
+}
+
+function decodeVector(buf: Uint8Array): number[] {
+	const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+	const len = buf.byteLength / 4;
+	return Array.from({length: len}, (_, i) => view.getFloat32(i * 4, true));
+}
+
+export async function rebuild(knowledgeDir: string, provider?: EmbeddingProvider): Promise<number> {
 	const db = openDb(knowledgeDir);
 	db.run('DELETE FROM notes_fts');
 	const insert = db.prepare('INSERT INTO notes_fts(id,path,type,status,title,tags,body) VALUES(?,?,?,?,?,?,?)');
@@ -50,6 +71,21 @@ export async function rebuild(knowledgeDir: string): Promise<number> {
 			(n.meta.tags ?? []).join(' '),
 			n.body,
 		);
+	}
+
+	if (provider) {
+		db.run('DELETE FROM note_vectors');
+		const insertVec = db.prepare('INSERT INTO note_vectors(id,path,vec) VALUES(?,?,?)');
+		const BATCH = 32;
+		for (let i = 0; i < notes.length; i += BATCH) {
+			const batch = notes.slice(i, i + BATCH);
+			const texts = batch.map(n => `${n.meta.title ?? ''}\n${n.body}`);
+			const vectors = await provider.embed(texts); // eslint-disable-line no-await-in-loop
+			for (const [j, note] of batch.entries()) {
+				const vec = vectors[j]!;
+				insertVec.run(note.meta.id ?? '', note.path, encodeVector(vec));
+			}
+		}
 	}
 
 	db.close();
@@ -105,6 +141,46 @@ export function search(
 	return rows
 		.map(r => ({...r, tags: r.tags ? r.tags.split(' ') : []}))
 		.filter(r => !filterTag || r.tags.includes(filterTag));
+}
+
+export type SemanticResult = {
+	id: string;
+	path: string;
+	score: number;
+};
+
+export async function semanticSearch(
+	knowledgeDir: string,
+	queryVector: number[],
+	limit = 10,
+): Promise<SemanticResult[]> {
+	if (!existsSync(dbPath(knowledgeDir))) {
+		throw new Error('Search index not found — run: pk index');
+	}
+
+	const db = openDb(knowledgeDir);
+	const rows = db.query<{id: string; path: string; vec: Uint8Array}, never[]>('SELECT id, path, vec FROM note_vectors').all();
+	db.close();
+
+	if (rows.length === 0) {
+		return [];
+	}
+
+	return rows
+		.map(r => ({id: r.id, path: r.path, score: cosineSimilarity(queryVector, decodeVector(r.vec))}))
+		.toSorted((a, b) => b.score - a.score)
+		.slice(0, limit);
+}
+
+export function hasVectors(knowledgeDir: string): boolean {
+	if (!existsSync(dbPath(knowledgeDir))) {
+		return false;
+	}
+
+	const db = openDb(knowledgeDir);
+	const row = db.query<{count: number}, never[]>('SELECT COUNT(*) as count FROM note_vectors').get();
+	db.close();
+	return (row?.count ?? 0) > 0;
 }
 
 export function vocab(knowledgeDir: string): Array<{tag: string; count: number}> {

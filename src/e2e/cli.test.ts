@@ -452,44 +452,15 @@ describe('pk CLI e2e tests', () => {
 		});
 
 		test('pk config exposes structured embedding config', async () => {
+			type EmbeddingShape = {embedding: {enabled: boolean; model: unknown}};
 			const defaultResult = await $`HOME=${pkHome} ${cliPath} config`.quiet();
-			expect(parseJson<{
-				embedding: {
-					enabled: boolean;
-					provider: string | null;
-					model: string | null;
-				};
-			}>(defaultResult.stdout.toString().trim())).toEqual({
-				embedding: {enabled: false, provider: null, model: null},
-			});
+			expect(parseJson<EmbeddingShape>(defaultResult.stdout.toString().trim())).toEqual({embedding: {enabled: false, model: null}});
 
-			const enableResult
-				= await $`HOME=${pkHome} ${cliPath} config --embedding all-MiniLM-L6-v2`.quiet();
-			expect(parseJson<{
-				embedding: {
-					enabled: boolean;
-					provider: string | null;
-					model: string | null;
-				};
-			}>(enableResult.stdout.toString().trim())).toEqual({
-				embedding: {
-					enabled: true,
-					provider: 'local',
-					model: 'all-MiniLM-L6-v2',
-				},
-			});
+			const enableResult = await $`HOME=${pkHome} ${cliPath} config --embedding nomic-embed-text`.quiet();
+			expect(parseJson<EmbeddingShape>(enableResult.stdout.toString().trim())).toEqual({embedding: {enabled: true, model: 'nomic-embed-text'}});
 
-			const disableResult
-				= await $`HOME=${pkHome} ${cliPath} config --no-embedding`.quiet();
-			expect(parseJson<{
-				embedding: {
-					enabled: boolean;
-					provider: string | null;
-					model: string | null;
-				};
-			}>(disableResult.stdout.toString().trim())).toEqual({
-				embedding: {enabled: false, provider: null, model: null},
-			});
+			const disableResult = await $`HOME=${pkHome} ${cliPath} config --no-embedding`.quiet();
+			expect(parseJson<EmbeddingShape>(disableResult.stdout.toString().trim())).toEqual({embedding: {enabled: false, model: null}});
 		});
 	});
 });
