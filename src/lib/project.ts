@@ -114,7 +114,7 @@ export async function initializeProject(options: InitializeProjectOptions): Prom
 function skillTargetDir(harness: Harness, projectRoot: string): string {
 	switch (harness) {
 		case 'claude': {
-			return path.join(os.homedir(), '.claude', 'skills', 'pk');
+			return path.join(projectRoot, '.claude', 'skills', 'pk');
 		}
 
 		case 'opencode':
