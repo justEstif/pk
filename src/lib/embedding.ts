@@ -20,18 +20,3 @@ export function getProvider(cfg: EmbeddingConfig): EmbeddingProvider | undefined
 		},
 	};
 }
-
-export function cosineSimilarity(a: number[], b: number[]): number {
-	let dot = 0;
-	let normA = 0;
-	let normB = 0;
-	for (const [i, ai] of a.entries()) {
-		const bi = b[i] ?? 0;
-		dot += ai * bi;
-		normA += ai * ai;
-		normB += bi * bi;
-	}
-
-	const denom = Math.sqrt(normA) * Math.sqrt(normB);
-	return denom === 0 ? 0 : dot / denom;
-}

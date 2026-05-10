@@ -5,9 +5,9 @@ import {
 	beforeEach, afterEach, describe, expect, test,
 } from 'bun:test';
 import {
-	search, rebuild, vocab, semanticSearch, hasVectors,
+	search, rebuild, vocab, semanticSearch, hasVectors, hybridSearch, upsertVector,
 } from './db.ts';
-import {cosineSimilarity, type EmbeddingProvider} from './embedding.ts';
+import type {EmbeddingProvider} from './embedding.ts';
 
 const TMP = path.join(os.tmpdir(), `pk-db-test-${Date.now()}`);
 const KNOWLEDGE_DIR = path.join(TMP, 'knowledge');
@@ -251,24 +251,6 @@ describe('db', () => {
 	});
 });
 
-describe('cosineSimilarity', () => {
-	test('identical vectors return 1', () => {
-		expect(cosineSimilarity([1, 0, 0], [1, 0, 0])).toBeCloseTo(1);
-	});
-
-	test('orthogonal vectors return 0', () => {
-		expect(cosineSimilarity([1, 0], [0, 1])).toBeCloseTo(0);
-	});
-
-	test('opposite vectors return -1', () => {
-		expect(cosineSimilarity([1, 0], [-1, 0])).toBeCloseTo(-1);
-	});
-
-	test('zero vector returns 0', () => {
-		expect(cosineSimilarity([0, 0], [1, 0])).toBe(0);
-	});
-});
-
 describe('semanticSearch', () => {
 	const TMP2 = path.join(os.tmpdir(), `pk-vec-test-${Date.now()}`);
 	const VEC_DIR = path.join(TMP2, 'knowledge');
@@ -289,7 +271,6 @@ describe('semanticSearch', () => {
 		await writeNote(path.join(VEC_DIR, 'notes'), '2026-01-01-a.md', {id: 'vec-a', title: 'Alpha'});
 		await writeNote(path.join(VEC_DIR, 'notes'), '2026-01-02-b.md', {id: 'vec-b', title: 'Beta'});
 
-		// Fake provider: vec-a = [1,0], vec-b = [0,1]
 		const fakeProvider: EmbeddingProvider = {
 			async embed(texts) {
 				return texts.map((_, i) => i === 0 ? [1, 0] : [0, 1]);
@@ -299,10 +280,127 @@ describe('semanticSearch', () => {
 		await rebuild(VEC_DIR, fakeProvider);
 		expect(hasVectors(VEC_DIR)).toBe(true);
 
-		// Query [1,0] should rank vec-a first
+		// Vec-a=[1,0], vec-b=[0,1]; query [1,0] should rank vec-a first
 		const results = await semanticSearch(VEC_DIR, [1, 0], 10);
 		expect(results[0]?.id).toBe('vec-a');
 		expect(results[1]?.id).toBe('vec-b');
 		expect(results[0]!.score).toBeGreaterThan(results[1]!.score);
+	});
+});
+
+describe('hybridSearch', () => {
+	const TMP3 = path.join(os.tmpdir(), `pk-hybrid-test-${Date.now()}`);
+	const HYB_DIR = path.join(TMP3, 'knowledge');
+
+	beforeEach(() => {
+		mkdirSync(path.join(HYB_DIR, 'notes'), {recursive: true});
+		mkdirSync(path.join(HYB_DIR, 'decisions'), {recursive: true});
+		mkdirSync(path.join(HYB_DIR, 'questions'), {recursive: true});
+		mkdirSync(path.join(HYB_DIR, 'sources'), {recursive: true});
+		mkdirSync(path.join(HYB_DIR, 'indexes'), {recursive: true});
+	});
+
+	afterEach(() => {
+		rmSync(TMP3, {recursive: true, force: true});
+	});
+
+	test('promotes note that ranks high in both retrievers', async () => {
+		await writeNote(path.join(HYB_DIR, 'notes'), '2026-01-01-a.md', {id: 'hyb-a', title: 'Auth token design'});
+		await writeNote(path.join(HYB_DIR, 'notes'), '2026-01-01-b.md', {id: 'hyb-b', title: 'Auth policy notes'});
+		await writeNote(path.join(HYB_DIR, 'notes'), '2026-01-01-c.md', {id: 'hyb-c', title: 'Unrelated concept'});
+
+		const fakeProvider: EmbeddingProvider = {
+			async embed(texts) {
+				return texts.map((_, i) => {
+					if (i === 0) {
+						return [1, 0];
+					}
+
+					if (i === 1) {
+						return [0.3, 0.7];
+					}
+
+					return [0, 1];
+				});
+			},
+		};
+
+		await rebuild(HYB_DIR, fakeProvider);
+
+		const results = await hybridSearch(HYB_DIR, 'auth', [1, 0], {limit: 3});
+		const ids = results.map(r => r.id);
+		expect(ids[0]).toBe('hyb-a'); // Appears in both keyword and semantic — must win
+		expect(ids).toContain('hyb-c'); // Semantic-only hit must still surface
+	});
+
+	test('returns SearchResult shape with type, status, title, tags', async () => {
+		await writeNote(path.join(HYB_DIR, 'notes'), '2026-01-01-a.md', {id: 'hyb-d', title: 'Shape test', tags: ['shape']});
+
+		const fakeProvider: EmbeddingProvider = {
+			async embed() {
+				return [[1, 0]];
+			},
+		};
+
+		await rebuild(HYB_DIR, fakeProvider);
+		const results = await hybridSearch(HYB_DIR, 'shape', [1, 0], {limit: 5});
+		expect(results.length).toBe(1);
+		expect(results[0]!.id).toBe('hyb-d');
+		expect(results[0]!.type).toBe('note');
+		expect(Array.isArray(results[0]!.tags)).toBe(true);
+	});
+
+	test('respects limit', async () => {
+		for (let i = 0; i < 5; i++) {
+			await writeNote(path.join(HYB_DIR, 'notes'), `2026-01-0${i + 1}-n.md`, {id: `hyb-lim-${i}`, title: `Keyword match ${i}`}); // eslint-disable-line no-await-in-loop
+		}
+
+		const fakeProvider: EmbeddingProvider = {
+			async embed(texts) {
+				return texts.map((_, i) => [i, 0]);
+			},
+		};
+
+		await rebuild(HYB_DIR, fakeProvider);
+		const results = await hybridSearch(HYB_DIR, 'keyword', [1, 0], {limit: 2});
+		expect(results.length).toBe(2);
+	});
+});
+
+describe('upsertVector', () => {
+	const TMP4 = path.join(os.tmpdir(), `pk-upsert-test-${Date.now()}`);
+	const UP_DIR = path.join(TMP4, 'knowledge');
+
+	beforeEach(() => {
+		mkdirSync(path.join(UP_DIR, 'notes'), {recursive: true});
+		mkdirSync(path.join(UP_DIR, 'indexes'), {recursive: true});
+	});
+
+	afterEach(() => {
+		rmSync(TMP4, {recursive: true, force: true});
+	});
+
+	test('inserts a vector that is then retrievable via semanticSearch', async () => {
+		const notePath = await writeNote(path.join(UP_DIR, 'notes'), '2026-01-01-upsert.md', {id: 'up-1', title: 'Upsert test'});
+		await rebuild(UP_DIR); // Build FTS index without vectors
+		expect(hasVectors(UP_DIR)).toBe(false);
+
+		await upsertVector(UP_DIR, 'up-1', notePath, [1, 0]);
+		expect(hasVectors(UP_DIR)).toBe(true);
+
+		const results = await semanticSearch(UP_DIR, [1, 0], 5);
+		expect(results[0]?.id).toBe('up-1');
+	});
+
+	test('replaces an existing vector on second upsert', async () => {
+		const notePath = await writeNote(path.join(UP_DIR, 'notes'), '2026-01-01-replace.md', {id: 'up-2', title: 'Replace test'});
+		await rebuild(UP_DIR);
+
+		await upsertVector(UP_DIR, 'up-2', notePath, [1, 0]);
+		await upsertVector(UP_DIR, 'up-2', notePath, [0, 1]);
+
+		const results = await semanticSearch(UP_DIR, [0, 1], 5);
+		expect(results[0]?.id).toBe('up-2');
+		expect(results[0]!.score).toBeCloseTo(1); // Identical vectors → score ≈ 1
 	});
 });
