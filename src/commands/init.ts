@@ -1,4 +1,3 @@
-import {existsSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {$} from 'bun';
@@ -7,17 +6,10 @@ import type {Command} from 'commander';
 import {listExistingProjects, pkHome} from '../lib/paths.ts';
 import {
 	type Harness,
-	type HarnessContext,
-	applyHarnesses,
-	buildOutro,
-	ensureProject,
 	HARNESSES,
-	HARNESS_VALUES,
-	HARNESS_ACTIVATION,
+	initializeProject,
 	parseHarnesses,
 } from '../lib/project.ts';
-
-export type {Harness, HarnessContext} from '../lib/project.ts';
 
 /**
  * Check that git is available on PATH.
@@ -32,31 +24,9 @@ async function requireGit(): Promise<void> {
 	}
 }
 
-async function safeEnsureProject(name: string): Promise<{created: boolean; knowledgeDir: string}> {
-	try {
-		return await ensureProject(name);
-	} catch (error: unknown) {
-		console.error(String(error));
-		process.exit(1);
-	}
-}
-
-/**
- * Ensure git repo exists in the knowledge directory.
- * Runs on first creation and on re-init if .git is missing.
- */
-async function ensureGitRepo(created: boolean, knowledgeDir: string): Promise<void> {
-	if (!created && existsSync(path.join(knowledgeDir, '.git'))) {
-		return;
-	}
-
-	try {
-		const {initRepo} = await import('../lib/git.ts');
-		await initRepo(knowledgeDir);
-	} catch (error) {
-		console.error(`[pk] Failed to initialize git repo: ${String(error)}`);
-		process.exit(1);
-	}
+function failInit(error: unknown): never {
+	console.error(String(error));
+	process.exit(1);
 }
 
 // ─── registerInit ─────────────────────────────────────────────────────────────
@@ -90,14 +60,18 @@ export function registerInit(program: Command): void {
 
 			// ── Non-interactive path: both args supplied ───────────────────────
 			if (nameArg && flagHarnesses) {
-				const {created, knowledgeDir} = await safeEnsureProject(nameArg);
-				await ensureGitRepo(created, knowledgeDir);
+				try {
+					const {lines} = await initializeProject({
+						harnesses: flagHarnesses,
+						home,
+						name: nameArg,
+						projectRoot,
+					});
+					console.log(lines.join('\n'));
+				} catch (error) {
+					failInit(error);
+				}
 
-				const ctx = {
-					home, knowledgeDir, name: nameArg, projectRoot,
-				};
-				await applyHarnesses(flagHarnesses, ctx);
-				console.log(buildOutro(created, knowledgeDir, flagHarnesses).join('\n'));
 				return;
 			}
 
@@ -165,14 +139,16 @@ export function registerInit(program: Command): void {
 			}
 
 			// ── Apply ──────────────────────────────────────────────────────────
-			const {created, knowledgeDir} = await safeEnsureProject(name);
-			await ensureGitRepo(created, knowledgeDir);
-
-			const ctx = {
-				home, knowledgeDir, name, projectRoot,
-			};
-			await applyHarnesses(harnesses, ctx);
-
-			p.outro(buildOutro(created, knowledgeDir, harnesses).join('\n'));
+			try {
+				const {lines} = await initializeProject({
+					harnesses,
+					home,
+					name,
+					projectRoot,
+				});
+				p.outro(lines.join('\n'));
+			} catch (error) {
+				failInit(error);
+			}
 		});
 }

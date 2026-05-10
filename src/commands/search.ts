@@ -1,17 +1,11 @@
 import type {Command} from 'commander';
-import {
-	search, hybridSearch, semanticSearch, hasVectors,
-} from '../lib/db.ts';
+import {executeSearch, type SearchExecutionResult} from '../lib/db.ts';
 import {loadConfig} from '../lib/config.ts';
 import {getProvider} from '../lib/embedding.ts';
 import {writeEvent} from '../lib/git.ts';
 import {runDir, writeJson} from '../lib/runner.ts';
 
-async function resolveProvider(dir: string) {
-	if (!hasVectors(dir)) {
-		return undefined;
-	}
-
+async function resolveProvider() {
 	const config = await loadConfig();
 	try {
 		return getProvider(config.embedding);
@@ -33,70 +27,56 @@ export function registerSearch(program: Command): void {
 		.option('--pretty', 'Human-readable output')
 		.action(runDir(async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; pretty?: boolean; context: boolean; semantic?: boolean}) => {
 			const limit = Number.parseInt(opts.limit, 10);
-			const provider = await resolveProvider(dir);
+			const provider = await resolveProvider();
+			let execution: SearchExecutionResult;
+			try {
+				execution = await executeSearch(dir, query, {
+					provider,
+					semantic: opts.semantic,
+					filterStatus: opts.status,
+					filterTag: opts.tag,
+					filterType: opts.type,
+					limit,
+				});
+			} catch (error) {
+				console.error(error instanceof Error ? error.message : String(error));
+				process.exit(1);
+			}
 
-			// Pure semantic mode (explicit flag)
-			if (opts.semantic) {
-				if (!provider) {
-					console.error('No embeddings in index — configure embeddings and run: pk index');
-					process.exit(1);
-				}
+			await writeEvent(dir, 'search', {
+				query,
+				...(execution.mode === 'keyword' ? {} : {mode: execution.mode}),
+				results: String(execution.results.length),
+			}).catch(() => {/* best-effort */});
 
-				const [queryVec] = await provider.embed([query]);
-				if (!queryVec) {
-					console.error('Embedding provider returned empty result.');
-					process.exit(1);
-				}
-
-				const semResults = await semanticSearch(dir, queryVec, limit > 0 ? limit : 10);
-				await writeEvent(dir, 'search', {query, mode: 'semantic', results: String(semResults.length)}).catch(() => {/* best-effort */});
-
-				if (!opts.pretty) {
-					writeJson({results: semResults});
-					return;
-				}
-
-				if (semResults.length === 0) {
-					console.log('No results.');
-					return;
-				}
-
-				for (const r of semResults) {
-					console.log(`${r.path} | score: ${r.score.toFixed(4)}`);
-				}
-
+			if (execution.mode === 'semantic') {
+				printSemanticResults(execution.results, opts);
 				return;
 			}
 
-			// Hybrid: BM25 + vector fused via RRF (when vectors available)
-			if (provider) {
-				const [queryVec] = await provider.embed([query]);
-				if (queryVec) {
-					const results = await hybridSearch(dir, query, queryVec, {
-						limit: limit > 0 ? limit : 10,
-						filterStatus: opts.status,
-						filterTag: opts.tag,
-						filterType: opts.type,
-					});
-					await writeEvent(dir, 'search', {query, mode: 'hybrid', results: String(results.length)}).catch(() => {/* best-effort */});
-					await printResults(results, opts);
-					return;
-				}
-			}
-
-			// Keyword-only fallback
-			const results = search(dir, query, {
-				filterStatus: opts.status,
-				filterTag: opts.tag,
-				filterType: opts.type,
-				limit,
-			});
-			await writeEvent(dir, 'search', {query, results: String(results.length)}).catch(() => {/* best-effort */});
-			await printResults(results, opts);
+			await printResults(execution.results, opts);
 		}));
 }
 
+type PrintableSemanticResult = {path: string; score: number};
+
 type PrintableResult = {path: string; type: string; status: string; id: string; title: string; tags: string[]; snippet?: string};
+
+function printSemanticResults(results: PrintableSemanticResult[], opts: {pretty?: boolean}) {
+	if (!opts.pretty) {
+		writeJson({results});
+		return;
+	}
+
+	if (results.length === 0) {
+		console.log('No results.');
+		return;
+	}
+
+	for (const r of results) {
+		console.log(`${r.path} | score: ${r.score.toFixed(4)}`);
+	}
+}
 
 async function printResults(results: PrintableResult[], opts: {pretty?: boolean; context: boolean; limit: string}) {
 	if (!opts.pretty) {

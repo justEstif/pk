@@ -20,6 +20,12 @@
 		});
 	}
 
+	function harnessCommand(tool: AITool, selectedOs: OS | null): string {
+		const install = harnessInstall[tool];
+		if (install.cmd) return install.cmd;
+		return selectedOs ? (install.platformCmds?.[selectedOs] ?? '') : '';
+	}
+
 	const harnessInstall: Record<
 		AITool,
 		{
@@ -333,13 +339,14 @@
 			{/if}
 
 			<!-- Step 6: AI harness -->
-			{#if doneGit && doneBun && donePk}
+			{#if doneGit && doneBun && donePk && aiTool}
+				{@const selectedTool = aiTool}
 				<div class="card bg-base-200 card-border">
 					<div class="card-body">
 						<div class="mb-1 font-mono text-xs tracking-widest text-base-content/30 uppercase">
 							Step 6
 						</div>
-						<h2 class="mb-1 text-lg font-semibold">Install {harnessInstall[aiTool].label}</h2>
+						<h2 class="mb-1 text-lg font-semibold">Install {harnessInstall[selectedTool].label}</h2>
 						<p class="mb-4 text-sm text-base-content/60">
 							This is the AI assistant pk will work alongside. You'll chat with it in your terminal.
 						</p>
@@ -349,21 +356,18 @@
 								style="border-bottom:1px solid #292524"
 							>
 								<span class="font-mono text-xs" style="color:#57534E"
-									>install {harnessInstall[aiTool].label.toLowerCase()}</span
+									>install {harnessInstall[selectedTool].label.toLowerCase()}</span
 								>
 								<button
 									class="font-mono text-xs {copiedMap['harness']
 										? 'text-success'
 										: 'text-base-content/40'}"
-									onclick={() =>
-										copy(
-											'harness',
-											harnessInstall[aiTool].cmd ?? harnessInstall[aiTool].platformCmds?.[os!] ?? ''
-										)}>{copiedMap['harness'] ? 'copied!' : 'copy'}</button
+									onclick={() => copy('harness', harnessCommand(selectedTool, os))}
+									>{copiedMap['harness'] ? 'copied!' : 'copy'}</button
 								>
 							</div>
 							<div class="px-4 py-3 font-mono text-sm">
-								{#if os === 'windows' && aiTool === 'claude-code'}
+								{#if os === 'windows' && selectedTool === 'claude-code'}
 									<div class="mb-2 font-mono text-xs" style="color:#57534E">PowerShell:</div>
 									<div>
 										<span style="color:#44403C" class="mr-3">></span><span style="color:#A8A29E"
@@ -373,19 +377,17 @@
 								{:else}
 									<div>
 										<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E"
-											>{harnessInstall[aiTool].cmd ??
-												harnessInstall[aiTool].platformCmds?.[os!] ??
-												''}</span
+											>{harnessCommand(selectedTool, os)}</span
 										>
 									</div>
 								{/if}
 							</div>
 						</div>
-						{#if harnessInstall[aiTool].note}
-							<p class="mb-3 text-sm text-base-content/60">{harnessInstall[aiTool].note}</p>
+						{#if harnessInstall[selectedTool].note}
+							<p class="mb-3 text-sm text-base-content/60">{harnessInstall[selectedTool].note}</p>
 						{/if}
 						<a
-							href={harnessInstall[aiTool].docs}
+							href={harnessInstall[selectedTool].docs}
 							target="_blank"
 							rel="noopener"
 							class="mb-4 block link text-sm text-base-content/50"

@@ -175,24 +175,6 @@ export function parseEventNote(note: string): ParsedEvent | undefined {
 }
 
 /**
- * Add a git note for a synthesize operation.
- * @deprecated Use writeEvent(knowledgeDir, 'synthesize', {query}) instead.
- */
-export async function addSynthesizeNote(
-	knowledgeDir: string,
-	query: string,
-): Promise<void> {
-	const timestamp = new Date().toISOString();
-	const noteContent = `pk synthesize\nQuery: ${query}\nTimestamp: ${timestamp}`;
-
-	try {
-		await $`git -C ${knowledgeDir} notes add -m ${noteContent}`.quiet();
-	} catch (error) {
-		console.warn(`[pk] Failed to add git note: ${String(error)}`);
-	}
-}
-
-/**
  * Get git history with filtering support.
  */
 export async function getHistory(

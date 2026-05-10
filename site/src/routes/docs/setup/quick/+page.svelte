@@ -1,30 +1,15 @@
 <script lang="ts">
+	import CodeBlock from '$lib/CodeBlock.svelte';
+
 	type PkgMgr = 'curl' | 'bun' | 'npm' | 'brew';
 
 	let pkgMgr = $state<PkgMgr>('curl');
-	let copiedMap = $state<Record<string, boolean>>({});
-
-	function copy(key: string, text: string) {
-		navigator.clipboard.writeText(text).then(() => {
-			copiedMap[key] = true;
-			setTimeout(() => {
-				copiedMap[key] = false;
-			}, 2000);
-		});
-	}
 
 	const pkgCmds: Record<PkgMgr, string[]> = {
 		curl: ['curl -fsSL https://justestif.github.io/pk/install.sh | bash', 'pk init'],
 		bun: ['bun install -g @justestif/pk', 'pk init'],
 		npm: ['npm install -g @justestif/pk', 'pk init'],
 		brew: ['brew install justEstif/tap/pk', 'pk init']
-	};
-
-	const copyText: Record<PkgMgr, string> = {
-		curl: 'curl -fsSL https://justestif.github.io/pk/install.sh | bash\npk init',
-		bun: 'bun install -g @justestif/pk\npk init',
-		npm: 'npm install -g @justestif/pk\npk init',
-		brew: 'brew install justEstif/tap/pk\npk init'
 	};
 </script>
 
@@ -71,29 +56,8 @@
 					>
 				{/each}
 			</div>
-			<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
-				<div
-					class="flex items-center justify-between px-4 py-2"
-					style="border-bottom:1px solid #292524"
-				>
-					<span class="font-mono text-xs" style="color:#57534E">install + init</span>
-					<button
-						class="font-mono text-xs transition-colors {copiedMap['install']
-							? 'text-success'
-							: 'text-base-content/40 hover:text-base-content/60'}"
-						onclick={() => copy('install', copyText[pkgMgr])}
-						>{copiedMap['install'] ? 'copied!' : 'copy'}</button
-					>
-				</div>
-				<div class="px-4 py-3 font-mono text-sm leading-loose">
-					{#each pkgCmds[pkgMgr] as line}
-						<div>
-							<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E"
-								>{line}</span
-							>
-						</div>
-					{/each}
-				</div>
+			<div class="mb-4">
+				<CodeBlock label="install + init" lines={pkgCmds[pkgMgr]} />
 			</div>
 			<p class="text-sm text-base-content/60">
 				Run <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">pk init</code> inside
@@ -109,20 +73,10 @@
 		<p class="mb-3 font-mono text-xs tracking-widest text-base-content/30 uppercase">
 			Non-interactive
 		</p>
-		<div class="overflow-hidden rounded-lg" style="background:#1C1917">
-			<div class="px-4 py-3 font-mono text-sm leading-loose">
-				<div>
-					<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E"
-						>pk init my-project --harness claude</span
-					>
-				</div>
-				<div>
-					<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E"
-						>pk init my-project --harness claude,codex</span
-					>
-				</div>
-			</div>
-		</div>
+		<CodeBlock
+			label="non-interactive"
+			lines={['pk init my-project --harness claude', 'pk init my-project --harness claude,codex']}
+		/>
 		<p class="mt-3 text-xs text-base-content/40">
 			Available harnesses: <code class="font-mono">claude</code>,
 			<code class="font-mono">codex</code>, <code class="font-mono">opencode</code>

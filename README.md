@@ -1,6 +1,6 @@
 # pk
 
-Project knowledge CLI — structured intake, search, and recall.
+Structured project memory for AI agents. Decisions, questions, notes, and sources — organized, searchable, stored locally.
 
 ## Install
 
@@ -44,8 +44,6 @@ Non-interactive:
 pk init my-project --harness claude
 pk init my-project --harness claude,codex   # multiple harnesses
 ```
-
-**Git integration:** `pk init` creates a git repository in `~/.pk/<name>/.git` and tracks all knowledge operations via commits and git notes.
 
 Available harnesses: `claude` (Claude Code), `codex` (Codex), `opencode` (OpenCode).
 
@@ -121,26 +119,23 @@ Agents access them exclusively through the CLI; humans can read and edit them di
 
 Run `pk index` after creating or editing notes to update `.index.db` and `indexes/`.
 
-Search is powered by SQLite FTS5 with BM25 ranking and porter stemming.
-Partial word matching works — `pk search migr` matches "migration", "migrate", etc.
-
 `pk vocab` lists all tags by frequency — useful for orienting before searching.
 
 `pk history` shows all knowledge operations (create, update, delete) as git commits and synthesize operations as git notes. Supports filtering by type, tag, and operation.
 
-### Semantic search (optional)
+## Embeddings (optional)
 
-pk can generate embeddings via a local Ollama model and store them alongside the FTS5 index. Once enabled, `pk search --semantic` finds notes by meaning rather than keyword overlap.
+pk can generate embeddings via a local [Ollama](https://ollama.com) model and store them alongside the FTS5 index. Once enabled, `pk search --semantic` finds notes by meaning rather than keyword overlap.
 
 ```bash
-# Install Ollama and pull a model
+# Install Ollama — https://ollama.com
 ollama pull nomic-embed-text
 
 # Enable embeddings
 pk config --embedding nomic-embed-text
 
 # Rebuild index to generate embeddings
-pk rebuild
+pk index
 
 # Search by meaning
 pk search "slow database queries" --semantic

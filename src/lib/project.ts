@@ -15,9 +15,9 @@ export const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
 	{hint: 'forced-eval plugin', label: 'OpenCode', value: 'opencode'},
 ];
 
-export const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
+const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
 
-export const HARNESS_ACTIVATION: Record<Harness, string> = {
+const HARNESS_ACTIVATION: Record<Harness, string> = {
 	claude: 'start a new Claude Code session in this project',
 	codex: 'start a new Codex session in this project',
 	opencode: 'reload OpenCode or restart the app',
@@ -47,6 +47,66 @@ export async function ensureProject(name: string): Promise<{created: boolean; kn
 	}
 
 	return {created: !alreadyExists, knowledgeDir: kDir};
+}
+
+// ─── Initialization workflow ─────────────────────────────────────────────────
+
+type InitializeProjectOptions = {
+	name: string;
+	harnesses: Harness[];
+	projectRoot: string;
+	home?: string;
+};
+
+export type InitializeProjectResult = {
+	created: boolean;
+	knowledgeDir: string;
+	lines: string[];
+};
+
+class GitInitializationError extends Error {
+	override toString(): string {
+		return this.message;
+	}
+}
+
+/**
+ * Ensure git repo exists in the knowledge directory.
+ * Runs on first creation and on re-init if .git is missing.
+ */
+async function ensureGitRepo(created: boolean, knowledgeDir: string): Promise<void> {
+	if (!created && existsSync(path.join(knowledgeDir, '.git'))) {
+		return;
+	}
+
+	try {
+		const {initRepo} = await import('./git.ts');
+		await initRepo(knowledgeDir);
+	} catch (error) {
+		throw new GitInitializationError(`[pk] Failed to initialize git repo: ${String(error)}`);
+	}
+}
+
+/**
+ * Run the shared project initialization workflow and return display lines.
+ */
+export async function initializeProject(options: InitializeProjectOptions): Promise<InitializeProjectResult> {
+	const {created, knowledgeDir} = await ensureProject(options.name);
+	await ensureGitRepo(created, knowledgeDir);
+
+	const ctx = {
+		home: options.home ?? os.homedir(),
+		knowledgeDir,
+		name: options.name,
+		projectRoot: options.projectRoot,
+	};
+	await applyHarnesses(options.harnesses, ctx);
+
+	return {
+		created,
+		knowledgeDir,
+		lines: buildOutro(created, knowledgeDir, options.harnesses),
+	};
 }
 
 // ─── Skill installation ───────────────────────────────────────────────────────
@@ -140,7 +200,7 @@ export async function applyHarnesses(harnesses: Harness[], ctx: HarnessContext):
 /**
  * Build the post-init summary lines shared by interactive and non-interactive paths.
  */
-export function buildOutro(
+function buildOutro(
 	created: boolean,
 	knowledgeDir: string,
 	harnesses: Harness[],

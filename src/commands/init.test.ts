@@ -7,6 +7,7 @@ import {
 import {
 	applyHarnesses,
 	ensureProject,
+	initializeProject,
 	installSkill,
 } from '../lib/project.ts';
 import {writeAgentsMd} from './harnesses/codex.ts';
@@ -79,6 +80,46 @@ describe('applyHarnesses', () => {
 		await applyHarnesses(['claude', 'codex'], ctx);
 		expect(existsSync(path.join(tmpDir, '.claude', 'hooks', 'pk-eval.ts'))).toBe(true);
 		expect(existsSync(path.join(tmpDir, 'AGENTS.md'))).toBe(true);
+	});
+});
+
+// ─── initializeProject ───────────────────────────────────────────────────────
+
+describe('initializeProject', () => {
+	test('creates the project, initializes git, applies harnesses, and returns output lines', async () => {
+		const result = await initializeProject({
+			harnesses: ['codex'],
+			home: fakeHome,
+			name: 'myproject',
+			projectRoot: tmpDir,
+		});
+
+		expect(result.created).toBe(true);
+		expect(existsSync(path.join(result.knowledgeDir, '.git'))).toBe(true);
+		expect(existsSync(path.join(tmpDir, 'AGENTS.md'))).toBe(true);
+		expect(result.lines).toEqual([
+			`Created project: ${result.knowledgeDir}`,
+			'  codex: configured → start a new Codex session in this project',
+		]);
+	});
+
+	test('connects to an existing initialized project without reinitializing git', async () => {
+		await initializeProject({
+			harnesses: ['codex'],
+			home: fakeHome,
+			name: 'myproject',
+			projectRoot: tmpDir,
+		});
+
+		const result = await initializeProject({
+			harnesses: ['codex'],
+			home: fakeHome,
+			name: 'myproject',
+			projectRoot: tmpDir,
+		});
+
+		expect(result.created).toBe(false);
+		expect(result.lines[0]).toBe(`Connected to existing project: ${result.knowledgeDir}`);
 	});
 });
 
