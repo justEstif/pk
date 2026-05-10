@@ -4,7 +4,10 @@ import os from 'node:os';
 import {
 	beforeEach, afterEach, describe, expect, test,
 } from 'bun:test';
-import {search, rebuild, vocab} from './db.ts';
+import {
+	search, rebuild, vocab, semanticSearch, hasVectors,
+} from './db.ts';
+import {cosineSimilarity, type EmbeddingProvider} from './embedding.ts';
 
 const TMP = path.join(os.tmpdir(), `pk-db-test-${Date.now()}`);
 const KNOWLEDGE_DIR = path.join(TMP, 'knowledge');
@@ -245,5 +248,61 @@ describe('db', () => {
 			const tags = vocab(KNOWLEDGE_DIR);
 			expect(tags).toEqual([]);
 		});
+	});
+});
+
+describe('cosineSimilarity', () => {
+	test('identical vectors return 1', () => {
+		expect(cosineSimilarity([1, 0, 0], [1, 0, 0])).toBeCloseTo(1);
+	});
+
+	test('orthogonal vectors return 0', () => {
+		expect(cosineSimilarity([1, 0], [0, 1])).toBeCloseTo(0);
+	});
+
+	test('opposite vectors return -1', () => {
+		expect(cosineSimilarity([1, 0], [-1, 0])).toBeCloseTo(-1);
+	});
+
+	test('zero vector returns 0', () => {
+		expect(cosineSimilarity([0, 0], [1, 0])).toBe(0);
+	});
+});
+
+describe('semanticSearch', () => {
+	const TMP2 = path.join(os.tmpdir(), `pk-vec-test-${Date.now()}`);
+	const VEC_DIR = path.join(TMP2, 'knowledge');
+
+	beforeEach(() => {
+		mkdirSync(path.join(VEC_DIR, 'notes'), {recursive: true});
+	});
+
+	afterEach(() => {
+		rmSync(TMP2, {recursive: true, force: true});
+	});
+
+	test('hasVectors returns false before indexing', () => {
+		expect(hasVectors(VEC_DIR)).toBe(false);
+	});
+
+	test('stores and retrieves vectors, ranks by cosine similarity', async () => {
+		await writeNote(path.join(VEC_DIR, 'notes'), '2026-01-01-a.md', {id: 'vec-a', title: 'Alpha'});
+		await writeNote(path.join(VEC_DIR, 'notes'), '2026-01-02-b.md', {id: 'vec-b', title: 'Beta'});
+
+		// Fake provider: vec-a = [1,0], vec-b = [0,1]
+		const fakeProvider: EmbeddingProvider = {
+			async embed(texts) {
+				return texts.map((_, i) => i === 0 ? [1, 0] : [0, 1]);
+			},
+		};
+
+		await rebuild(VEC_DIR, fakeProvider);
+		expect(hasVectors(VEC_DIR)).toBe(true);
+
+		// Query [1,0] should rank vec-a first
+		const results = await semanticSearch(VEC_DIR, [1, 0], 10);
+		expect(results[0]?.id).toBe('vec-a');
+		expect(results[1]?.id).toBe('vec-b');
+		expect(results[0]!.score).toBeGreaterThan(results[1]!.score);
 	});
 });

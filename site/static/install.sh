@@ -87,6 +87,18 @@ else
   success "pk installed ($(pk --version))"
 fi
 
+# ── Ollama (optional — for semantic search) ───────────────────────────────────
+
+if command -v ollama &>/dev/null; then
+  success "Ollama already installed"
+else
+  echo ""
+  info "Ollama (optional)"
+  echo "  Ollama enables semantic search in pk — find notes by meaning, not just keywords."
+  echo "  Install: https://ollama.com"
+  echo "  Then run: ollama pull nomic-embed-text && pk config --embedding nomic-embed-text"
+fi
+
 # ── Done ──────────────────────────────────────────────────────────────────────
 
 echo ""

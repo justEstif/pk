@@ -68,7 +68,7 @@ pk init [name] [--harness h1,h2,...]   # set up project + hooks
 
 pk new <type> <title> [--tags t1,t2]
 pk delete <path>                       # JSON output, non-interactive
-pk search <query> [--limit 5] [--type] [--status] [--tag]
+pk search <query> [--limit 5] [--type] [--status] [--tag] [--semantic]
 pk synthesize [query] [--all]
 pk history [--limit 20] [--type <type>] [--filter-type <type>] [--filter-tag <tag>] [--filter-operation <op>]
 pk read <path>
@@ -77,7 +77,7 @@ pk index                               # rebuild FTS5 + markdown indexes
 pk lint [paths...]
 pk prime                               # output priming context for hooks
 pk instructions <command>
-pk config [--embedding <model>] [--no-embedding]
+pk config [--embedding <model>] [--no-embedding] [--base-url <url>]
 ```
 
 All commands output JSON by default. Use `--pretty` for human-readable output.
@@ -127,6 +127,26 @@ Partial word matching works — `pk search migr` matches "migration", "migrate",
 `pk vocab` lists all tags by frequency — useful for orienting before searching.
 
 `pk history` shows all knowledge operations (create, update, delete) as git commits and synthesize operations as git notes. Supports filtering by type, tag, and operation.
+
+### Semantic search (optional)
+
+pk can generate embeddings via a local Ollama model and store them alongside the FTS5 index. Once enabled, `pk search --semantic` finds notes by meaning rather than keyword overlap.
+
+```bash
+# Install Ollama and pull a model
+ollama pull nomic-embed-text
+
+# Enable embeddings
+pk config --embedding nomic-embed-text
+
+# Rebuild index to generate embeddings
+pk rebuild
+
+# Search by meaning
+pk search "slow database queries" --semantic
+```
+
+Embeddings are stored in `.index.db` and are rebuilt on `pk index`. FTS keyword search continues to work unchanged; `--semantic` is opt-in per query.
 
 ## License
 
