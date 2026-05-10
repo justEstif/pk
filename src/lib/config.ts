@@ -27,17 +27,7 @@ export async function loadConfig(): Promise<Config> {
 	const p = configPath();
 	try {
 		const text = await Bun.file(p).text();
-		const raw: unknown = JSON.parse(text);
-
-		// Backward compat: {"embedding": "model-name"} → structured config.
-		if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-			const obj = raw as Record<string, unknown>;
-			if (typeof obj.embedding === 'string') {
-				obj.embedding = obj.embedding ? {enabled: true, model: obj.embedding} : {};
-			}
-		}
-
-		return ConfigSchema.parse(raw);
+		return ConfigSchema.parse(JSON.parse(text));
 	} catch {
 		return {...defaultConfig};
 	}
