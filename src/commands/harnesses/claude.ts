@@ -53,12 +53,10 @@ function addHookEntry(
 	const wrappedHook = {matcher: '', hooks: [{type: 'command', command}]};
 	const alreadyPresent = (entry: Record<string, unknown>) =>
 		Array.isArray(entry.hooks)
-		&& entry.hooks.some(
-			(h: unknown) =>
-				typeof h === 'object'
-				&& h !== null
-				&& (h as Record<string, unknown>).command === command,
-		);
+		&& entry.hooks.some((h: unknown) =>
+			typeof h === 'object'
+			&& h !== null
+			&& (h as Record<string, unknown>).command === command);
 	if (!entries.some(alreadyPresent)) {
 		entries.push(wrappedHook);
 	}
