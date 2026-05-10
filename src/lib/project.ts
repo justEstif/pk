@@ -2,26 +2,47 @@ import {cpSync, existsSync, mkdirSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {writeClaudeHook} from '../commands/harnesses/claude.ts';
-import {writeAgentsMd} from '../commands/harnesses/codex.ts';
 import {writeOpenCodePlugin} from '../commands/harnesses/opencode.ts';
+import {writePiPlugin} from '../commands/harnesses/pi.ts';
 import {TYPE_DIRS} from './schema.ts';
 import {projectDir} from './paths.ts';
 
-export type Harness = 'claude' | 'codex' | 'opencode';
+export type Harness = 'claude' | 'opencode' | 'pi';
 
 export const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
-	{hint: 'forced-eval hook', label: 'Claude Code', value: 'claude'},
-	{hint: 'AGENTS.md injection', label: 'Codex', value: 'codex'},
-	{hint: 'forced-eval plugin', label: 'OpenCode', value: 'opencode'},
+	{hint: 'SessionStart env + UserPromptSubmit context', label: 'Claude Code', value: 'claude'},
+	{hint: 'shell.env + chat.system.transform plugin', label: 'OpenCode', value: 'opencode'},
+	{hint: 'tool_call env + before_agent_start context', label: 'Pi', value: 'pi'},
 ];
 
 const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
 
 const HARNESS_ACTIVATION: Record<Harness, string> = {
 	claude: 'start a new Claude Code session in this project',
-	codex: 'start a new Codex session in this project',
 	opencode: 'reload OpenCode or restart the app',
+	pi: 'start a new Pi session in this project',
 };
+
+// ─── .env management ──────────────────────────────────────────────────────────
+
+async function upsertEnvVar(projectRoot: string, key: string, value: string): Promise<void> {
+	const envPath = path.join(projectRoot, '.env');
+	let existing = '';
+	try {
+		existing = await Bun.file(envPath).text();
+	} catch {}
+
+	const line = `${key}=${value}`;
+	const lines = existing ? existing.split('\n') : [];
+	const idx = lines.findIndex(l => l.startsWith(`${key}=`));
+	if (idx !== -1) {
+		lines[idx] = line;
+	} else {
+		lines.push(line);
+	}
+
+	await Bun.write(envPath, lines.join('\n').replace(/\n+$/, '') + '\n');
+}
 
 // ─── Project creation ─────────────────────────────────────────────────────────
 
@@ -100,6 +121,7 @@ export async function initializeProject(options: InitializeProjectOptions): Prom
 		name: options.name,
 		projectRoot: options.projectRoot,
 	};
+	await upsertEnvVar(options.projectRoot, 'PK_KNOWLEDGE_DIR', knowledgeDir);
 	await applyHarnesses(options.harnesses, ctx);
 
 	return {
@@ -117,12 +139,9 @@ function skillTargetDir(harness: Harness, projectRoot: string): string {
 			return path.join(os.homedir(), '.claude', 'skills', 'pk');
 		}
 
-		case 'opencode': {
+		case 'opencode':
+		case 'pi': {
 			return path.join(projectRoot, '.agents', 'skills', 'pk');
-		}
-
-		case 'codex': {
-			return path.join(os.homedir(), '.codex', 'skills', 'pk');
 		}
 	}
 }
@@ -163,13 +182,13 @@ async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void
 			break;
 		}
 
-		case 'codex': {
-			await writeAgentsMd(projectRoot, knowledgeDir);
+		case 'opencode': {
+			await writeOpenCodePlugin(projectRoot, knowledgeDir);
 			break;
 		}
 
-		case 'opencode': {
-			await writeOpenCodePlugin(projectRoot, knowledgeDir);
+		case 'pi': {
+			await writePiPlugin(projectRoot, knowledgeDir);
 			break;
 		}
 	}

@@ -11,7 +11,7 @@ const guides: Record<string, string> = {
       'pk index\nRebuilds FTS5 index (~/.pk/<name>/.index.db) and markdown index files (~/.pk/<name>/indexes/). Run after any note change.',
 	lint: 'pk lint\nValidates frontmatter, required sections, file location, ID uniqueness, tag format, length limits.',
 	// eslint-disable-next-line @stylistic/max-len
-	init: 'pk init [<name>] [--harness <harness>]\nInteractive when args omitted. Creates ~/.pk/<name>/ knowledge base, configures hooks, installs skill.\nDetects existing projects and connects without recreating.\nHarnesses: claude, codex, opencode.',
+	init: 'pk init [<name>] [--harness <harness>]\nInteractive when args omitted. Creates ~/.pk/<name>/ knowledge base, configures hooks, installs skill.\nDetects existing projects and connects without recreating.\nHarnesses: claude, opencode, pi.',
 	config:
       'pk config [--embedding model] [--no-embedding]\nShows or updates pk configuration. Embedding config shape: {embedding:{enabled,provider,model}}.',
 };

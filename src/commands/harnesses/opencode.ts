@@ -14,6 +14,9 @@ export const experimental = {
 	     system.unshift(output);
 	   }
 	},
+	async 'shell.env'(_input: unknown, output: { env: Record<string, string> }): Promise<void> {
+	   output.env.PK_KNOWLEDGE_DIR = '${knowledgeDir}';
+	},
 };
 `;
 }
