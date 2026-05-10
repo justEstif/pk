@@ -14,6 +14,7 @@
 				{ href: `${base}/docs/setup/full`, label: 'Full guide' },
 			]
 		},
+		{ href: `${base}/docs/embeddings`, label: 'Semantic search' },
 	];
 
 	function isActive(href: string) {

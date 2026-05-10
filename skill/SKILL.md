@@ -27,9 +27,12 @@ Returns formatted markdown with title, type, status, tags, and an excerpt per no
 pk search "database schema"
 pk search "api" --type question --status open
 pk search "deploy" --tag infra --limit 5
+pk search "slow queries" --semantic   # vector similarity (requires embeddings)
 ```
 
 Returns path, type, status, title, tags, and snippet per match. Always search before creating — duplicates erode trust faster than gaps do.
+
+Use `--semantic` when keyword search misses the intent — e.g. searching "latency issues" should find a note titled "slow database queries". Requires Ollama configured via `pk config --embedding <model>`.
 
 ### `pk read` — full note body
 
@@ -100,7 +103,18 @@ Useful for orienting before searching. Requires the search index.
 pk index
 ```
 
-Run after creating or editing notes. Rebuilds `~/.pk/<name>/.index.db` and `~/.pk/<name>/indexes/`.
+Run after creating or editing notes. Rebuilds `~/.pk/<name>/.index.db` and `~/.pk/<name>/indexes/`. If embeddings are configured (`pk config --embedding <model>`), also generates vectors for semantic search.
+
+### `pk config` — show or update configuration
+
+```bash
+pk config                                    # show current config
+pk config --embedding nomic-embed-text       # enable Ollama embeddings
+pk config --no-embedding                     # disable embeddings
+pk config --base-url http://my-ollama:11434  # custom Ollama endpoint
+```
+
+Config lives at `~/.pk/config.json`.
 
 ### Status transitions
 
