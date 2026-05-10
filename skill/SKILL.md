@@ -51,6 +51,7 @@ pk new source "Meeting notes 2024-06-01"
 Prints the absolute path. Frontmatter (id, dates, status, tags) is generated automatically — don't edit frontmatter after creation. After receiving the path: `pk read` to see the skeleton, then edit the file to fill in the required sections.
 
 **Required sections by type:**
+
 - `note` → `## Summary`, `## Details`, `## Evidence`, `## Related`
 - `decision` → `## Decision`, `## Context`, `## Rationale`, `## Consequences`, `## Related`
 - `question` → `## Question`, `## Why It Matters`, `## Current Understanding`, `## Resolution`
@@ -80,10 +81,10 @@ pk history --filter-operation update           # only updates
 ### `pk delete` — delete a note
 
 ```bash
-pk delete /abs/path/to/note.md --yes
+pk delete /abs/path/to/note.md
 ```
 
-Deletes and commits. `--yes` skips confirmation (required in non-interactive mode).
+Deletes and commits. The command is non-interactive and outputs JSON by default.
 
 ### `pk vocab` — list tags by frequency
 
@@ -91,7 +92,15 @@ Deletes and commits. `--yes` skips confirmation (required in non-interactive mod
 pk vocab
 ```
 
-Useful for orienting before searching.
+Useful for orienting before searching. Requires the search index.
+
+### `pk index` — rebuild search indexes
+
+```bash
+pk index
+```
+
+Run after creating or editing notes. Rebuilds `~/.pk/<name>/.index.db` and `~/.pk/<name>/indexes/`.
 
 ### Status transitions
 

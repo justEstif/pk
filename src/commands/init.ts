@@ -124,6 +124,7 @@ export function registerInit(program: Command): void {
 					const typed = await p.text({
 						message: 'Project name',
 						placeholder: 'my-project',
+						initialValue: path.basename(projectRoot),
 						validate(v) {
 							if (!v?.trim()) {
 								return 'Name is required';
