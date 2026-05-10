@@ -6,12 +6,12 @@ Built with SvelteKit (static adapter), Tailwind CSS v4, and DaisyUI v5.
 
 ## Routes
 
-| Route | Description |
-|---|---|
-| `/` | Landing page |
-| `/docs/how-it-works` | How the pk memory system works |
-| `/setup` | Interactive step-by-step setup wizard (linked from docs sidebar) |
-| `/design-system` | Live design system reference |
+| Route                | Description                                                      |
+| -------------------- | ---------------------------------------------------------------- |
+| `/`                  | Landing page                                                     |
+| `/docs/how-it-works` | How the pk memory system works                                   |
+| `/docs/setup`        | Interactive step-by-step setup wizard (linked from docs sidebar) |
+| `/design-system`     | Live design system reference                                     |
 
 ## Developing
 
