@@ -42,22 +42,22 @@ Non-interactive:
 
 ```bash
 pk init my-project --harness claude
-pk init my-project --harness claude,codex   # multiple harnesses
+pk init my-project --harness claude,opencode   # multiple harnesses
 ```
 
-Available harnesses: `claude` (Claude Code), `codex` (Codex), `opencode` (OpenCode).
+Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi).
 
 `pk init` does three things:
 
 1. Creates `~/.pk/<name>/` as the knowledge home for this project
-2. Installs a hook or plugin that calls `pk prime` at session start to inject context into your agent
+2. Installs a hook or plugin that injects `PK_KNOWLEDGE_DIR` into the shell and calls `pk prime` for context
 3. Installs the pk skill so your agent knows how to use the CLI
 
-| Harness    | Files written                                       | Mechanism                                 |
-| ---------- | --------------------------------------------------- | ----------------------------------------- |
-| `claude`   | `.claude/hooks/pk-eval.ts`, `.claude/settings.json` | Hook spawns `pk prime` on every prompt    |
-| `codex`    | `AGENTS.md`                                         | Codex reads AGENTS.md natively            |
-| `opencode` | `.opencode/plugins/pk-eval.ts`                      | Plugin spawns `pk prime` at session start |
+| Harness    | Files written                                                              | Env injection                        |
+| ---------- | -------------------------------------------------------------------------- | ------------------------------------ |
+| `claude`   | `.claude/hooks/pk-session-start.sh`, `pk-eval.ts`, `.claude/settings.json`| `SessionStart` → `$CLAUDE_ENV_FILE`  |
+| `opencode` | `.opencode/plugins/pk-eval.ts`                                             | `shell.env` plugin hook              |
+| `pi`       | `.pi/extensions/pk-eval.ts`                                                | `tool_call` mutation                 |
 
 ## Commands
 

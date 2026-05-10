@@ -17,7 +17,7 @@
 		<a href="{base}/docs/setup/quick" class="card card-border bg-base-200 hover:bg-base-300 transition-colors cursor-pointer group">
 			<div class="card-body gap-3">
 				<div class="font-mono text-xs uppercase tracking-widest text-primary/60">Quick setup</div>
-				<h2 class="font-semibold text-lg">I already use Claude Code, Codex, or OpenCode</h2>
+				<h2 class="font-semibold text-lg">I already use Claude Code, OpenCode, or Pi</h2>
 				<p class="text-base-content/60 text-sm leading-relaxed">
 					Just install pk and run <code class="font-mono bg-base-300 px-1.5 py-0.5 rounded text-xs">pk init</code>. Takes two minutes.
 				</p>

@@ -21,7 +21,7 @@
 	<div>
 		<h1 style="font-family:'Unbounded',sans-serif" class="mb-2 text-3xl font-black">Quick setup</h1>
 		<p class="text-lg text-base-content/60">
-			Already using Claude Code, Codex, or OpenCode? Two commands.
+			Already using Claude Code, OpenCode, or Pi? Two commands.
 		</p>
 	</div>
 
@@ -75,11 +75,11 @@
 		</p>
 		<CodeBlock
 			label="non-interactive"
-			lines={['pk init my-project --harness claude', 'pk init my-project --harness claude,codex']}
+			lines={['pk init my-project --harness claude', 'pk init my-project --harness claude,opencode']}
 		/>
 		<p class="mt-3 text-xs text-base-content/40">
 			Available harnesses: <code class="font-mono">claude</code>,
-			<code class="font-mono">codex</code>, <code class="font-mono">opencode</code>
+			<code class="font-mono">opencode</code>, <code class="font-mono">pi</code>
 		</p>
 	</div>
 
