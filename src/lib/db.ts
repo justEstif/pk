@@ -1,8 +1,9 @@
 import {existsSync} from 'node:fs';
 import path from 'node:path';
 import {Database} from 'bun:sqlite';
+import {cosineSimilarity} from 'ai';
 import {validNotes} from './notes.ts';
-import {cosineSimilarity, type EmbeddingProvider} from './embedding.ts';
+import type {EmbeddingProvider} from './embedding.ts';
 
 const DB_NAME = '.index.db';
 
@@ -170,6 +171,62 @@ export async function semanticSearch(
 		.map(r => ({id: r.id, path: r.path, score: cosineSimilarity(queryVector, decodeVector(r.vec))}))
 		.toSorted((a, b) => b.score - a.score)
 		.slice(0, limit);
+}
+
+type HybridOpts = {limit?: number; filterStatus?: string; filterTag?: string; filterType?: string};
+
+export async function hybridSearch(
+	knowledgeDir: string,
+	query: string,
+	queryVector: number[],
+	opts: HybridOpts = {},
+): Promise<SearchResult[]> {
+	const POOL = 100;
+	const K = 60;
+	const limit = opts.limit ?? 10;
+
+	const ftsResults = search(knowledgeDir, query, {...opts, limit: POOL});
+	const semResults = await semanticSearch(knowledgeDir, queryVector, POOL);
+
+	const scores = new Map<string, number>();
+	const meta = new Map<string, SearchResult>();
+
+	for (const [rank, r] of ftsResults.entries()) {
+		scores.set(r.id, (scores.get(r.id) ?? 0) + (1 / (K + rank + 1)));
+		meta.set(r.id, r);
+	}
+
+	for (const [rank, r] of semResults.entries()) {
+		scores.set(r.id, (scores.get(r.id) ?? 0) + (1 / (K + rank + 1)));
+	}
+
+	// Enrich semantic-only hits with metadata from FTS table
+	const missing = semResults.map(r => r.id).filter(id => !meta.has(id));
+	if (missing.length > 0) {
+		const db = openDb(knowledgeDir);
+		for (const id of missing) {
+			const row = db.query<Row, [string]>('SELECT path,id,type,status,title,tags,0 as score,\'\' as snippet FROM notes_fts WHERE id = ?').get(id);
+			if (row) {
+				meta.set(id, {...row, tags: row.tags ? row.tags.split(' ') : []});
+			}
+		}
+
+		db.close();
+	}
+
+	return [...scores.entries()]
+		.toSorted((a, b) => b[1] - a[1])
+		.slice(0, limit)
+		.flatMap(([id]) => {
+			const m = meta.get(id);
+			return m ? [m] : [];
+		});
+}
+
+export async function upsertVector(knowledgeDir: string, id: string, notePath: string, vec: number[]): Promise<void> {
+	const db = openDb(knowledgeDir);
+	db.run('INSERT OR REPLACE INTO note_vectors(id, path, vec) VALUES(?,?,?)', [id, notePath, encodeVector(vec)]);
+	db.close();
 }
 
 export function hasVectors(knowledgeDir: string): boolean {
