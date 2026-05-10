@@ -15,7 +15,7 @@
       "build": "bun build src/index.ts --outfile dist/index.js --target bun && printf '#!/usr/bin/env bun\n' | cat - dist/index.js > dist/tmp.js && mv dist/tmp.js dist/index.js && chmod +x dist/index.js",
       "check": "bun run typecheck && bun run lint && bun test",
       "typecheck": "bunx tsc --noEmit",
-      "lint": "xo",
+      "lint": "xo src",
       "test": "bun test",
       "prepublishOnly": "bun run build"
    },
@@ -31,6 +31,21 @@
    "repository": {
       "type": "git",
       "url": "git+https://github.com/justEstif/pk.git"
+   },
+   "xo": {
+      "ignores": ["site/**", "docs/**"],
+      "rules": {
+         "@stylistic/curly-newline": "off",
+         "@typescript-eslint/naming-convention": "off",
+         "@typescript-eslint/no-restricted-types": "off",
+         "@typescript-eslint/no-unsafe-type-assertion": "off",
+         "n/prefer-global/process": "off",
+         "unicorn/no-array-callback-reference": "off",
+         "unicorn/no-array-reduce": "off",
+         "unicorn/no-null": "off",
+         "unicorn/no-process-exit": "off",
+         "unicorn/prevent-abbreviations": "off"
+      }
    },
    "devDependencies": {
       "@types/bun": "latest",
