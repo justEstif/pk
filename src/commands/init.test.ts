@@ -200,7 +200,8 @@ describe('writeOpenCodePlugin', () => {
 		expect(existsSync(pluginPath)).toBe(true);
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('experimental');
-		expect(plugin).toContain('chat.system.transform');
+		expect(plugin).toContain('experimental.chat.system.transform');
+		expect(plugin).toContain('shell.env');
 		expect(plugin).toContain('prime');
 		expect(plugin).toContain(KNOWLEDGE_DIR);
 	});
