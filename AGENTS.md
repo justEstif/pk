@@ -21,7 +21,7 @@ pk is a CLI tool. No MCP server. Agents interact via CLI commands with `--json`.
 - **Skill** documents CLI usage patterns for agents
 - **`--json` flag** is the seam for machine consumers
 
-Three harnesses: Claude Code (hook), Codex (AGENTS.md), OpenCode (plugin).
+Three harnesses: Claude Code (hook), OpenCode (plugin), Pi (extension).
 
 ## Release
 
