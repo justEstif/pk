@@ -5,7 +5,7 @@ import {
 	beforeEach, afterEach, describe, expect, test,
 } from 'bun:test';
 import {
-	search, rebuild, vocab, semanticSearch, hasVectors, hybridSearch, upsertVector,
+	search, rebuild, vocab, semanticSearch, hasVectors, hybridSearch, executeSearch, upsertVector,
 } from './db.ts';
 import type {EmbeddingProvider} from './embedding.ts';
 
@@ -364,6 +364,74 @@ describe('hybridSearch', () => {
 		await rebuild(HYB_DIR, fakeProvider);
 		const results = await hybridSearch(HYB_DIR, 'keyword', [1, 0], {limit: 2});
 		expect(results.length).toBe(2);
+	});
+});
+
+describe('executeSearch', () => {
+	const TMP5 = path.join(os.tmpdir(), `pk-execute-search-test-${Date.now()}`);
+	const EXEC_DIR = path.join(TMP5, 'knowledge');
+
+	beforeEach(() => {
+		mkdirSync(path.join(EXEC_DIR, 'notes'), {recursive: true});
+		mkdirSync(path.join(EXEC_DIR, 'indexes'), {recursive: true});
+	});
+
+	afterEach(() => {
+		rmSync(TMP5, {recursive: true, force: true});
+	});
+
+	test('uses keyword mode when vectors or provider are unavailable', async () => {
+		await writeNote(path.join(EXEC_DIR, 'notes'), '2026-01-01-keyword.md', {id: 'exec-a', title: 'Keyword execution'});
+		await rebuild(EXEC_DIR);
+
+		const result = await executeSearch(EXEC_DIR, 'keyword', {limit: 10});
+
+		expect(result.mode).toBe('keyword');
+		expect(result.results.map(r => r.id)).toEqual(['exec-a']);
+	});
+
+	test('uses hybrid mode when vectors and provider are available', async () => {
+		await writeNote(path.join(EXEC_DIR, 'notes'), '2026-01-01-a.md', {id: 'exec-hybrid-a', title: 'Auth execution'});
+		await writeNote(path.join(EXEC_DIR, 'notes'), '2026-01-02-b.md', {id: 'exec-hybrid-b', title: 'Other execution'});
+		const provider: EmbeddingProvider = {
+			async embed(texts) {
+				return texts.map((_, i) => i === 0 ? [1, 0] : [0, 1]);
+			},
+		};
+		await rebuild(EXEC_DIR, provider);
+
+		const result = await executeSearch(EXEC_DIR, 'auth', {provider, limit: 2});
+
+		expect(result.mode).toBe('hybrid');
+		expect(result.results[0]?.id).toBe('exec-hybrid-a');
+	});
+
+	test('semantic mode requires configured provider and indexed vectors', async () => {
+		await writeNote(path.join(EXEC_DIR, 'notes'), '2026-01-01-semantic.md', {id: 'exec-semantic', title: 'Semantic execution'});
+		await rebuild(EXEC_DIR);
+
+		try {
+			await executeSearch(EXEC_DIR, 'semantic', {semantic: true});
+			expect.unreachable();
+		} catch (error) {
+			expect(error).toBeInstanceOf(Error);
+			expect((error as Error).message).toContain('No embeddings in index');
+		}
+	});
+
+	test('semantic mode returns semantic results when provider and vectors exist', async () => {
+		await writeNote(path.join(EXEC_DIR, 'notes'), '2026-01-01-semantic.md', {id: 'exec-semantic-a', title: 'Semantic alpha'});
+		const provider: EmbeddingProvider = {
+			async embed() {
+				return [[1, 0]];
+			},
+		};
+		await rebuild(EXEC_DIR, provider);
+
+		const result = await executeSearch(EXEC_DIR, 'semantic', {provider, semantic: true, limit: 5});
+
+		expect(result.mode).toBe('semantic');
+		expect(result.results[0]?.id).toBe('exec-semantic-a');
 	});
 });
 

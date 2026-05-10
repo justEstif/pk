@@ -93,7 +93,7 @@ export async function rebuild(knowledgeDir: string, provider?: EmbeddingProvider
 	return notes.length;
 }
 
-type SearchResult = {
+export type SearchResult = {
 	id: string;
 	path: string;
 	score: number;
@@ -173,7 +173,58 @@ export async function semanticSearch(
 		.slice(0, limit);
 }
 
-type HybridOpts = {limit?: number; filterStatus?: string; filterTag?: string; filterType?: string};
+type SearchFilters = {filterStatus?: string; filterTag?: string; filterType?: string};
+type HybridOpts = {limit?: number} & SearchFilters;
+
+export type SearchExecutionResult
+	= | {mode: 'keyword' | 'hybrid'; results: SearchResult[]}
+		| {mode: 'semantic'; results: SemanticResult[]};
+
+export async function executeSearch(
+	knowledgeDir: string,
+	query: string,
+	opts: {limit?: number; semantic?: boolean; provider?: EmbeddingProvider} & SearchFilters = {},
+): Promise<SearchExecutionResult> {
+	const limit = opts.limit && opts.limit > 0 ? opts.limit : 10;
+
+	if (opts.semantic) {
+		if (!opts.provider || !hasVectors(knowledgeDir)) {
+			throw new Error('No embeddings in index — configure embeddings and run: pk index');
+		}
+
+		const [queryVector] = await opts.provider.embed([query]);
+		if (!queryVector) {
+			throw new Error('Embedding provider returned empty result.');
+		}
+
+		return {mode: 'semantic', results: await semanticSearch(knowledgeDir, queryVector, limit)};
+	}
+
+	if (opts.provider && hasVectors(knowledgeDir)) {
+		const [queryVector] = await opts.provider.embed([query]);
+		if (queryVector) {
+			return {
+				mode: 'hybrid',
+				results: await hybridSearch(knowledgeDir, query, queryVector, {
+					limit,
+					filterStatus: opts.filterStatus,
+					filterTag: opts.filterTag,
+					filterType: opts.filterType,
+				}),
+			};
+		}
+	}
+
+	return {
+		mode: 'keyword',
+		results: search(knowledgeDir, query, {
+			filterStatus: opts.filterStatus,
+			filterTag: opts.filterTag,
+			filterType: opts.filterType,
+			limit: opts.limit,
+		}),
+	};
+}
 
 export async function hybridSearch(
 	knowledgeDir: string,
