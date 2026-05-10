@@ -4,20 +4,18 @@
 </script>
 
 <svelte:head>
-	<title>Semantic search — pk</title>
+	<title>Embeddings — pk</title>
 	<meta
 		name="description"
-		content="Enable Ollama-powered semantic search in pk to find notes by meaning, not just keywords."
+		content="Enable Ollama-powered embeddings in pk to find notes by meaning, not just keywords."
 	/>
 </svelte:head>
 
 <div class="space-y-10">
 	<div>
-		<h1 style="font-family:'Unbounded',sans-serif" class="mb-2 text-3xl font-black">
-			Semantic search
-		</h1>
+		<h1 style="font-family:'Unbounded',sans-serif" class="mb-2 text-3xl font-black">Embeddings</h1>
 		<p class="text-lg text-base-content/60">
-			Find notes by meaning, not just keywords — powered by a local Ollama model.
+			Optional. Enable Ollama embeddings to find notes by meaning, not just keywords.
 		</p>
 	</div>
 

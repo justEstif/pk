@@ -21,7 +21,7 @@
 		},
 		{ href: `${base}/docs/cli`, label: 'CLI' },
 		{ href: `${base}/docs/config`, label: 'Config' },
-		{ href: `${base}/docs/embeddings`, label: 'Semantic search' },
+		{ href: `${base}/docs/embeddings`, label: 'Embeddings' },
 		{ href: `${base}/docs/how-it-works`, label: 'How it works' }
 	];
 
