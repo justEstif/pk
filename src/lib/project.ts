@@ -23,27 +23,6 @@ const HARNESS_ACTIVATION: Record<Harness, string> = {
 	pi: 'start a new Pi session in this project',
 };
 
-// ─── .env management ──────────────────────────────────────────────────────────
-
-async function upsertEnvVar(projectRoot: string, key: string, value: string): Promise<void> {
-	const envPath = path.join(projectRoot, '.env');
-	let existing = '';
-	try {
-		existing = await Bun.file(envPath).text();
-	} catch {}
-
-	const line = `${key}=${value}`;
-	const lines = existing ? existing.split('\n') : [];
-	const idx = lines.findIndex(l => l.startsWith(`${key}=`));
-	if (idx !== -1) {
-		lines[idx] = line;
-	} else {
-		lines.push(line);
-	}
-
-	await Bun.write(envPath, lines.join('\n').replace(/\n+$/, '') + '\n');
-}
-
 // ─── Project creation ─────────────────────────────────────────────────────────
 
 export async function ensureProject(name: string): Promise<{created: boolean; knowledgeDir: string}> {
@@ -121,7 +100,6 @@ export async function initializeProject(options: InitializeProjectOptions): Prom
 		name: options.name,
 		projectRoot: options.projectRoot,
 	};
-	await upsertEnvVar(options.projectRoot, 'PK_KNOWLEDGE_DIR', knowledgeDir);
 	await applyHarnesses(options.harnesses, ctx);
 
 	return {
