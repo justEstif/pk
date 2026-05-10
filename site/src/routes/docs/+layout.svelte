@@ -10,8 +10,8 @@
 			href: `${base}/docs/setup`,
 			label: 'Setup',
 			children: [
-				{ href: `${base}/docs/setup/engineers`, label: 'Quick setup' },
-				{ href: `${base}/docs/setup/newcomers`, label: 'Full guide' },
+				{ href: `${base}/docs/setup/quick`, label: 'Quick setup' },
+				{ href: `${base}/docs/setup/full`, label: 'Full guide' },
 			]
 		},
 	];

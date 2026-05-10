@@ -14,7 +14,7 @@
 	</div>
 
 	<div class="grid sm:grid-cols-2 gap-4">
-		<a href="{base}/docs/setup/engineers" class="card card-border bg-base-200 hover:bg-base-300 transition-colors cursor-pointer group">
+		<a href="{base}/docs/setup/quick" class="card card-border bg-base-200 hover:bg-base-300 transition-colors cursor-pointer group">
 			<div class="card-body gap-3">
 				<div class="font-mono text-xs uppercase tracking-widest text-primary/60">Quick setup</div>
 				<h2 class="font-semibold text-lg">I already use Claude Code, Codex, or OpenCode</h2>
@@ -25,7 +25,7 @@
 			</div>
 		</a>
 
-		<a href="{base}/docs/setup/newcomers" class="card card-border bg-base-200 hover:bg-base-300 transition-colors cursor-pointer group">
+		<a href="{base}/docs/setup/full" class="card card-border bg-base-200 hover:bg-base-300 transition-colors cursor-pointer group">
 			<div class="card-body gap-3">
 				<div class="font-mono text-xs uppercase tracking-widest text-base-content/30">Full guide</div>
 				<h2 class="font-semibold text-lg">I'm new to AI coding tools</h2>
