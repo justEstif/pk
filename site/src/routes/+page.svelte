@@ -155,7 +155,7 @@
 
 		<!-- Supported harnesses -->
 		<div class="flex flex-wrap gap-x-6 gap-y-1 mb-8">
-			{#each ['Claude Code', 'Codex', 'OpenCode'] as harness}
+			{#each ['Claude Code', 'OpenCode', 'Pi'] as harness}
 				<span class="font-mono text-sm text-base-content/40 flex items-center gap-1.5">
 					<span class="text-[6px] text-primary/50">●</span>{harness}
 				</span>

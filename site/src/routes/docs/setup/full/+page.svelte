@@ -1,5 +1,5 @@
 <script lang="ts">
-	type AITool = 'claude-code' | 'codex' | 'opencode';
+	type AITool = 'claude-code' | 'opencode' | 'pi';
 	type OS = 'mac' | 'linux' | 'windows';
 
 	let aiTool = $state<AITool | null>(null);
@@ -47,15 +47,15 @@
 			note: 'Then run `claude` to log in on first use.',
 			docs: 'https://code.claude.com/docs/en/quickstart'
 		},
-		codex: {
-			label: 'Codex CLI',
-			cmd: 'npm install -g @openai/codex',
-			docs: 'https://github.com/openai/codex'
-		},
 		opencode: {
 			label: 'OpenCode',
 			cmd: 'npm install -g opencode-ai',
 			docs: 'https://opencode.ai'
+		},
+		pi: {
+			label: 'Pi',
+			cmd: 'npm install -g @earendil-works/pi-coding-agent',
+			docs: 'https://pi.dev'
 		}
 	};
 
@@ -171,7 +171,7 @@
 						pk works with all three. Claude Code is the most popular right now.
 					</p>
 					<div class="flex flex-wrap gap-3">
-						{#each [['claude-code', 'Claude Code'], ['codex', 'Codex'], ['opencode', 'OpenCode']] as const as [val, label]}
+						{#each [['claude-code', 'Claude Code'], ['opencode', 'OpenCode'], ['pi', 'Pi']] as const as [val, label]}
 							<button
 								class="btn px-6 py-2.5 text-sm {aiTool === val
 									? 'btn-primary'
