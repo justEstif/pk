@@ -77,11 +77,32 @@
 			<p class="font-mono text-xs tracking-widest text-base-content/40 uppercase">
 				Step 1 — Install Ollama
 			</p>
-			<p class="text-sm text-base-content/70">
-				Download and install from <a href="https://ollama.com" class="text-primary hover:underline"
-					>ollama.com</a
-				>. The installer works on macOS and Linux.
-			</p>
+			<a
+				href="https://ollama.com"
+				target="_blank"
+				rel="noopener"
+				class="group card cursor-pointer bg-base-200 transition-colors card-border hover:bg-base-300"
+			>
+				<div class="card-body gap-2">
+					<div class="flex items-center gap-3">
+						<div
+							class="flex h-9 w-9 items-center justify-center rounded-lg bg-base-300 font-mono text-lg text-base-content/70"
+						>
+							🦙
+						</div>
+						<div>
+							<h3 class="font-semibold">Download Ollama</h3>
+							<p class="text-sm text-base-content/50">ollama.com · macOS · Linux</p>
+						</div>
+						<span
+							class="ml-auto font-mono text-xs text-primary/70 transition-colors group-hover:text-primary"
+							>ollama.com →</span
+						>
+					</div>
+				</div>
+			</a>
+			<p class="text-sm text-base-content/60">After installing, verify it works:</p>
+			<CodeBlock label="verify" lines={['ollama --version']} />
 		</div>
 
 		<!-- Step 2 -->
