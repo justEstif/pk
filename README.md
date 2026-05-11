@@ -66,10 +66,11 @@ pk init [name] [--harness h1,h2,...]   # set up project + hooks
 
 pk new <type> <title> [--tags t1,t2]
 pk delete <path>                       # JSON output, non-interactive
-pk search <query> [--limit 5] [--type] [--status] [--tag] [--semantic]
+pk search <query> [--limit 5] [--type] [--status] [--tag]
 pk synthesize [query] [--all]
 pk history [--limit 20] [--type <type>] [--filter-type <type>] [--filter-tag <tag>] [--filter-operation <op>]
 pk read <path>
+pk write <path>                        # write content from stdin + commit
 pk vocab
 pk index                               # rebuild FTS5 + markdown indexes
 pk lint [paths...]
@@ -104,7 +105,7 @@ pk synthesize
 ## Knowledge structure
 
 Notes live in `~/.pk/<name>/` as plain markdown files — human-editable and git-diffable.
-Agents access them exclusively through the CLI; humans can read and edit them directly.
+Agents read and write them exclusively through the CLI. Humans can edit files directly, but should run `pk write <path> < <file>` or commit manually afterward to keep the git history clean.
 
 ```
 ~/.pk/
@@ -125,7 +126,7 @@ Run `pk index` after creating or editing notes to update `.index.db` and `indexe
 
 ## Embeddings (optional)
 
-pk can generate embeddings via a local [Ollama](https://ollama.com) model and store them alongside the FTS5 index. Once enabled, `pk search --semantic` finds notes by meaning rather than keyword overlap.
+pk can generate embeddings via a local [Ollama](https://ollama.com) model and store them alongside the FTS5 index. Once configured, `pk search` automatically uses hybrid search — BM25 keyword ranking fused with vector similarity via RRF.
 
 ```bash
 # Install Ollama — https://ollama.com
@@ -137,11 +138,11 @@ pk config --embedding nomic-embed-text
 # Rebuild index to generate embeddings
 pk index
 
-# Search by meaning
-pk search "slow database queries" --semantic
+# Search now uses hybrid automatically
+pk search "slow database queries"
 ```
 
-Embeddings are stored in `.index.db` and are rebuilt on `pk index`. FTS keyword search continues to work unchanged; `--semantic` is opt-in per query.
+Embeddings are stored in `.index.db` and rebuilt on `pk index`. If no embedding model is configured, search falls back to keyword-only FTS.
 
 ## License
 

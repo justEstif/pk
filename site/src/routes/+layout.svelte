@@ -61,7 +61,7 @@
 			>
 			<div class="flex items-center gap-1">
 				<a
-					href="{base}/docs/how-it-works"
+					href="{base}/docs/getting-started"
 					class="btn bg-base-200 px-5 py-2 font-mono text-sm text-base-content/50 hover:bg-base-300"
 					>Docs</a
 				>

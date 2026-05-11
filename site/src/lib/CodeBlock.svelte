@@ -2,7 +2,7 @@
 	let {
 		label,
 		lines,
-		copyText = lines.join('\n')
+		copyText = lines.filter((l) => !l.startsWith('#')).join('\n')
 	}: {
 		label: string;
 		lines: string[];
@@ -21,7 +21,7 @@
 	}
 </script>
 
-<div class="overflow-hidden rounded-lg" style="background:#1C1917">
+<div class="overflow-hidden rounded-xl" style="background:#1C1917">
 	<div class="flex items-center justify-between px-4 py-2" style="border-bottom:1px solid #292524">
 		<span class="font-mono text-xs" style="color:#57534E">{label}</span>
 		<button
@@ -33,9 +33,15 @@
 	</div>
 	<div class="px-4 py-3 font-mono text-sm leading-loose">
 		{#each lines as line}
-			<div>
-				<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">{line}</span>
-			</div>
+			{#if line === ''}
+				<div class="h-2"></div>
+			{:else if line.startsWith('#')}
+				<div style="color:#57534E">{line}</div>
+			{:else}
+				<div>
+					<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">{line}</span>
+				</div>
+			{/if}
 		{/each}
 	</div>
 </div>

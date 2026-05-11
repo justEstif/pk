@@ -23,16 +23,14 @@ export function registerSearch(program: Command): void {
 		.option('--tag <tag>', 'Filter by tag')
 		.option('--limit <n>', 'Max results', '10')
 		.option('--context', 'Include full note body in output')
-		.option('--semantic', 'Pure vector search (requires embeddings configured and pk index run)')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir(async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; pretty?: boolean; context: boolean; semantic?: boolean}) => {
+		.action(runDir(async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; pretty?: boolean; context: boolean}) => {
 			const limit = Number.parseInt(opts.limit, 10);
 			const provider = await resolveProvider();
 			let execution: SearchExecutionResult;
 			try {
 				execution = await executeSearch(dir, query, {
 					provider,
-					semantic: opts.semantic,
 					filterStatus: opts.status,
 					filterTag: opts.tag,
 					filterType: opts.type,
@@ -49,34 +47,11 @@ export function registerSearch(program: Command): void {
 				results: String(execution.results.length),
 			}).catch(() => {/* best-effort */});
 
-			if (execution.mode === 'semantic') {
-				printSemanticResults(execution.results, opts);
-				return;
-			}
-
 			await printResults(execution.results, opts);
 		}));
 }
 
-type PrintableSemanticResult = {path: string; score: number};
-
 type PrintableResult = {path: string; type: string; status: string; id: string; title: string; tags: string[]; snippet?: string};
-
-function printSemanticResults(results: PrintableSemanticResult[], opts: {pretty?: boolean}) {
-	if (!opts.pretty) {
-		writeJson({results});
-		return;
-	}
-
-	if (results.length === 0) {
-		console.log('No results.');
-		return;
-	}
-
-	for (const r of results) {
-		console.log(`${r.path} | score: ${r.score.toFixed(4)}`);
-	}
-}
 
 async function printResults(results: PrintableResult[], opts: {pretty?: boolean; context: boolean; limit: string}) {
 	if (!opts.pretty) {

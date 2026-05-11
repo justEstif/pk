@@ -1,0 +1,160 @@
+<script lang="ts">
+	import { base } from '$app/paths';
+	import CodeBlock from '$lib/CodeBlock.svelte';
+</script>
+
+<svelte:head>
+	<title>Embeddings — pk</title>
+	<meta
+		name="description"
+		content="Set up Ollama embeddings so pk search uses hybrid mode automatically."
+	/>
+</svelte:head>
+
+<div class="space-y-10">
+	<div class="not-prose">
+		<h1 style="font-family:'Unbounded',sans-serif" class="mb-2 text-3xl font-black">Embeddings</h1>
+		<p class="text-lg text-base-content/60">
+			Set up once. Search becomes hybrid — keyword and semantic — automatically.
+		</p>
+	</div>
+
+	<div class="space-y-4">
+		<h2>Why it matters</h2>
+		<p>
+			Without embeddings, <code>pk search</code> only finds notes containing your exact words. Your
+			agent misses context that exists under a different title.
+		</p>
+
+		<div class="not-prose grid gap-3 sm:grid-cols-2">
+			<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-2">
+				<p class="font-mono text-xs text-base-content/40 uppercase tracking-widest">
+					Without embeddings
+				</p>
+				<p class="text-sm text-base-content/60">
+					Search <code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs"
+						>database latency</code
+					> → nothing. Your note is titled "slow queries."
+				</p>
+				<p class="text-sm text-base-content/40 italic">Agent assumes no decision was made.</p>
+			</div>
+			<div
+				class="rounded-xl border border-base-300 border-l-4 border-l-primary bg-base-200 px-5 py-4 space-y-2"
+			>
+				<p class="font-mono text-xs text-primary/60 uppercase tracking-widest">With embeddings</p>
+				<p class="text-sm text-base-content/60">
+					Search <code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs"
+						>database latency</code
+					> → "slow queries," "pg performance issues," "connection pool tuning."
+				</p>
+				<p class="text-sm text-base-content/60 italic">Agent has the full picture.</p>
+			</div>
+		</div>
+
+		<p>
+			With embeddings configured, every <code>pk search</code> uses hybrid mode — BM25 keyword
+			matching combined with vector similarity, merged automatically. No flags needed.
+		</p>
+	</div>
+
+	<div class="space-y-5">
+		<h2>Setup</h2>
+		<p>Takes about two minutes. Runs locally — no API keys, no GPU required.</p>
+
+		<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-3 not-prose">
+			<p class="font-mono text-xs tracking-widest text-base-content/30 uppercase">Step 1</p>
+			<p class="text-sm font-semibold">Install Ollama</p>
+			<a
+				href="https://ollama.com"
+				target="_blank"
+				rel="noopener"
+				class="flex items-center justify-between rounded-xl border border-base-300 bg-base-300 px-4 py-3 transition-colors hover:bg-base-300/70"
+			>
+				<div class="flex items-center gap-3">
+					<span class="text-lg">🦙</span>
+					<div>
+						<p class="text-sm font-semibold">Download Ollama</p>
+						<p class="text-xs text-base-content/50">ollama.com · macOS · Linux</p>
+					</div>
+				</div>
+				<span class="font-mono text-xs text-primary/70">ollama.com →</span>
+			</a>
+		</div>
+
+		<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-3 not-prose">
+			<p class="font-mono text-xs tracking-widest text-base-content/30 uppercase">Step 2</p>
+			<p class="text-sm font-semibold">Pull a model</p>
+			<CodeBlock label="ollama" lines={['ollama pull nomic-embed-text']} />
+			<p class="font-mono text-xs text-base-content/40">~274 MB · runs on CPU · no GPU required</p>
+		</div>
+
+		<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-3 not-prose">
+			<p class="font-mono text-xs tracking-widest text-base-content/30 uppercase">Step 3</p>
+			<p class="text-sm font-semibold">Configure pk and index your notes</p>
+			<CodeBlock
+				label="configure + index"
+				lines={['pk config --embedding nomic-embed-text', 'pk index']}
+			/>
+			<p class="text-sm text-base-content/60">
+				Run <code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs">pk index</code> again
+				after adding new notes — vectors aren't generated on <code
+					class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs">pk new</code
+				>.
+			</p>
+		</div>
+
+		<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-3 not-prose">
+			<p class="font-mono text-xs tracking-widest text-base-content/30 uppercase">Step 4</p>
+			<p class="text-sm font-semibold">Search — hybrid is now automatic</p>
+			<CodeBlock label="search" lines={['pk search "slow database queries"']} />
+			<p class="text-sm text-base-content/60">
+				No flags. BM25 + vector results are merged automatically when embeddings are configured.
+			</p>
+		</div>
+	</div>
+
+	<div class="space-y-3">
+		<h2>Recommended models</h2>
+		<div class="not-prose overflow-x-auto rounded-xl border border-base-300">
+			<table class="table w-full table-sm font-mono text-sm">
+				<thead>
+					<tr class="text-xs tracking-widest text-base-content/40 uppercase">
+						<th>Model</th>
+						<th>Size</th>
+						<th>Notes</th>
+					</tr>
+				</thead>
+				<tbody class="text-base-content/70">
+					<tr>
+						<td>nomic-embed-text</td>
+						<td>274 MB</td>
+						<td>Best balance of quality and speed — start here</td>
+					</tr>
+					<tr>
+						<td>mxbai-embed-large</td>
+						<td>670 MB</td>
+						<td>Higher quality, slightly larger</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<div class="space-y-3">
+		<h2>Config reference</h2>
+		<div class="not-prose">
+			<CodeBlock
+				label="config"
+				lines={[
+					'pk config --embedding nomic-embed-text',
+					'pk config --no-embedding',
+					'pk config --base-url http://my-host:11434'
+				]}
+			/>
+		</div>
+		<p>
+			Config lives at <code>~/.pk/config.json</code> and applies across all projects. See
+			<a href="{base}/docs/reference/config">Config</a> for more.
+		</p>
+	</div>
+</div>
