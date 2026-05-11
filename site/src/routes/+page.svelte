@@ -112,8 +112,8 @@
 		</h1>
 
 		<p class="text-lg leading-relaxed text-base-content/60 mb-9 max-w-xl">
-			Drop in information as you work — a decision, a Slack thread, a doc, a question you haven't
-			answered yet. Your agent organizes it. The more you put in, the more useful it gets.
+			Give your AI agent a memory. Log decisions, open questions, and context — your agent searches
+			them automatically every session, and never re-asks what you've already answered.
 		</p>
 
 		<!-- Install widget -->
@@ -164,7 +164,7 @@
 
 		<!-- CTA -->
 		<div class="flex flex-col items-start gap-1.5 mb-12">
-			<a href="{base}/docs/setup" class="btn btn-primary px-8 py-3 text-base">Get started →</a>
+			<a href="{base}/docs/getting-started" class="btn btn-primary px-8 py-3 text-base">Get started →</a>
 			<span class="font-mono text-xs text-base-content/30">step-by-step setup guide</span>
 		</div>
 

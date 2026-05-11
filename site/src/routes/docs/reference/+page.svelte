@@ -11,33 +11,30 @@
 </svelte:head>
 
 <div class="space-y-10">
-	<div>
+	<div class="not-prose">
 		<h1 style="font-family:'Unbounded',sans-serif" class="mb-2 text-3xl font-black">Reference</h1>
 		<p class="text-lg text-base-content/60">The memory model, commands, and configuration.</p>
 	</div>
 
-	<!-- Memory model -->
 	<section class="space-y-5">
-		<h2 class="text-xl font-semibold">How the memory system works</h2>
-		<p class="text-sm leading-relaxed text-base-content/60">
+		<h2>How the memory system works</h2>
+		<p>
 			pk gives your AI agent persistent memory for each project. Notes are stored locally as plain
 			markdown — searchable, diffable, and readable by both you and your agent. Nothing leaves your
 			machine.
 		</p>
-		<p class="text-sm leading-relaxed text-base-content/60">
-			pk separates two kinds of memory: what you know, and what happened.
-		</p>
+		<p>pk separates two kinds of memory: what you know, and what happened.</p>
 
-		<div class="grid gap-4 sm:grid-cols-2">
+		<div class="not-prose grid gap-4 sm:grid-cols-2">
 			<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-2">
 				<div class="flex items-center gap-2">
 					<span class="badge badge-warning badge-soft font-mono text-xs">semantic</span>
 					<span class="font-mono text-xs text-base-content/30">what do we know?</span>
 				</div>
-				<p class="font-semibold text-sm">Notes, decisions, questions</p>
+				<p class="text-sm font-semibold">Notes, decisions, questions</p>
 				<p class="text-sm leading-relaxed text-base-content/60">
-					Structured markdown indexed for full-text search. Your agent queries these to answer
-					questions about the project.
+					Structured markdown indexed for full-text and semantic search. Your agent queries these
+					to answer questions about the project.
 				</p>
 			</div>
 			<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-2">
@@ -45,21 +42,20 @@
 					<span class="badge badge-info badge-soft font-mono text-xs">episodic</span>
 					<span class="font-mono text-xs text-base-content/30">what happened?</span>
 				</div>
-				<p class="font-semibold text-sm">Git history</p>
+				<p class="text-sm font-semibold">Git history</p>
 				<p class="text-sm leading-relaxed text-base-content/60">
-					Every pk command is recorded as a git commit. Your agent can reconstruct a timeline — who
-					asked what, when, and what changed.
+					Every pk command is recorded as a git commit. Your agent can reconstruct a timeline —
+					who asked what, when, and what changed.
 				</p>
 			</div>
 		</div>
 
-		<p class="text-sm text-base-content/60">
+		<p>
 			The semantic store answers <em>"what did we decide about the database?"</em> The episodic
 			store answers <em>"when did we make that call, and what happened right before it?"</em>
 		</p>
 
-		<!-- File layout -->
-		<div class="overflow-hidden rounded-xl" style="background:#1C1917">
+		<div class="not-prose overflow-hidden rounded-xl" style="background:#1C1917">
 			<div class="px-5 py-4 font-mono text-sm leading-loose" style="color:#A8A29E">
 				<div style="color:#57534E">~/.pk/</div>
 				<div>&nbsp;&nbsp;<span style="color:#57534E">your-project/</span></div>
@@ -67,30 +63,45 @@
 				<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>decisions/</span></div>
 				<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>questions/</span></div>
 				<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>sources/</span></div>
-				<div>
-					&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C"
+				<div
+					>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C"
 						>.index.db &nbsp;&nbsp;&nbsp;← full-text search index</span
-					>
-				</div>
-				<div>
-					&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C"
+					></div
+				>
+				<div
+					>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C"
 						>.git/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← episodic event log</span
-					>
-				</div>
+					></div
+				>
 			</div>
 		</div>
 	</section>
 
-	<!-- Reference cards -->
 	<section class="space-y-4">
-		<h2 class="text-xl font-semibold">Reference pages</h2>
-		<div class="grid gap-4 sm:grid-cols-3">
-			{#each [{ href: `${base}/docs/reference/cli`, label: 'CLI', desc: 'All commands, flags, and machine output options.' }, { href: `${base}/docs/reference/config`, label: 'Config', desc: 'Global settings stored at ~/.pk/config.json.' }, { href: `${base}/docs/reference/embeddings`, label: 'Embeddings', desc: 'Ollama setup for semantic search.' }] as card}
+		<h2>Reference pages</h2>
+		<div class="not-prose grid gap-4 sm:grid-cols-3">
+			{#each [
+				{
+					href: `${base}/docs/reference/cli`,
+					label: 'CLI',
+					desc: 'All commands, flags, and machine output options.'
+				},
+				{
+					href: `${base}/docs/reference/config`,
+					label: 'Config',
+					desc: 'Global settings stored at ~/.pk/config.json.'
+				},
+				{
+					href: `${base}/docs/reference/embeddings`,
+					label: 'Embeddings',
+					desc: 'Ollama setup for semantic search.'
+				}
+			] as card}
 				<a
 					href={card.href}
 					class="group rounded-xl border border-base-300 bg-base-200 px-5 py-4 transition-colors hover:bg-base-300 cursor-pointer space-y-1"
 				>
-					<p class="font-semibold text-sm">{card.label}</p>
+					<p class="text-sm font-semibold">{card.label}</p>
 					<p class="text-sm text-base-content/60">{card.desc}</p>
 					<p class="font-mono text-xs text-primary/60 transition-colors group-hover:text-primary">
 						{card.label.toLowerCase()} →

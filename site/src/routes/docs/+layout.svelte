@@ -12,17 +12,20 @@
 
 	const nav: NavItem[] = [
 		{
-			href: `${base}/docs/setup`,
-			label: 'Setup',
-			children: [
-				{ href: `${base}/docs/setup/quick`, label: 'Quick setup' },
-				{ href: `${base}/docs/setup/full`, label: 'Full guide' }
-			]
+			href: `${base}/docs/getting-started`,
+			label: 'Getting started',
+			children: [{ href: `${base}/docs/getting-started/full`, label: 'Full guide' }]
 		},
-		{ href: `${base}/docs/cli`, label: 'CLI' },
-		{ href: `${base}/docs/config`, label: 'Config' },
-		{ href: `${base}/docs/embeddings`, label: 'Embeddings' },
-		{ href: `${base}/docs/how-it-works`, label: 'How it works' }
+		{ href: `${base}/docs/usage`, label: 'Usage' },
+		{
+			href: `${base}/docs/reference`,
+			label: 'Reference',
+			children: [
+				{ href: `${base}/docs/reference/cli`, label: 'CLI' },
+				{ href: `${base}/docs/reference/config`, label: 'Config' },
+				{ href: `${base}/docs/reference/embeddings`, label: 'Embeddings' }
+			]
+		}
 	];
 
 	function isActive(href: string) {
@@ -44,21 +47,16 @@
 				{#each nav as item}
 					<a
 						href={item.href}
-						class="flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors
+						class="rounded-lg px-3 py-1.5 text-sm transition-colors
 							{isActive(item.href)
 							? 'bg-base-200 font-medium text-base-content'
 							: isParentActive(item)
 								? 'font-medium text-base-content/70'
 								: 'text-base-content/50 hover:text-base-content/80'}"
 					>
-						<span>{item.label}</span>
-						{#if item.children}
-							<span class="font-mono text-xs text-base-content/30"
-								>{isParentActive(item) ? '⌄' : '›'}</span
-							>
-						{/if}
+						{item.label}
 					</a>
-					{#if item.children && isParentActive(item)}
+					{#if item.children}
 						{#each item.children as child}
 							<a
 								href={child.href}
@@ -75,7 +73,7 @@
 	</aside>
 
 	<!-- Content -->
-	<main class="min-w-0 flex-1">
+	<main class="min-w-0 flex-1 prose prose-sm max-w-none">
 		{@render children()}
 	</main>
 </div>
