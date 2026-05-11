@@ -176,29 +176,14 @@ export async function semanticSearch(
 type SearchFilters = {filterStatus?: string; filterTag?: string; filterType?: string};
 type HybridOpts = {limit?: number} & SearchFilters;
 
-export type SearchExecutionResult
-	= | {mode: 'keyword' | 'hybrid'; results: SearchResult[]}
-		| {mode: 'semantic'; results: SemanticResult[]};
+export type SearchExecutionResult = {mode: 'keyword' | 'hybrid'; results: SearchResult[]};
 
 export async function executeSearch(
 	knowledgeDir: string,
 	query: string,
-	opts: {limit?: number; semantic?: boolean; provider?: EmbeddingProvider} & SearchFilters = {},
+	opts: {limit?: number; provider?: EmbeddingProvider} & SearchFilters = {},
 ): Promise<SearchExecutionResult> {
 	const limit = opts.limit && opts.limit > 0 ? opts.limit : 10;
-
-	if (opts.semantic) {
-		if (!opts.provider || !hasVectors(knowledgeDir)) {
-			throw new Error('No embeddings in index — configure embeddings and run: pk index');
-		}
-
-		const [queryVector] = await opts.provider.embed([query]);
-		if (!queryVector) {
-			throw new Error('Embedding provider returned empty result.');
-		}
-
-		return {mode: 'semantic', results: await semanticSearch(knowledgeDir, queryVector, limit)};
-	}
 
 	if (opts.provider && hasVectors(knowledgeDir)) {
 		const [queryVector] = await opts.provider.embed([query]);
