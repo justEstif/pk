@@ -417,7 +417,11 @@
 							>. This creates a knowledge folder at
 							<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs"
 								>~/.pk/&lt;project&gt;/</code
-							> where your notes will live.
+							>, writes a
+							<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.pk.json</code>
+							to your project root so pk commands find it automatically, and wires up your AI tool.
+							Add <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.pk.json</code> to your
+							<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.gitignore</code>.
 						</p>
 						<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
 							<div

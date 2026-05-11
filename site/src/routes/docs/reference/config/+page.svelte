@@ -4,15 +4,15 @@
 </script>
 
 <svelte:head>
-	<title>Config reference — pk</title>
-	<meta name="description" content="Configure pk embeddings and global settings." />
+	<title>Config — pk</title>
+	<meta name="description" content="Configure pk per-project and global settings." />
 </svelte:head>
 
 <div class="space-y-10">
 	<div class="not-prose">
 		<h1 style="font-family:'Unbounded',sans-serif" class="mb-2 text-3xl font-black">Config</h1>
 		<p class="text-lg text-base-content/60">
-			Settings that apply across all pk projects on your machine.
+			Project and global configuration for pk.
 		</p>
 	</div>
 
@@ -23,6 +23,33 @@
 				>~/.pk/config.json</code
 			>.
 		</p>
+	</div>
+
+	<div class="space-y-4">
+		<h2>Project config — .pk.json</h2>
+		<p>
+			<code>pk init</code> writes a <code>.pk.json</code> file to your project root. pk commands
+			find the knowledge directory by walking up from the current directory — no environment
+			variables needed.
+		</p>
+		<div class="not-prose overflow-hidden rounded-xl border border-base-300">
+			<table class="table w-full table-sm font-mono text-sm">
+				<tbody class="text-base-content/70">
+					<tr><td class="w-36">location</td><td>&lt;project-root&gt;/.pk.json</td></tr>
+					<tr><td>contents</td><td>&#123;&quot;knowledgeDir&quot;: &quot;/abs/path&quot;&#125;</td></tr>
+					<tr><td>gitignore</td><td>yes — contains machine-local absolute paths</td></tr>
+				</tbody>
+			</table>
+		</div>
+		<p>
+			To switch projects temporarily, set <code>PK_KNOWLEDGE_DIR</code> in your shell.
+			The env var takes precedence over <code>.pk.json</code>.
+		</p>
+	</div>
+
+	<div class="space-y-4">
+		<h2>Global config — ~/.pk/config.json</h2>
+		<p>Settings that apply across all pk projects on your machine.</p>
 	</div>
 
 	<div class="space-y-4">
