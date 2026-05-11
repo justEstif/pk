@@ -51,7 +51,24 @@ pk new question "Should we rate-limit the search endpoint?"
 pk new source "Meeting notes 2024-06-01"
 ```
 
-Prints the absolute path. Frontmatter (id, dates, status, tags) is generated automatically — don't edit frontmatter after creation. After receiving the path: `pk read` to see the skeleton, then edit the file to fill in the required sections.
+Prints the absolute path. Frontmatter (id, dates, status, tags) is generated automatically — don't edit frontmatter after creation. After receiving the path: `pk read` to see the skeleton, then fill in the required sections and write it back with `pk write`:
+
+```bash
+path=$(pk new source "My topic" | jq -r .path)
+pk read "$path"   # inspect the skeleton
+# compose the full content, then:
+pk write "$path" <<'EOF'
+---
+...frontmatter unchanged...
+---
+
+## Source
+
+...
+EOF
+```
+
+**Always use `pk write` to save edits** — it writes the file and commits the change atomically.
 
 **Required sections by type:**
 
@@ -80,6 +97,23 @@ pk history --filter-type decision              # only decisions
 pk history --filter-tag important              # only tagged 'important'
 pk history --filter-operation update           # only updates
 ```
+
+### `pk write` — update an existing note
+
+```bash
+pk write /abs/path/to/note.md <<'EOF'
+---
+id: ...
+...
+---
+
+## Section
+
+Content here.
+EOF
+```
+
+Writes content to an existing note and commits it as an update. Always `pk read` first, modify the content, then write back. Frontmatter `id`, `type`, and `created` **must not change**.
 
 ### `pk delete` — delete a note
 
@@ -118,7 +152,7 @@ Config lives at `~/.pk/config.json`.
 
 ### Status transitions
 
-No command for status changes. Edit the frontmatter `status` field directly, then `pk lint` to validate.
+No dedicated command. Use `pk read` to get the current content, change the `status` field in the frontmatter, then `pk write` to save and commit.
 
 **MANDATORY READ `references/knowledge-model.md`** when: creating a note type you haven't used before, unsure which folder a type belongs in, validating frontmatter fields, or unsure which status values are valid for a given type.
 

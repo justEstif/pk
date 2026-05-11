@@ -70,6 +70,7 @@ pk search <query> [--limit 5] [--type] [--status] [--tag] [--semantic]
 pk synthesize [query] [--all]
 pk history [--limit 20] [--type <type>] [--filter-type <type>] [--filter-tag <tag>] [--filter-operation <op>]
 pk read <path>
+pk write <path>                        # write content from stdin + commit
 pk vocab
 pk index                               # rebuild FTS5 + markdown indexes
 pk lint [paths...]
@@ -104,7 +105,7 @@ pk synthesize
 ## Knowledge structure
 
 Notes live in `~/.pk/<name>/` as plain markdown files — human-editable and git-diffable.
-Agents access them exclusively through the CLI; humans can read and edit them directly.
+Agents read and write them exclusively through the CLI. Humans can edit files directly, but should run `pk write <path> < <file>` or commit manually afterward to keep the git history clean.
 
 ```
 ~/.pk/

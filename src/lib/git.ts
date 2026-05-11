@@ -87,6 +87,26 @@ export async function commitKnowledgeFile(
 /**
  * Commit the deletion of a knowledge file.
  */
+/**
+ * Commit generated index files after a rebuild.
+ * Silent no-op when nothing changed.
+ */
+export async function commitIndexRebuild(knowledgeDir: string): Promise<void> {
+	const indexDir = path.join(knowledgeDir, 'indexes');
+	try {
+		await $`git -C ${knowledgeDir} add ${indexDir}`.quiet();
+		const result = await $`git -C ${knowledgeDir} commit -m "knowledge: rebuild indexes"`.quiet();
+		if (result.exitCode !== 0) {
+			const out = result.stdout.toString() + result.stderr.toString();
+			if (!out.includes('nothing to commit')) {
+				console.warn(`[pk] Git commit failed (indexes): ${out}`);
+			}
+		}
+	} catch (error) {
+		console.warn(`[pk] Git commit failed (indexes): ${String(error)}`);
+	}
+}
+
 export async function commitDelete(
 	knowledgeDir: string,
 	notePath: string,

@@ -1,6 +1,7 @@
 import {mkdirSync} from 'node:fs';
 import path from 'node:path';
 import {rebuild} from './db.ts';
+import {commitIndexRebuild} from './git.ts';
 import {excerpt, validNotes} from './notes.ts';
 import {TYPE_DIRS, type Note} from './schema.ts';
 import type {EmbeddingProvider} from './embedding.ts';
@@ -66,5 +67,6 @@ export async function buildIndexFiles(knowledgeDir: string, provider?: Embedding
 
 	await Bun.write(path.join(indexDir, 'tags.md'), tagsBody + footer('See open-questions.md.'));
 
+	await commitIndexRebuild(knowledgeDir);
 	return {ftsCount, indexDir};
 }
