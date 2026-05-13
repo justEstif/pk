@@ -7,7 +7,7 @@ export function registerVocab(program: Command): void {
 		.command('vocab')
 		.description('List tags in the knowledge base by frequency')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir((dir, opts: {pretty?: boolean}) => {
+		.action(runDir('vocab', (dir, opts: {pretty?: boolean}) => {
 			const tags = vocab(dir);
 
 			if (opts.pretty) {

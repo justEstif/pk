@@ -6,21 +6,27 @@ import path from 'node:path';
 import {writeClaudeHook} from '../commands/harnesses/claude.ts';
 import {writeOpenCodePlugin} from '../commands/harnesses/opencode.ts';
 import {writePiPlugin} from '../commands/harnesses/pi.ts';
+import {writeClaudeDesktopConfig} from '../commands/harnesses/claude-desktop.ts';
+import {writeCodexConfig} from '../commands/harnesses/codex.ts';
 import {TYPE_DIRS} from './schema.ts';
 import {projectDir} from './paths.ts';
 
-export type Harness = 'claude' | 'opencode' | 'pi';
+export type Harness = 'claude' | 'opencode' | 'pi' | 'claude-desktop' | 'codex';
 
 export const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
 	{hint: 'UserPromptSubmit context', label: 'Claude Code', value: 'claude'},
 	{hint: 'chat.system.transform plugin', label: 'OpenCode', value: 'opencode'},
 	{hint: 'before_agent_start context', label: 'Pi', value: 'pi'},
+	{hint: 'MCP server in claude_desktop_config.json', label: 'Claude Desktop', value: 'claude-desktop'},
+	{hint: 'MCP server in ~/.codex/config.toml', label: 'Codex Desktop', value: 'codex'},
 ];
 
 const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
 
 const HARNESS_ACTIVATION: Record<Harness, string> = {
 	claude: 'start a new Claude Code session in this project',
+	'claude-desktop': 'restart Claude Desktop',
+	codex: 'restart the Codex app',
 	opencode: 'reload OpenCode or restart the app',
 	pi: 'start a new Pi session in this project',
 };
@@ -144,6 +150,13 @@ function skillTargetDir(harness: Harness, projectRoot: string): string {
 		case 'pi': {
 			return path.join(projectRoot, '.agents', 'skills', 'pk');
 		}
+
+		// Desktop harnesses configure a global MCP server entry; they have no
+		// project-local skill directory convention.
+		case 'claude-desktop':
+		case 'codex': {
+			return '';
+		}
 	}
 }
 
@@ -189,6 +202,16 @@ async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void
 
 		case 'pi': {
 			await writePiPlugin(projectRoot);
+			break;
+		}
+
+		case 'claude-desktop': {
+			await writeClaudeDesktopConfig(ctx);
+			break;
+		}
+
+		case 'codex': {
+			await writeCodexConfig(ctx);
 			break;
 		}
 	}

@@ -8,7 +8,7 @@ export function registerRebuild(program: Command): void {
 	program
 		.command('index')
 		.description('Rebuild FTS5 search index and markdown index files')
-		.action(runDir(async dir => {
+		.action(runDir('rebuild', async dir => {
 			const config = await loadConfig();
 			let provider;
 			try {

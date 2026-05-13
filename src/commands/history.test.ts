@@ -1,10 +1,10 @@
 import {mkdirSync, rmSync} from 'node:fs';
 import path from 'node:path';
 import {tmpdir} from 'node:os';
-import {Command} from 'commander';
 import {
 	describe, test, expect, beforeEach, afterEach,
 } from 'bun:test';
+import {Command} from 'commander';
 import {registerHistory} from './history.ts';
 
 describe('history command', () => {

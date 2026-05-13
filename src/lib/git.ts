@@ -53,7 +53,7 @@ export async function initRepo(knowledgeDir: string): Promise<void> {
 
 	// Initial commit
 	await $`git -C ${knowledgeDir} add .`.quiet();
-	const commitResult = await $`git -C ${knowledgeDir} commit -m "pk: initialize knowledge base"`.quiet();
+	const commitResult = await $`git -C ${knowledgeDir} -c commit.gpgsign=false commit -m "pk: initialize knowledge base"`.quiet();
 	if (commitResult.exitCode !== 0) {
 		throw new Error(`Git commit failed: ${commitResult.stderr.toString()}`);
 	}
@@ -78,15 +78,16 @@ export async function commitKnowledgeFile(
 
 	try {
 		await $`git -C ${knowledgeDir} add ${filePath}`.quiet();
-		await $`git -C ${knowledgeDir} commit -m ${message}`.quiet();
+		// -c commit.gpgsign=false: prevents gpg-agent passphrase prompts hanging
+		// in non-TTY contexts (MCP server, CI). The repo-level setting from
+		// initRepo covers new repos; this covers pre-existing repos with global
+		// commit.gpgsign=true.
+		await $`git -C ${knowledgeDir} -c commit.gpgsign=false commit -m ${message}`.quiet();
 	} catch (error) {
 		console.warn(`[pk] Git commit failed: ${String(error)}`);
 	}
 }
 
-/**
- * Commit the deletion of a knowledge file.
- */
 /**
  * Commit generated index files after a rebuild.
  * Silent no-op when nothing changed.
@@ -95,7 +96,7 @@ export async function commitIndexRebuild(knowledgeDir: string): Promise<void> {
 	const indexDir = path.join(knowledgeDir, 'indexes');
 	try {
 		await $`git -C ${knowledgeDir} add ${indexDir}`.quiet();
-		const result = await $`git -C ${knowledgeDir} commit -m "knowledge: rebuild indexes"`.quiet();
+		const result = await $`git -C ${knowledgeDir} -c commit.gpgsign=false commit -m "knowledge: rebuild indexes"`.quiet();
 		if (result.exitCode !== 0) {
 			const out = result.stdout.toString() + result.stderr.toString();
 			if (!out.includes('nothing to commit')) {
@@ -117,7 +118,7 @@ export async function commitDelete(
 
 	try {
 		await $`git -C ${knowledgeDir} add ${notePath}`.quiet();
-		await $`git -C ${knowledgeDir} commit -m ${message}`.quiet();
+		await $`git -C ${knowledgeDir} -c commit.gpgsign=false commit -m ${message}`.quiet();
 	} catch (error) {
 		console.warn(`[pk] Git commit failed: ${String(error)}`);
 	}

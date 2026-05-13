@@ -24,6 +24,11 @@ function dbPath(knowledgeDir: string): string {
 
 function openDb(knowledgeDir: string): Database {
 	const db = new Database(dbPath(knowledgeDir));
+	// WAL allows concurrent readers alongside a writer (important when multiple
+	// MCP sessions share the same knowledge dir). busy_timeout retries for 5s
+	// instead of failing immediately with SQLITE_BUSY.
+	db.run('PRAGMA journal_mode = WAL');
+	db.run('PRAGMA busy_timeout = 5000');
 	db.run(`CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(
     id,
     path     UNINDEXED,

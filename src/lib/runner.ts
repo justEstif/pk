@@ -1,4 +1,5 @@
 import {requireKnowledgeDir} from './paths.ts';
+import {logOp} from './log.ts';
 import type {Issue} from './lint.ts';
 import type {HistoryEntry} from './git.ts';
 
@@ -9,11 +10,18 @@ export function writeJson(data: unknown): void {
 
 /**
  * Wrap a Commander action that needs the knowledge directory.
- * Resolves the directory, catches errors, and exits with code 1 on failure.
- * The callback receives (knowledgeDir, ...commanderArgs).
+ * Resolves the directory, catches errors, exits with code 1 on failure,
+ * and emits a wide-event log line on completion.
+ *
+ * @param op  Command name used as the log event's `op` field (e.g. 'search')
+ * @param fn  Action callback receiving (knowledgeDir, ...commanderArgs)
  */
-export function runDir<TArgs extends unknown[]>(fn: (dir: string, ...args: TArgs) => Promise<void> | void): (...args: TArgs) => Promise<void> {
+export function runDir<TArgs extends unknown[]>(
+	op: string,
+	fn: (dir: string, ...args: TArgs) => Promise<void> | void,
+): (...args: TArgs) => Promise<void> {
 	return async (...args: TArgs) => {
+		const start = Date.now();
 		let dir: string;
 		try {
 			dir = requireKnowledgeDir();
@@ -24,7 +32,9 @@ export function runDir<TArgs extends unknown[]>(fn: (dir: string, ...args: TArgs
 
 		try {
 			await fn(dir, ...args);
+			logOp('cli', op, dir, start);
 		} catch (error) {
+			logOp('cli', op, dir, start, error);
 			console.error(String(error));
 			process.exit(1);
 		}

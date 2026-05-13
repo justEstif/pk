@@ -1,8 +1,5 @@
-import path from 'node:path';
-import {existsSync} from 'node:fs';
-import {$} from 'bun';
 import type {Command} from 'commander';
-import {commitDelete} from '../lib/git.ts';
+import {deleteKnowledgeNote} from '../lib/operations.ts';
 import {runDir, writeJson} from '../lib/runner.ts';
 
 export function registerDelete(program: Command): void {
@@ -12,21 +9,17 @@ export function registerDelete(program: Command): void {
 		.argument('<path>', 'Path to the note file')
 		.option('-y, --yes', 'Skip confirmation prompt')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir(async (dir, notePath: string, options: {yes?: boolean; pretty?: boolean}) => {
-			const fullPath = resolveFullPath(notePath, dir);
-
-			if (!checkFileExists(fullPath)) {
-				throw new Error(`Note not found: ${fullPath}`);
+		.action(runDir('delete', async (dir, notePath: string, options: {yes?: boolean; pretty?: boolean}) => {
+			// JSON/machine mode skips confirmation always; --pretty mode respects --yes flag.
+			if (options.pretty && !options.yes) {
+				const confirmed = await confirmDeletion(notePath);
+				if (!confirmed) {
+					console.log('Aborted.');
+					process.exit(0);
+				}
 			}
 
-			// Default (JSON/machine mode) skips confirmation; --pretty restores the prompt
-			if (!(await confirmDeletion(fullPath, options.pretty ? options.yes : true))) {
-				console.log('Aborted.');
-				process.exit(0);
-			}
-
-			await $`rm ${fullPath}`;
-			await commitDelete(dir, fullPath);
+			const fullPath = await deleteKnowledgeNote(dir, notePath);
 
 			if (options.pretty) {
 				console.log(`Deleted: ${fullPath}`);
@@ -36,51 +29,25 @@ export function registerDelete(program: Command): void {
 		}));
 }
 
-function resolveFullPath(notePath: string, knowledgeDir: string): string {
-	return notePath.startsWith('/') ? notePath : path.join(knowledgeDir, notePath);
-}
-
-function checkFileExists(fullPath: string): boolean {
-	return existsSync(fullPath);
-}
-
-async function confirmDeletion(fullPath: string, skipConfirm: boolean | undefined): Promise<boolean> {
-	if (skipConfirm) {
-		return true;
-	}
-
-	console.log(`Deleting: ${fullPath}`);
+async function confirmDeletion(notePath: string): Promise<boolean> {
+	console.log(`Deleting: ${notePath}`);
 	console.log('This action cannot be undone (but you can recover from git).');
-	const confirm = await prompt('Delete this note? (y/N): ');
-	return confirm.toLowerCase() === 'y';
-}
-
-async function prompt(question: string): Promise<string> {
-	// Simple readline prompt
-	process.stdout.write(question);
+	process.stdout.write('Delete this note? (y/N): ');
 	const chunks: Uint8Array[] = [];
-
 	for await (const chunk of process.stdin as unknown as AsyncIterable<Uint8Array>) {
 		chunks.push(chunk);
-		const str = new TextDecoder().decode(chunk);
-		if (str.includes('\n')) {
+		if (new TextDecoder().decode(chunk).includes('\n')) {
 			break;
 		}
 	}
 
-	const combined = concatenateChunks(chunks);
-	return new TextDecoder().decode(combined).trim();
-}
-
-function concatenateChunks(chunks: Uint8Array[]): Uint8Array {
-	const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-	const combined = new Uint8Array(totalLength);
-	let offset = 0;
-
-	for (const chunk of chunks) {
-		combined.set(chunk, offset);
-		offset += chunk.length;
+	const total = chunks.reduce((s, c) => s + c.byteLength, 0);
+	const buf = new Uint8Array(total);
+	let off = 0;
+	for (const c of chunks) {
+		buf.set(c, off);
+		off += c.byteLength;
 	}
 
-	return combined;
+	return new TextDecoder().decode(buf).trim().toLowerCase() === 'y';
 }

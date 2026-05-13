@@ -24,7 +24,7 @@ export function registerSearch(program: Command): void {
 		.option('--limit <n>', 'Max results', '10')
 		.option('--context', 'Include full note body in output')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir(async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; pretty?: boolean; context: boolean}) => {
+		.action(runDir('search', async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; pretty?: boolean; context: boolean}) => {
 			const limit = Number.parseInt(opts.limit, 10);
 			const provider = await resolveProvider();
 			let execution: SearchExecutionResult;

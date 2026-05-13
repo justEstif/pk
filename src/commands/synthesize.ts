@@ -14,7 +14,7 @@ export function registerSynthesize(program: Command): void {
 		.option('--limit <n>', 'Max notes', '10')
 		.option('--session-start', 'Open questions + recent decisions + active notes')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir(async (dir, query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string; pretty?: boolean}) => {
+		.action(runDir('synthesize', async (dir, query: string | undefined, opts: {sessionStart: boolean; all: boolean; type: string; tag: string; limit: string; pretty?: boolean}) => {
 			const notes = await selectNotes(dir, query, {
 				all: opts.all,
 				limit: Number.parseInt(opts.limit, 10),

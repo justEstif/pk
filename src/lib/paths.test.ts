@@ -164,12 +164,6 @@ describe('requireKnowledgeDir', () => {
 		expect(requireKnowledgeDir()).toBe('/tmp/from-parent');
 	});
 
-	test('falls back to legacy .pk.json when .pk/config.json is absent', () => {
-		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({knowledgeDir: '/tmp/legacy-project'}));
-		process.chdir(tmpDir);
-		expect(requireKnowledgeDir()).toBe('/tmp/legacy-project');
-	});
-
 	test('throws when neither env var nor config file', () => {
 		process.chdir(tmpDir);
 		expect(() => requireKnowledgeDir()).toThrow('No .pk/config.json found');

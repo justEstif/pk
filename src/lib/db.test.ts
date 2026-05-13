@@ -444,3 +444,23 @@ describe('upsertVector', () => {
 		expect(results[0]!.score).toBeCloseTo(1); // Identical vectors → score ≈ 1
 	});
 });
+
+describe('openDb pragmas', () => {
+	test('WAL journal mode is set on the database', async () => {
+		const walDir = path.join(os.tmpdir(), `pk-wal-test-${Date.now()}`);
+		try {
+			for (const sub of ['notes', 'decisions', 'questions', 'sources', 'indexes']) {
+				mkdirSync(path.join(walDir, sub), {recursive: true});
+			}
+
+			await rebuild(walDir);
+			const {Database} = await import('bun:sqlite');
+			const db = new Database(path.join(walDir, '.index.db'));
+			const row = db.query<{journal_mode: string}, never[]>('PRAGMA journal_mode').get();
+			db.close();
+			expect(row?.journal_mode).toBe('wal');
+		} finally {
+			rmSync(walDir, {recursive: true, force: true});
+		}
+	});
+});

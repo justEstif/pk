@@ -23,7 +23,8 @@
 			children: [
 				{ href: `${base}/docs/reference/cli`, label: 'CLI' },
 				{ href: `${base}/docs/reference/config`, label: 'Config' },
-				{ href: `${base}/docs/reference/embeddings`, label: 'Embeddings' }
+				{ href: `${base}/docs/reference/embeddings`, label: 'Embeddings' },
+				{ href: `${base}/docs/reference/mcp`, label: 'MCP' }
 			]
 		}
 	];

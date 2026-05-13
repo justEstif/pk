@@ -1,6 +1,6 @@
 import path from 'node:path';
 import type {Command} from 'commander';
-import {commitKnowledgeFile} from '../lib/git.ts';
+import {updateKnowledgeNote} from '../lib/operations.ts';
 import {runDir, writeJson} from '../lib/runner.ts';
 
 async function readStdin(): Promise<string> {
@@ -25,22 +25,10 @@ export function registerWrite(program: Command): void {
 		.command('write <path>')
 		.description('Write content to an existing knowledge note and commit the update')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir(async (dir, notePath: string, opts: {pretty?: boolean}) => {
+		.action(runDir('write', async (dir, notePath: string, opts: {pretty?: boolean}) => {
 			const fullPath = notePath.startsWith('/') ? notePath : path.join(dir, notePath);
-
-			const file = Bun.file(fullPath);
-			if (!(await file.exists())) {
-				throw new Error(`Note not found: ${fullPath}. Use 'pk new' to create.`);
-			}
-
-			const sep = dir.endsWith(path.sep) ? dir : dir + path.sep;
-			if (!fullPath.startsWith(sep)) {
-				throw new Error(`Path must be within knowledge directory: ${dir}`);
-			}
-
 			const content = await readStdin();
-			await Bun.write(fullPath, content);
-			await commitKnowledgeFile(fullPath, 'update');
+			await updateKnowledgeNote(dir, fullPath, content);
 
 			if (opts.pretty) {
 				console.log(`Updated: ${fullPath}`);
