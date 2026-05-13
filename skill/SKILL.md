@@ -139,7 +139,7 @@ pk index
 
 Run after creating or editing notes. Rebuilds `~/.pk/<name>/.index.db` and `~/.pk/<name>/indexes/`. If embeddings are configured (`pk config --embedding <model>`), also generates vectors for semantic search.
 
-### `pk config` — show or update configuration
+### `pk config` — show or update global configuration
 
 ```bash
 pk config                                    # show current config
@@ -148,7 +148,7 @@ pk config --no-embedding                     # disable embeddings
 pk config --base-url http://my-ollama:11434  # custom Ollama endpoint
 ```
 
-Config lives at `~/.pk/config.json`.
+Manages global settings at `~/.pk/config.json` (embeddings, base URL). Separate from `.pk.json` in the project root, which records which knowledge directory this project uses and is written by `pk init`.
 
 ### Status transitions
 
