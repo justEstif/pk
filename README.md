@@ -44,9 +44,11 @@ Non-interactive:
 pk init --harness claude                        # local: knowledge in .pk/ (default)
 pk init my-project --harness claude --global   # global: knowledge in ~/.pk/my-project/
 pk init my-project --harness claude,opencode --global   # multiple harnesses
+pk init my-project --harness claude-desktop --global   # Claude Desktop app
+pk init my-project --harness codex --global            # Codex desktop app
 ```
 
-Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi).
+Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi), `claude-desktop` (Claude Desktop), `codex` (Codex Desktop).
 
 `pk init` does five things:
 
@@ -56,11 +58,15 @@ Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi).
 4. Installs a hook or plugin that calls `pk prime` to inject context at session start
 5. Installs the pk skill so your agent knows how to use the CLI
 
-| Harness    | Files written                                             |
-| ---------- | --------------------------------------------------------- |
-| `claude`   | `.claude/hooks/pk-eval.ts`, `.claude/settings.json`       |
-| `opencode` | `.opencode/plugins/pk-eval.ts`                            |
-| `pi`       | `.pi/extensions/pk-eval.ts`                               |
+| Harness           | Files written                                                                  |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `claude`          | `.claude/hooks/pk-eval.ts`, `.claude/settings.json`                            |
+| `opencode`        | `.opencode/plugins/pk-eval.ts`                                                 |
+| `pi`              | `.pi/extensions/pk-eval.ts`                                                    |
+| `claude-desktop`  | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)      |
+| `codex`           | `~/.codex/config.toml`                                                         |
+
+> **Desktop harnesses** (`claude-desktop`, `codex`) configure an MCP server entry in the app's config rather than installing a hook. They require `--global` since desktop apps don't run inside a project folder. Restart the app after `pk init`.
 
 > **Override:** `PK_KNOWLEDGE_DIR` env var takes precedence over `.pk/config.json` if you need to point at a different project temporarily.
 
@@ -80,6 +86,7 @@ pk vocab
 pk index                               # rebuild FTS5 + markdown indexes
 pk lint [paths...]
 pk prime                               # output priming context for hooks
+pk mcp                                 # start MCP server (used by Desktop harnesses)
 pk instructions <command>
 pk config [--embedding <model>] [--no-embedding] [--base-url <url>]
 ```
