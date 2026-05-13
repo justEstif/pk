@@ -12,7 +12,7 @@ export function registerHistory(program: Command): void {
 		.option('--filter-tag <tag>', 'Filter by tag')
 		.option('--filter-operation <operation>', 'Filter by operation: create, update, delete')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir(async (dir, options: {
+		.action(runDir('history', async (dir, options: {
 			limit: string;
 			type: string;
 			filterType?: string;

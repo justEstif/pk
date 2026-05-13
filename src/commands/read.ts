@@ -7,7 +7,7 @@ export function registerRead(program: Command): void {
 		.command('read <path>')
 		.description('Read the full content of a knowledge note')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir(async (dir, notePath: string, opts: {pretty?: boolean}) => {
+		.action(runDir('read', async (dir, notePath: string, opts: {pretty?: boolean}) => {
 			const fullPath = notePath.startsWith('/') ? notePath : path.join(dir, notePath);
 
 			if (!fullPath.startsWith(dir)) {

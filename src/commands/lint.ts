@@ -7,7 +7,7 @@ export function registerLint(program: Command): void {
 		.command('lint [paths...]')
 		.description('Validate knowledge notes structure and frontmatter')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir(async (dir, paths: string[] | undefined, opts: {pretty?: boolean}) => {
+		.action(runDir('lint', async (dir, paths: string[] | undefined, opts: {pretty?: boolean}) => {
 			const resolved = paths?.length
 				? paths.map(p => p.startsWith('/') ? p : `${dir}/${p}`)
 				: undefined;
