@@ -104,7 +104,7 @@ export function registerInit(program: Command): void {
 								return 'Name is required';
 							}
 
-							if (!/^[\w.-]+$/v.test(v)) {
+							if (!/^[\w.\-]+$/v.test(v)) {
 								return 'Use letters, numbers, hyphens, dots only';
 							}
 						},

@@ -5,11 +5,7 @@ export function pkInstruction(knowledgeDir: string): string {
 Use the pk skill and its CLI commands to manage project knowledge for this project. \
 Run \`pk synthesize --session-start\` at the start of every session.
 
-Knowledge directory: \`${knowledgeDir}\`
-
-\`\`\`bash
-export PK_KNOWLEDGE_DIR="${knowledgeDir}"
-\`\`\``;
+Knowledge directory: \`${knowledgeDir}\``;
 }
 
 export const FORCED_EVAL_PROMPT = 'SKILL EVALUATION REQUIRED: Before responding, explicitly decide YES or NO'

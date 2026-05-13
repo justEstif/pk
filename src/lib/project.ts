@@ -94,6 +94,10 @@ export async function initializeProject(options: InitializeProjectOptions): Prom
 	const {created, knowledgeDir} = await ensureProject(options.name);
 	await ensureGitRepo(created, knowledgeDir);
 
+	// Write .pk.json to project root so pk commands can find knowledgeDir without env vars
+	const pkConfigPath = path.join(options.projectRoot, '.pk.json');
+	await Bun.write(pkConfigPath, JSON.stringify({knowledgeDir}, null, 2) + '\n');
+
 	const ctx = {
 		home: options.home ?? os.homedir(),
 		knowledgeDir,
@@ -153,20 +157,20 @@ export function installSkill(harness: Harness, projectRoot: string): string {
 export type HarnessContext = {name: string; knowledgeDir: string; projectRoot: string; home: string};
 
 async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void> {
-	const {knowledgeDir, projectRoot} = ctx;
+	const {projectRoot} = ctx;
 	switch (harness) {
 		case 'claude': {
-			await writeClaudeHook(projectRoot, knowledgeDir);
+			await writeClaudeHook(projectRoot);
 			break;
 		}
 
 		case 'opencode': {
-			await writeOpenCodePlugin(projectRoot, knowledgeDir);
+			await writeOpenCodePlugin(projectRoot);
 			break;
 		}
 
 		case 'pi': {
-			await writePiPlugin(projectRoot, knowledgeDir);
+			await writePiPlugin(projectRoot);
 			break;
 		}
 	}

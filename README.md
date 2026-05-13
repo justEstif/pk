@@ -50,14 +50,19 @@ Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi).
 `pk init` does three things:
 
 1. Creates `~/.pk/<name>/` as the knowledge home for this project
-2. Installs a hook or plugin that injects `PK_KNOWLEDGE_DIR` into the shell and calls `pk prime` for context
-3. Installs the pk skill so your agent knows how to use the CLI
+2. Writes `.pk.json` in your project root — pk commands find the knowledge directory by walking up from CWD, so no environment variables needed
+3. Installs a hook or plugin that calls `pk prime` to inject context at session start
+4. Installs the pk skill so your agent knows how to use the CLI
 
-| Harness    | Files written                                                              | Env injection                        |
-| ---------- | -------------------------------------------------------------------------- | ------------------------------------ |
-| `claude`   | `.claude/hooks/pk-session-start.sh`, `pk-eval.ts`, `.claude/settings.json`| `SessionStart` → `$CLAUDE_ENV_FILE`  |
-| `opencode` | `.opencode/plugins/pk-eval.ts`                                             | `shell.env` plugin hook              |
-| `pi`       | `.pi/extensions/pk-eval.ts`                                                | `tool_call` mutation                 |
+| Harness    | Files written                                             |
+| ---------- | --------------------------------------------------------- |
+| `claude`   | `.claude/hooks/pk-eval.ts`, `.claude/settings.json`       |
+| `opencode` | `.opencode/plugins/pk-eval.ts`                            |
+| `pi`       | `.pi/extensions/pk-eval.ts`                               |
+
+`.pk.json` contains the path to your knowledge directory and should be added to `.gitignore` — it holds machine-local absolute paths.
+
+> **Override:** `PK_KNOWLEDGE_DIR` env var takes precedence over `.pk.json` if you need to point at a different project temporarily.
 
 ## Commands
 
