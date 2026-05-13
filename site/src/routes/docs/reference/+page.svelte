@@ -55,27 +55,28 @@
 			store answers <em>"when did we make that call, and what happened right before it?"</em>
 		</p>
 
-		<p>Knowledge files live in <code>~/.pk/</code>. Your project root gets a <code>.pk.json</code> that points to it.</p>
+		<p>Knowledge lives in <code>.pk/</code> — local by default, or in <code>~/.pk/&lt;name&gt;/</code> with <code>--global</code>. <code>.pk/config.json</code> records which store the project uses.</p>
 		<div class="not-prose grid gap-3 sm:grid-cols-2">
 			<div class="overflow-hidden rounded-xl" style="background:#1C1917">
-				<div class="px-4 py-2 font-mono text-xs" style="color:#57534E;border-bottom:1px solid #292524">knowledge store</div>
+				<div class="px-4 py-2 font-mono text-xs" style="color:#57534E;border-bottom:1px solid #292524">local (default)</div>
 				<div class="px-5 py-4 font-mono text-sm leading-loose" style="color:#A8A29E">
-					<div style="color:#57534E">~/.pk/</div>
-					<div>&nbsp;&nbsp;<span style="color:#57534E">your-project/</span></div>
-					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>notes/</span></div>
-					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>decisions/</span></div>
-					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>questions/</span></div>
-					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>sources/</span></div>
-					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C">.index.db 	← search index</span></div>
-					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C">.git/ 		← event log</span></div>
+					<div style="color:#57534E">your-project/</div>
+					<div>&nbsp;&nbsp;<span style="color:#57534E">.pk/</span></div>
+					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>notes/ decisions/ ...</span></div>
+					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C">.index.db &nbsp;← search index</span></div>
+					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C">.git/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← event log</span></div>
+					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>config.json</span>&nbsp;<span style="color:#44403C">← pk config</span></div>
 				</div>
 			</div>
 			<div class="overflow-hidden rounded-xl" style="background:#1C1917">
-				<div class="px-4 py-2 font-mono text-xs" style="color:#57534E;border-bottom:1px solid #292524">project root</div>
+				<div class="px-4 py-2 font-mono text-xs" style="color:#57534E;border-bottom:1px solid #292524">global (--global)</div>
 				<div class="px-5 py-4 font-mono text-sm leading-loose" style="color:#A8A29E">
-					<div style="color:#57534E">your-project/</div>
-					<div>&nbsp;&nbsp;<span>.pk.json</span>&nbsp;&nbsp;&nbsp;<span style="color:#44403C">	← points to knowledge store</span></div>
-					<div>&nbsp;&nbsp;<span style="color:#44403C">.gitignore 	← add .pk.json here</span></div>
+					<div style="color:#57534E">~/.pk/</div>
+					<div>&nbsp;&nbsp;<span style="color:#57534E">your-project/</span></div>
+					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>notes/ decisions/ ...</span></div>
+					<div style="margin-top:0.5rem;color:#57534E">your-project/</div>
+					<div>&nbsp;&nbsp;<span style="color:#57534E">.pk/</span></div>
+					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>config.json</span>&nbsp;<span style="color:#44403C">← points to ~/.pk/...</span></div>
 				</div>
 			</div>
 		</div>
@@ -93,7 +94,7 @@
 				{
 					href: `${base}/docs/reference/config`,
 					label: 'Config',
-					desc: 'Project config (.pk.json) and global settings (~/.pk/config.json).'
+					desc: 'Project config (.pk/config.json) and global settings (~/.pk/config.json).'
 				},
 				{
 					href: `${base}/docs/reference/embeddings`,

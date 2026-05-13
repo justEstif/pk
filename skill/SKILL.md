@@ -148,7 +148,7 @@ pk config --no-embedding                     # disable embeddings
 pk config --base-url http://my-ollama:11434  # custom Ollama endpoint
 ```
 
-Manages global settings at `~/.pk/config.json` (embeddings, base URL). Separate from `.pk.json` in the project root, which records which knowledge directory this project uses and is written by `pk init`.
+Manages global settings at `~/.pk/config.json` (embeddings, base URL). Separate from `.pk/config.json` in the project root, which records which knowledge directory this project uses and is written by `pk init`.
 
 ### Status transitions
 

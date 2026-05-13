@@ -27,7 +27,7 @@
 					</tr>
 				</thead>
 				<tbody class="text-base-content/70">
-					<tr><td>pk init</td><td>Create or connect a knowledge project, write .pk.json, and wire a harness.</td></tr>
+					<tr><td>pk init</td><td>Create a knowledge project (local by default, --global for ~/.pk/), wire a harness.</td></tr>
 					<tr><td>pk prime</td><td>Print session-start context for an agent.</td></tr>
 					<tr><td>pk search</td><td>Find notes by keyword or meaning.</td></tr>
 					<tr><td>pk new</td><td>Create a note, decision, question, or source.</td></tr>
@@ -110,9 +110,9 @@
 			<CodeBlock
 				label="pk init"
 				lines={[
-					'pk init',
-					'pk init my-project --harness claude',
-					'pk init my-project --harness claude,opencode'
+					'pk init --harness claude',
+					'pk init my-project --harness claude --global',
+					'pk init my-project --harness claude,opencode --global'
 				]}
 			/>
 		</div>
@@ -121,9 +121,9 @@
 			flags, pk runs interactively.
 		</p>
 		<p>
-			Writes <code>.pk.json</code> to the current directory. pk commands find the knowledge
-			directory by walking up from CWD — no environment variable setup needed.
-			Add <code>.pk.json</code> to <code>.gitignore</code>.
+			Default: knowledge store in <code>.pk/</code> (local). Use <code>--global</code> to store in
+			<code>~/.pk/&lt;name&gt;/</code> instead. Either way, <code>.pk/config.json</code> is written
+			to the project root and <code>.pk/</code> is added to <code>.gitignore</code> automatically.
 		</p>
 	</div>
 
