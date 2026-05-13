@@ -71,15 +71,18 @@ describe('findPkProjectConfig', () => {
 		rmSync(tmpDir, {recursive: true, force: true});
 	});
 
-	test('finds .pk.json in the start directory', () => {
-		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({knowledgeDir: '/tmp/proj'}));
+	test('finds .pk/config.json in the start directory', () => {
+		mkdirSync(path.join(tmpDir, '.pk'));
+		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), JSON.stringify({knowledgeDir: '/tmp/proj', mode: 'global'}));
 		const result = findPkProjectConfig(tmpDir);
 		expect(result?.config.knowledgeDir).toBe('/tmp/proj');
+		expect(result?.config.mode).toBe('global');
 		expect(result?.configDir).toBe(tmpDir);
 	});
 
-	test('finds .pk.json in a parent directory', () => {
-		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({knowledgeDir: '/tmp/proj'}));
+	test('finds .pk/config.json in a parent directory', () => {
+		mkdirSync(path.join(tmpDir, '.pk'));
+		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), JSON.stringify({knowledgeDir: '/tmp/proj', mode: 'global'}));
 		const child = path.join(tmpDir, 'src', 'lib');
 		mkdirSync(child, {recursive: true});
 		const result = findPkProjectConfig(child);
@@ -87,17 +90,13 @@ describe('findPkProjectConfig', () => {
 		expect(result?.configDir).toBe(tmpDir);
 	});
 
-	test('returns null when no .pk.json exists anywhere', () => {
-		// Use a deep path inside tmpDir with no .pk.json
-		const deep = path.join(tmpDir, 'a', 'b', 'c');
-		mkdirSync(deep, {recursive: true});
-		// Walk will eventually reach tmpDir, then os.tmpdir(), etc — none have .pk.json
-		// We can't guarantee the real fs has no .pk.json above tmpdir, so test from tmpDir itself
+	test('returns null when no .pk/config.json exists', () => {
 		expect(findPkProjectConfig(tmpDir)).toBeNull();
 	});
 
-	test('returns null for malformed .pk.json', () => {
-		writeFileSync(path.join(tmpDir, '.pk.json'), 'not valid json{{{');
+	test('returns null for malformed config', () => {
+		mkdirSync(path.join(tmpDir, '.pk'));
+		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), 'not valid json{{{');
 		expect(findPkProjectConfig(tmpDir)).toBeNull();
 	});
 });
@@ -130,36 +129,33 @@ describe('requireKnowledgeDir', () => {
 		expect(requireKnowledgeDir()).toBe('/tmp/myproject');
 	});
 
-	test('env var takes priority over .pk.json', () => {
-		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({knowledgeDir: '/tmp/from-file'}));
+	test('env var takes priority over .pk/config.json', () => {
+		mkdirSync(path.join(tmpDir, '.pk'));
+		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), JSON.stringify({knowledgeDir: '/tmp/from-file', mode: 'global'}));
 		process.chdir(tmpDir);
 		process.env.PK_KNOWLEDGE_DIR = '/tmp/from-env';
 		expect(requireKnowledgeDir()).toBe('/tmp/from-env');
 	});
 
-	test('reads knowledgeDir from .pk.json in CWD', () => {
-		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({knowledgeDir: '/tmp/from-file'}));
+	test('reads knowledgeDir from .pk/config.json in CWD', () => {
+		mkdirSync(path.join(tmpDir, '.pk'));
+		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), JSON.stringify({knowledgeDir: '/tmp/from-file', mode: 'local'}));
 		process.chdir(tmpDir);
 		expect(requireKnowledgeDir()).toBe('/tmp/from-file');
 	});
 
-	test('reads .pk.json from parent of CWD', () => {
-		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({knowledgeDir: '/tmp/from-parent'}));
+	test('reads .pk/config.json from parent of CWD', () => {
+		mkdirSync(path.join(tmpDir, '.pk'));
+		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), JSON.stringify({knowledgeDir: '/tmp/from-parent', mode: 'global'}));
 		const sub = path.join(tmpDir, 'src');
 		mkdirSync(sub);
 		process.chdir(sub);
 		expect(requireKnowledgeDir()).toBe('/tmp/from-parent');
 	});
 
-	test('throws when .pk.json exists without knowledgeDir', () => {
-		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({}));
+	test('throws when neither env var nor config file', () => {
 		process.chdir(tmpDir);
-		expect(() => requireKnowledgeDir()).toThrow('.pk.json is missing "knowledgeDir"');
-	});
-
-	test('throws when neither env var nor .pk.json', () => {
-		process.chdir(tmpDir);
-		expect(() => requireKnowledgeDir()).toThrow('No .pk.json found');
+		expect(() => requireKnowledgeDir()).toThrow('No .pk/config.json found');
 	});
 });
 

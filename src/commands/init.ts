@@ -11,10 +11,6 @@ import {
 	parseHarnesses,
 } from '../lib/project.ts';
 
-/**
- * Check that git is available on PATH.
- * Exits with error if not found.
- */
 async function requireGit(): Promise<void> {
 	try {
 		await $`git --version`.quiet();
@@ -39,12 +35,13 @@ export function registerInit(program: Command): void {
 			'--harness <harnesses>',
 			`Comma-separated harnesses: ${HARNESSES.map(h => h.value).join(', ')}`,
 		)
-		.action(async (nameArg: string | undefined, opts: {harness?: string}) => {
+		.option('--global', 'Store knowledge in ~/.pk/<name>/ instead of ./.pk/')
+		.action(async (nameArg: string | undefined, opts: {harness?: string; global?: boolean}) => {
 			await requireGit();
 
 			const projectRoot = process.cwd();
 			const home = os.homedir();
-			const existing = listExistingProjects();
+			const isGlobal = opts.global ?? false;
 
 			// ── Validate harness flag early if provided ───────────────────────
 			let flagHarnesses: Harness[] | undefined;
@@ -58,10 +55,14 @@ export function registerInit(program: Command): void {
 				flagHarnesses = result;
 			}
 
-			// ── Non-interactive path: both args supplied ───────────────────────
-			if (nameArg && flagHarnesses) {
+			// ── Non-interactive path ──────────────────────────────────────────
+			// Global requires explicit name; local uses dirname
+			const impliedName = path.basename(projectRoot);
+
+			if (isGlobal && nameArg && flagHarnesses) {
 				try {
 					const {lines} = await initializeProject({
+						global: true,
 						harnesses: flagHarnesses,
 						home,
 						name: nameArg,
@@ -75,14 +76,34 @@ export function registerInit(program: Command): void {
 				return;
 			}
 
+			if (!isGlobal && flagHarnesses) {
+				try {
+					const {lines} = await initializeProject({
+						global: false,
+						harnesses: flagHarnesses,
+						home,
+						name: nameArg ?? impliedName,
+						projectRoot,
+					});
+					console.log(lines.join('\n'));
+				} catch (error) {
+					failInit(error);
+				}
+
+				return;
+			}
+
 			// ── Interactive path ───────────────────────────────────────────────
 			p.intro('pk init');
 
-			// Step 1: project name
+			// Step 1: name — only needed for global mode
 			let name: string;
-			if (nameArg) {
+			if (!isGlobal) {
+				name = nameArg ?? impliedName;
+			} else if (nameArg) {
 				name = nameArg;
 			} else {
+				const existing = listExistingProjects();
 				const choices: Array<{value: string; label: string; hint?: string}> = [
 					...existing.map(n => ({hint: pkHome() + '/' + n, label: n, value: n})),
 					{label: '+ New project', value: '__new__'},
@@ -98,7 +119,7 @@ export function registerInit(program: Command): void {
 					const typed = await p.text({
 						message: 'Project name',
 						placeholder: 'my-project',
-						initialValue: path.basename(projectRoot),
+						initialValue: impliedName,
 						validate(v) {
 							if (!v?.trim()) {
 								return 'Name is required';
@@ -120,7 +141,7 @@ export function registerInit(program: Command): void {
 				}
 			}
 
-			// Step 2: harnesses (multiselect)
+			// Step 2: harnesses
 			let harnesses: Harness[];
 			if (flagHarnesses) {
 				harnesses = flagHarnesses;
@@ -141,6 +162,7 @@ export function registerInit(program: Command): void {
 			// ── Apply ──────────────────────────────────────────────────────────
 			try {
 				const {lines} = await initializeProject({
+					global: isGlobal,
 					harnesses,
 					home,
 					name,

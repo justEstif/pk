@@ -40,17 +40,20 @@ afterEach(() => {
 // ─── ensureProject ────────────────────────────────────────────────────────────
 
 describe('ensureProject', () => {
-	test('creates project directories and returns created=true', async () => {
-		const {created, knowledgeDir} = await ensureProject('myproject');
+	test('creates project directories at given path and returns created=true', async () => {
+		const kDir = path.join(tmpDir, '.pk');
+		const {created, knowledgeDir} = await ensureProject(kDir);
 		expect(created).toBe(true);
+		expect(knowledgeDir).toBe(kDir);
 		expect(existsSync(knowledgeDir)).toBe(true);
 		expect(existsSync(path.join(knowledgeDir, 'notes'))).toBe(true);
 		expect(existsSync(path.join(knowledgeDir, '.gitignore'))).toBe(true);
 	});
 
 	test('returns created=false when project already exists', async () => {
-		await ensureProject('myproject');
-		const {created} = await ensureProject('myproject');
+		const kDir = path.join(tmpDir, '.pk');
+		await ensureProject(kDir);
+		const {created} = await ensureProject(kDir);
 		expect(created).toBe(false);
 	});
 });
@@ -74,7 +77,7 @@ describe('applyHarnesses', () => {
 	test('applies claude and pi harnesses', async () => {
 		const ctx = {
 			home: fakeHome,
-			knowledgeDir: path.join(fakeHome, '.pk', 'myproject'),
+			knowledgeDir: path.join(tmpDir, '.pk'),
 			name: 'myproject',
 			projectRoot: tmpDir,
 		};
@@ -84,10 +87,10 @@ describe('applyHarnesses', () => {
 	});
 });
 
-// ─── initializeProject ───────────────────────────────────────────────────────
+// ─── initializeProject — local mode (default) ────────────────────────────────
 
-describe('initializeProject', () => {
-	test('creates the project, writes .pk.json, initializes git, applies harnesses, returns output lines', async () => {
+describe('initializeProject (local)', () => {
+	test('creates .pk/ in projectRoot, writes config.json, inits git, wires harness', async () => {
 		const result = await initializeProject({
 			harnesses: ['pi'],
 			home: fakeHome,
@@ -96,40 +99,58 @@ describe('initializeProject', () => {
 		});
 
 		expect(result.created).toBe(true);
+		expect(result.knowledgeDir).toBe(path.join(tmpDir, '.pk'));
 		expect(existsSync(path.join(result.knowledgeDir, '.git'))).toBe(true);
 		expect(existsSync(path.join(tmpDir, '.pi', 'extensions', 'pk-eval.ts'))).toBe(true);
 
-		// .pk.json written to project root, not knowledge dir
-		const pkJson = path.join(tmpDir, '.pk.json');
-		expect(existsSync(pkJson)).toBe(true);
-		const config = JSON.parse(await Bun.file(pkJson).text()) as {knowledgeDir: string};
-		expect(config.knowledgeDir).toBe(result.knowledgeDir);
+		const cfg = JSON.parse(await Bun.file(path.join(tmpDir, '.pk', 'config.json')).text()) as {knowledgeDir: string; mode: string};
+		expect(cfg.knowledgeDir).toBe(result.knowledgeDir);
+		expect(cfg.mode).toBe('local');
 
-		expect(result.lines).toEqual([
-			`Created project: ${result.knowledgeDir}`,
-			'  pi: configured → start a new Pi session in this project',
-		]);
+		expect(result.lines[0]).toContain('Created project');
 	});
 
-	test('overwrites .pk.json on re-init', async () => {
+	test('re-init returns created=false and overwrites config.json', async () => {
 		await initializeProject({
-			harnesses: ['pi'],
-			home: fakeHome,
-			name: 'myproject',
-			projectRoot: tmpDir,
+			harnesses: ['pi'], home: fakeHome, name: 'myproject', projectRoot: tmpDir,
 		});
-
 		const result = await initializeProject({
+			harnesses: ['pi'], home: fakeHome, name: 'myproject', projectRoot: tmpDir,
+		});
+		expect(result.created).toBe(false);
+		const cfg = JSON.parse(await Bun.file(path.join(tmpDir, '.pk', 'config.json')).text()) as {mode: string};
+		expect(cfg.mode).toBe('local');
+		expect(result.lines[0]).toContain('Connected to existing project');
+	});
+
+	test('adds .pk/ to project .gitignore', async () => {
+		await initializeProject({
+			harnesses: [], home: fakeHome, name: 'myproject', projectRoot: tmpDir,
+		});
+		const gi = await Bun.file(path.join(tmpDir, '.gitignore')).text();
+		expect(gi).toContain('.pk/');
+	});
+});
+
+// ─── initializeProject — global mode ─────────────────────────────────────────
+
+describe('initializeProject (global)', () => {
+	test('creates knowledge store at ~/.pk/<name>/, writes config.json with mode=global', async () => {
+		const result = await initializeProject({
+			global: true,
 			harnesses: ['pi'],
 			home: fakeHome,
 			name: 'myproject',
 			projectRoot: tmpDir,
 		});
 
-		expect(result.created).toBe(false);
-		const config = JSON.parse(await Bun.file(path.join(tmpDir, '.pk.json')).text()) as {knowledgeDir: string};
-		expect(config.knowledgeDir).toBe(result.knowledgeDir);
-		expect(result.lines[0]).toBe(`Connected to existing project: ${result.knowledgeDir}`);
+		expect(result.created).toBe(true);
+		expect(result.knowledgeDir).toBe(path.join(fakeHome, '.pk', 'myproject'));
+		expect(existsSync(path.join(result.knowledgeDir, '.git'))).toBe(true);
+
+		const cfg = JSON.parse(await Bun.file(path.join(tmpDir, '.pk', 'config.json')).text()) as {knowledgeDir: string; mode: string};
+		expect(cfg.knowledgeDir).toBe(result.knowledgeDir);
+		expect(cfg.mode).toBe('global');
 	});
 });
 
@@ -143,9 +164,8 @@ describe('writePiPlugin', () => {
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('before_agent_start');
 		expect(plugin).toContain('prime');
-		expect(plugin).toContain('tool_call');
-		expect(plugin).toContain('.pk.json');
-		expect(plugin).toContain('PK_KNOWLEDGE_DIR');
+		expect(plugin).not.toContain('PK_KNOWLEDGE_DIR');
+		expect(plugin).not.toContain('tool_call');
 	});
 });
 
@@ -163,7 +183,6 @@ describe('writeClaudeHook', () => {
 			hooks: Record<string, unknown[]>;
 		};
 		expect(settings.hooks.UserPromptSubmit?.length).toBe(1);
-		// SessionStart no longer registered — pk finds .pk.json itself
 		expect(settings.hooks.SessionStart).toBeUndefined();
 	});
 
@@ -211,9 +230,8 @@ describe('writeOpenCodePlugin', () => {
 		expect(existsSync(pluginPath)).toBe(true);
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('experimental.chat.system.transform');
-		expect(plugin).toContain('shell.env');
 		expect(plugin).toContain('prime');
-		expect(plugin).toContain('.pk.json');
-		expect(plugin).toContain('PK_KNOWLEDGE_DIR');
+		expect(plugin).not.toContain('PK_KNOWLEDGE_DIR');
+		expect(plugin).not.toContain('shell.env');
 	});
 });

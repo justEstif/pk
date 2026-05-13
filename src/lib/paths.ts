@@ -9,29 +9,30 @@ export function pkHome(): string {
 	return path.join(process.env.HOME ?? os.homedir(), '.pk');
 }
 
-/** Returns the directory for a named project: ~/.pk/<name> */
+/** Returns the directory for a named global project: ~/.pk/<name> */
 export function projectDir(name: string): string {
 	return path.join(pkHome(), name);
 }
 
 export type PkProjectConfig = {
-	knowledgeDir?: string;
+	knowledgeDir: string;
+	mode: 'local' | 'global';
 };
 
 /**
- * Walk up from startDir looking for .pk.json.
+ * Walk up from startDir looking for .pk/config.json.
  * Returns the parsed config and the directory it was found in, or null if not found.
  */
 export function findPkProjectConfig(startDir: string): {config: PkProjectConfig; configDir: string} | null {
 	let dir = startDir;
 	while (true) {
-		const candidate = path.join(dir, '.pk.json');
+		const candidate = path.join(dir, '.pk', 'config.json');
 		if (existsSync(candidate)) {
 			try {
 				const config = JSON.parse(readFileSync(candidate, 'utf8')) as PkProjectConfig;
 				return {config, configDir: dir};
 			} catch {
-				// Malformed .pk.json — stop here rather than silently walk further up
+				// Malformed config — stop here rather than silently walk further up
 				return null;
 			}
 		}
@@ -47,7 +48,7 @@ export function findPkProjectConfig(startDir: string): {config: PkProjectConfig;
 
 /**
  * Returns the knowledge directory for the current project.
- * Precedence: PK_KNOWLEDGE_DIR env var > .pk.json found by walking up from CWD.
+ * Precedence: PK_KNOWLEDGE_DIR env var > .pk/config.json found by walking up from CWD.
  */
 export function requireKnowledgeDir(): string {
 	if (process.env.PK_KNOWLEDGE_DIR) {
@@ -55,18 +56,14 @@ export function requireKnowledgeDir(): string {
 	}
 
 	const found = findPkProjectConfig(process.cwd());
-	if (!found) {
-		throw new Error('No .pk.json found. Run: pk init <name> --harness <harness>');
-	}
-
-	if (found.config.knowledgeDir) {
+	if (found?.config.knowledgeDir) {
 		return found.config.knowledgeDir;
 	}
 
-	throw new Error('.pk.json is missing "knowledgeDir". Re-run: pk init <name> --harness <harness>');
+	throw new Error('No .pk/config.json found. Run: pk init --harness <harness>');
 }
 
-/** Returns sorted list of existing project names under ~/.pk/ */
+/** Returns sorted list of existing global project names under ~/.pk/ */
 export function listExistingProjects(): string[] {
 	const home = pkHome();
 	if (!existsSync(home)) {

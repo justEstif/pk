@@ -1,4 +1,6 @@
-import {cpSync, existsSync, mkdirSync} from 'node:fs';
+import {
+	appendFileSync, cpSync, existsSync, mkdirSync, readFileSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {writeClaudeHook} from '../commands/harnesses/claude.ts';
@@ -10,9 +12,9 @@ import {projectDir} from './paths.ts';
 export type Harness = 'claude' | 'opencode' | 'pi';
 
 export const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
-	{hint: 'SessionStart env + UserPromptSubmit context', label: 'Claude Code', value: 'claude'},
-	{hint: 'shell.env + chat.system.transform plugin', label: 'OpenCode', value: 'opencode'},
-	{hint: 'tool_call env + before_agent_start context', label: 'Pi', value: 'pi'},
+	{hint: 'UserPromptSubmit context', label: 'Claude Code', value: 'claude'},
+	{hint: 'chat.system.transform plugin', label: 'OpenCode', value: 'opencode'},
+	{hint: 'before_agent_start context', label: 'Pi', value: 'pi'},
 ];
 
 const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
@@ -25,28 +27,27 @@ const HARNESS_ACTIVATION: Record<Harness, string> = {
 
 // ─── Project creation ─────────────────────────────────────────────────────────
 
-export async function ensureProject(name: string): Promise<{created: boolean; knowledgeDir: string}> {
-	const kDir = projectDir(name);
-	const alreadyExists = existsSync(kDir);
+export async function ensureProject(knowledgeDir: string): Promise<{created: boolean; knowledgeDir: string}> {
+	const alreadyExists = existsSync(knowledgeDir);
 	try {
 		for (const dir of Object.values(TYPE_DIRS)) {
-			mkdirSync(path.join(kDir, dir), {recursive: true});
+			mkdirSync(path.join(knowledgeDir, dir), {recursive: true});
 		}
 
-		const gi = path.join(kDir, '.gitignore');
+		const gi = path.join(knowledgeDir, '.gitignore');
 		if (!existsSync(gi)) {
 			await Bun.write(gi, '.index.db\n');
 		}
 	} catch (error: unknown) {
 		const {code} = (error as NodeJS.ErrnoException);
 		if (code === 'EACCES') {
-			throw new Error(`pk requires write access to ${kDir}. Check directory permissions.`, {cause: error});
+			throw new Error(`pk requires write access to ${knowledgeDir}. Check directory permissions.`, {cause: error});
 		}
 
 		throw error;
 	}
 
-	return {created: !alreadyExists, knowledgeDir: kDir};
+	return {created: !alreadyExists, knowledgeDir};
 }
 
 // ─── Initialization workflow ─────────────────────────────────────────────────
@@ -55,6 +56,7 @@ type InitializeProjectOptions = {
 	name: string;
 	harnesses: Harness[];
 	projectRoot: string;
+	global?: boolean;
 	home?: string;
 };
 
@@ -70,10 +72,6 @@ class GitInitializationError extends Error {
 	}
 }
 
-/**
- * Ensure git repo exists in the knowledge directory.
- * Runs on first creation and on re-init if .git is missing.
- */
 async function ensureGitRepo(created: boolean, knowledgeDir: string): Promise<void> {
 	if (!created && existsSync(path.join(knowledgeDir, '.git'))) {
 		return;
@@ -87,16 +85,37 @@ async function ensureGitRepo(created: boolean, knowledgeDir: string): Promise<vo
 	}
 }
 
-/**
- * Run the shared project initialization workflow and return display lines.
- */
+/** Append entry to projectRoot/.gitignore if not already present. */
+function ensureGitignoreEntry(projectRoot: string, entry: string): void {
+	const giPath = path.join(projectRoot, '.gitignore');
+	try {
+		const content = existsSync(giPath) ? readFileSync(giPath, 'utf8') : '';
+		const lines = content.split('\n');
+		if (!lines.some(l => l.trim() === entry)) {
+			appendFileSync(giPath, content.endsWith('\n') || content === '' ? `${entry}\n` : `\n${entry}\n`);
+		}
+	} catch {/* best-effort */}
+}
+
 export async function initializeProject(options: InitializeProjectOptions): Promise<InitializeProjectResult> {
-	const {created, knowledgeDir} = await ensureProject(options.name);
+	const isGlobal = options.global ?? false;
+	const knowledgeDir = isGlobal
+		? projectDir(options.name)
+		: path.join(options.projectRoot, '.pk');
+
+	const {created} = await ensureProject(knowledgeDir);
 	await ensureGitRepo(created, knowledgeDir);
 
-	// Write .pk.json to project root so pk commands can find knowledgeDir without env vars
-	const pkConfigPath = path.join(options.projectRoot, '.pk.json');
-	await Bun.write(pkConfigPath, JSON.stringify({knowledgeDir}, null, 2) + '\n');
+	// Write .pk/config.json so pk commands can find knowledgeDir without env vars
+	const pkDir = path.join(options.projectRoot, '.pk');
+	mkdirSync(pkDir, {recursive: true});
+	await Bun.write(
+		path.join(pkDir, 'config.json'),
+		JSON.stringify({knowledgeDir, mode: isGlobal ? 'global' : 'local'}, null, 2) + '\n',
+	);
+
+	// Ensure .pk/ is gitignored in the project
+	ensureGitignoreEntry(options.projectRoot, '.pk/');
 
 	const ctx = {
 		home: options.home ?? os.homedir(),
@@ -132,7 +151,6 @@ function skillSourceDir(): string {
 	return path.resolve(import.meta.dir, '..', 'skill');
 }
 
-/** Returns the path installed to, or '' if skipped/unsupported. Idempotent. */
 export function installSkill(harness: Harness, projectRoot: string): string {
 	const target = skillTargetDir(harness, projectRoot);
 	if (!target) {
@@ -176,10 +194,6 @@ async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void
 	}
 }
 
-/**
- * Apply a list of harnesses, installing skill once per unique target dir.
- * Returns the set of skill paths installed.
- */
 export async function applyHarnesses(harnesses: Harness[], ctx: HarnessContext): Promise<string[]> {
 	await Promise.all(harnesses.map(async h => applyHarness(h, ctx)));
 
@@ -198,18 +212,10 @@ export async function applyHarnesses(harnesses: Harness[], ctx: HarnessContext):
 
 // ─── Outro / validation helpers ───────────────────────────────────────────────
 
-/**
- * Build the post-init summary lines shared by interactive and non-interactive paths.
- */
-function buildOutro(
-	created: boolean,
-	knowledgeDir: string,
-	harnesses: Harness[],
-): string[] {
+function buildOutro(created: boolean, knowledgeDir: string, harnesses: Harness[]): string[] {
 	const lines: string[] = [
 		created ? `Created project: ${knowledgeDir}` : `Connected to existing project: ${knowledgeDir}`,
 	];
-
 	for (const h of harnesses) {
 		lines.push(`  ${h}: configured → ${HARNESS_ACTIVATION[h]}`);
 	}
@@ -217,7 +223,6 @@ function buildOutro(
 	return lines;
 }
 
-/** Parse a comma-separated harness string into a validated Harness[]. */
 export function parseHarnesses(raw: string): Harness[] | string {
 	const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
 	const invalid = parts.filter(s => !HARNESS_VALUES.has(s));
