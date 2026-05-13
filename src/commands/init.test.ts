@@ -143,10 +143,9 @@ describe('writePiPlugin', () => {
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('before_agent_start');
 		expect(plugin).toContain('prime');
-		// No longer injects PK_KNOWLEDGE_DIR — pk finds .pk.json itself
-		expect(plugin).not.toContain('PK_KNOWLEDGE_DIR');
-		// No longer needs tool_call env injection
-		expect(plugin).not.toContain('tool_call');
+		expect(plugin).toContain('tool_call');
+		expect(plugin).toContain('.pk.json');
+		expect(plugin).toContain('PK_KNOWLEDGE_DIR');
 	});
 });
 
@@ -212,9 +211,9 @@ describe('writeOpenCodePlugin', () => {
 		expect(existsSync(pluginPath)).toBe(true);
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('experimental.chat.system.transform');
+		expect(plugin).toContain('shell.env');
 		expect(plugin).toContain('prime');
-		// No longer sets PK_KNOWLEDGE_DIR — pk finds .pk.json itself
-		expect(plugin).not.toContain('PK_KNOWLEDGE_DIR');
-		expect(plugin).not.toContain('shell.env');
+		expect(plugin).toContain('.pk.json');
+		expect(plugin).toContain('PK_KNOWLEDGE_DIR');
 	});
 });
