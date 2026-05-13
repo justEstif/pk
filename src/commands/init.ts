@@ -20,6 +20,46 @@ async function requireGit(): Promise<void> {
 	}
 }
 
+/** Interactively prompt for a global project name (select existing or type new). */
+async function promptGlobalName(impliedName: string): Promise<string> {
+	const existing = listExistingProjects();
+	const choices: Array<{value: string; label: string; hint?: string}> = [
+		...existing.map(n => ({hint: pkHome() + '/' + n, label: n, value: n})),
+		{label: '+ New project', value: '__new__'},
+	];
+
+	const picked = await p.select({message: 'Project', options: choices});
+	if (p.isCancel(picked)) {
+		p.cancel('Cancelled.');
+		process.exit(0);
+	}
+
+	if (picked !== '__new__') {
+		return picked;
+	}
+
+	const typed = await p.text({
+		message: 'Project name',
+		placeholder: 'my-project',
+		initialValue: impliedName,
+		validate(v) {
+			if (!v?.trim()) {
+				return 'Name is required';
+			}
+
+			if (!/^[\w.\-]+$/v.test(v)) {
+				return 'Use letters, numbers, hyphens, dots only';
+			}
+		},
+	});
+	if (p.isCancel(typed)) {
+		p.cancel('Cancelled.');
+		process.exit(0);
+	}
+
+	return typed;
+}
+
 function failInit(error: unknown): never {
 	console.error(String(error));
 	process.exit(1);
@@ -103,42 +143,7 @@ export function registerInit(program: Command): void {
 			} else if (nameArg) {
 				name = nameArg;
 			} else {
-				const existing = listExistingProjects();
-				const choices: Array<{value: string; label: string; hint?: string}> = [
-					...existing.map(n => ({hint: pkHome() + '/' + n, label: n, value: n})),
-					{label: '+ New project', value: '__new__'},
-				];
-
-				const picked = await p.select({message: 'Project', options: choices});
-				if (p.isCancel(picked)) {
-					p.cancel('Cancelled.');
-					process.exit(0);
-				}
-
-				if (picked === '__new__') {
-					const typed = await p.text({
-						message: 'Project name',
-						placeholder: 'my-project',
-						initialValue: impliedName,
-						validate(v) {
-							if (!v?.trim()) {
-								return 'Name is required';
-							}
-
-							if (!/^[\w.\-]+$/v.test(v)) {
-								return 'Use letters, numbers, hyphens, dots only';
-							}
-						},
-					});
-					if (p.isCancel(typed)) {
-						p.cancel('Cancelled.');
-						process.exit(0);
-					}
-
-					name = typed;
-				} else {
-					name = picked;
-				}
+				name = await promptGlobalName(impliedName);
 			}
 
 			// Step 2: harnesses

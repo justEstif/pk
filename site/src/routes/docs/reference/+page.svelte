@@ -65,7 +65,7 @@
 					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>notes/ decisions/ ...</span></div>
 					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C">.index.db &nbsp;← search index</span></div>
 					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#44403C">.git/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← event log</span></div>
-					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>config.json</span>&nbsp;<span style="color:#44403C">← pk config</span></div>
+					<div>&nbsp;&nbsp;&nbsp;&nbsp;<span>config.json</span>&nbsp;<span style="color:#44403C">← written by pk init</span></div>
 				</div>
 			</div>
 			<div class="overflow-hidden rounded-xl" style="background:#1C1917">

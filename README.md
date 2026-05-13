@@ -48,7 +48,7 @@ pk init my-project --harness claude,opencode --global   # multiple harnesses
 
 Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi).
 
-`pk init` does four things:
+`pk init` does five things:
 
 1. Creates the knowledge store — in `.pk/` (local, default) or `~/.pk/<name>/` (with `--global`)
 2. Writes `.pk/config.json` so pk commands find the knowledge directory by walking up from CWD

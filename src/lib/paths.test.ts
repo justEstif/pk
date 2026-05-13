@@ -1,4 +1,6 @@
-import {mkdirSync, rmSync, writeFileSync} from 'node:fs';
+import {
+	mkdirSync, realpathSync, rmSync, writeFileSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
@@ -137,9 +139,18 @@ describe('requireKnowledgeDir', () => {
 		expect(requireKnowledgeDir()).toBe('/tmp/from-env');
 	});
 
-	test('reads knowledgeDir from .pk/config.json in CWD', () => {
+	test('local mode: derives knowledgeDir from configDir, ignores stored path', () => {
 		mkdirSync(path.join(tmpDir, '.pk'));
-		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), JSON.stringify({knowledgeDir: '/tmp/from-file', mode: 'local'}));
+		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), JSON.stringify({knowledgeDir: '/stale/absolute/path', mode: 'local'}));
+		process.chdir(tmpDir);
+		// RealpathSync normalises /var -> /private/var on macOS
+		const realTmp = realpathSync(tmpDir);
+		expect(requireKnowledgeDir()).toBe(path.join(realTmp, '.pk'));
+	});
+
+	test('global mode: reads knowledgeDir verbatim from .pk/config.json in CWD', () => {
+		mkdirSync(path.join(tmpDir, '.pk'));
+		writeFileSync(path.join(tmpDir, '.pk', 'config.json'), JSON.stringify({knowledgeDir: '/tmp/from-file', mode: 'global'}));
 		process.chdir(tmpDir);
 		expect(requireKnowledgeDir()).toBe('/tmp/from-file');
 	});
@@ -151,6 +162,12 @@ describe('requireKnowledgeDir', () => {
 		mkdirSync(sub);
 		process.chdir(sub);
 		expect(requireKnowledgeDir()).toBe('/tmp/from-parent');
+	});
+
+	test('falls back to legacy .pk.json when .pk/config.json is absent', () => {
+		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({knowledgeDir: '/tmp/legacy-project'}));
+		process.chdir(tmpDir);
+		expect(requireKnowledgeDir()).toBe('/tmp/legacy-project');
 	});
 
 	test('throws when neither env var nor config file', () => {

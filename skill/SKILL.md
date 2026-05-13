@@ -137,7 +137,7 @@ Useful for orienting before searching. Requires the search index.
 pk index
 ```
 
-Run after creating or editing notes. Rebuilds `~/.pk/<name>/.index.db` and `~/.pk/<name>/indexes/`. If embeddings are configured (`pk config --embedding <model>`), also generates vectors for semantic search.
+Run after creating or editing notes. Rebuilds `.index.db` and `indexes/` inside the project's knowledge directory (`.pk/` for local, `~/.pk/<name>/` for global). If embeddings are configured (`pk config --embedding <model>`), also generates vectors for semantic search.
 
 ### `pk config` — show or update global configuration
 

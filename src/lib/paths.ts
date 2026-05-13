@@ -20,6 +20,14 @@ export type PkProjectConfig = {
 };
 
 /**
+ * Legacy flat config written by pk < 0.6.
+ * Only `knowledgeDir` matters — `mode` is inferred as global.
+ */
+type LegacyPkConfig = {
+	knowledgeDir?: string;
+};
+
+/**
  * Walk up from startDir looking for .pk/config.json.
  * Returns the parsed config and the directory it was found in, or null if not found.
  */
@@ -33,6 +41,19 @@ export function findPkProjectConfig(startDir: string): {config: PkProjectConfig;
 				return {config, configDir: dir};
 			} catch {
 				// Malformed config — stop here rather than silently walk further up
+				return null;
+			}
+		}
+
+		// Legacy format: .pk.json in project root (pk < 0.6)
+		const legacy = path.join(dir, '.pk.json');
+		if (existsSync(legacy)) {
+			try {
+				const raw = JSON.parse(readFileSync(legacy, 'utf8')) as LegacyPkConfig;
+				if (raw.knowledgeDir) {
+					return {config: {knowledgeDir: raw.knowledgeDir, mode: 'global'}, configDir: dir};
+				}
+			} catch {
 				return null;
 			}
 		}
@@ -56,8 +77,15 @@ export function requireKnowledgeDir(): string {
 	}
 
 	const found = findPkProjectConfig(process.cwd());
-	if (found?.config.knowledgeDir) {
-		return found.config.knowledgeDir;
+	if (found) {
+		// Local mode: knowledge dir is always <configDir>/.pk — relocatable
+		if (found.config.mode === 'local') {
+			return path.join(found.configDir, '.pk');
+		}
+
+		if (found.config.knowledgeDir) {
+			return found.config.knowledgeDir;
+		}
 	}
 
 	throw new Error('No .pk/config.json found. Run: pk init --harness <harness>');
