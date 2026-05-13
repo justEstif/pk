@@ -181,25 +181,6 @@ describe('writeClaudeHook', () => {
 		};
 		expect(settings.hooks.UserPromptSubmit.length).toBe(1);
 	});
-
-	test('removes legacy SessionStart hook on re-init', async () => {
-		// Simulate old settings.json with a SessionStart pk hook
-		const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
-		mkdirSync(path.join(tmpDir, '.claude'), {recursive: true});
-		const legacySessionStartPath = path.join(tmpDir, '.claude', 'hooks', 'pk-session-start.sh');
-		await Bun.write(settingsPath, JSON.stringify({
-			hooks: {
-				SessionStart: [{matcher: '', hooks: [{type: 'command', command: legacySessionStartPath}]}],
-			},
-		}));
-
-		await writeClaudeHook(tmpDir);
-
-		const settings = JSON.parse(await Bun.file(settingsPath).text()) as {
-			hooks: Record<string, unknown>;
-		};
-		expect(settings.hooks.SessionStart).toBeUndefined();
-	});
 });
 
 // ─── Skill installation for harnesses ─────────────────────────────────────────

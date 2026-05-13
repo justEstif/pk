@@ -55,11 +55,15 @@ export function requireKnowledgeDir(): string {
 	}
 
 	const found = findPkProjectConfig(process.cwd());
-	if (found?.config.knowledgeDir) {
+	if (!found) {
+		throw new Error('No .pk.json found. Run: pk init <name> --harness <harness>');
+	}
+
+	if (found.config.knowledgeDir) {
 		return found.config.knowledgeDir;
 	}
 
-	throw new Error('No .pk.json found. Run: pk init <name> --harness <harness>');
+	throw new Error('.pk.json is missing "knowledgeDir". Re-run: pk init <name> --harness <harness>');
 }
 
 /** Returns sorted list of existing project names under ~/.pk/ */

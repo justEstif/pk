@@ -53,28 +53,6 @@ function addHookEntry(
 	hooks[event] = entries;
 }
 
-/**
- * Remove the legacy SessionStart pk hook that injected PK_KNOWLEDGE_DIR.
- * No longer needed — pk discovers .pk.json by walking up from CWD.
- */
-function removeLegacySessionStartHook(hooks: Record<string, unknown>): void {
-	const entries = hooks.SessionStart as Array<Record<string, unknown>> | undefined;
-	if (!entries) {
-		return;
-	}
-
-	const filtered = entries.filter(entry => {
-		const hookList = entry.hooks as Array<Record<string, unknown>> | undefined;
-		return !hookList?.some(h => typeof h.command === 'string' && h.command.endsWith('pk-session-start.sh'));
-	});
-
-	if (filtered.length === 0) {
-		delete hooks.SessionStart;
-	} else {
-		hooks.SessionStart = filtered;
-	}
-}
-
 export async function writeClaudeHook(projectRoot: string): Promise<void> {
 	const hookDir = path.join(projectRoot, '.claude', 'hooks');
 	mkdirSync(hookDir, {recursive: true});
@@ -86,7 +64,6 @@ export async function writeClaudeHook(projectRoot: string): Promise<void> {
 	const settings = await readJson(settingsPath);
 	const hooks = (settings.hooks as Record<string, unknown> | undefined) ?? {};
 
-	removeLegacySessionStartHook(hooks);
 	addHookEntry(hooks, 'UserPromptSubmit', `bun run ${evalPath}`);
 
 	settings.hooks = hooks;

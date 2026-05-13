@@ -151,6 +151,12 @@ describe('requireKnowledgeDir', () => {
 		expect(requireKnowledgeDir()).toBe('/tmp/from-parent');
 	});
 
+	test('throws when .pk.json exists without knowledgeDir', () => {
+		writeFileSync(path.join(tmpDir, '.pk.json'), JSON.stringify({}));
+		process.chdir(tmpDir);
+		expect(() => requireKnowledgeDir()).toThrow('.pk.json is missing "knowledgeDir"');
+	});
+
 	test('throws when neither env var nor .pk.json', () => {
 		process.chdir(tmpDir);
 		expect(() => requireKnowledgeDir()).toThrow('No .pk.json found');

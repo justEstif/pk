@@ -157,7 +157,7 @@ export function installSkill(harness: Harness, projectRoot: string): string {
 export type HarnessContext = {name: string; knowledgeDir: string; projectRoot: string; home: string};
 
 async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void> {
-	const {knowledgeDir, projectRoot} = ctx;
+	const {projectRoot} = ctx;
 	switch (harness) {
 		case 'claude': {
 			await writeClaudeHook(projectRoot);
