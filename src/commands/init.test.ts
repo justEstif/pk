@@ -143,9 +143,8 @@ describe('writePiPlugin', () => {
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('before_agent_start');
 		expect(plugin).toContain('prime');
-		expect(plugin).toContain('tool_call');
-		expect(plugin).toContain('.pk.json');
-		expect(plugin).toContain('PK_KNOWLEDGE_DIR');
+		expect(plugin).not.toContain('tool_call');
+		expect(plugin).not.toContain('PK_KNOWLEDGE_DIR');
 	});
 });
 
@@ -211,9 +210,8 @@ describe('writeOpenCodePlugin', () => {
 		expect(existsSync(pluginPath)).toBe(true);
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('experimental.chat.system.transform');
-		expect(plugin).toContain('shell.env');
 		expect(plugin).toContain('prime');
-		expect(plugin).toContain('.pk.json');
-		expect(plugin).toContain('PK_KNOWLEDGE_DIR');
+		expect(plugin).not.toContain('shell.env');
+		expect(plugin).not.toContain('PK_KNOWLEDGE_DIR');
 	});
 });
