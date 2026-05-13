@@ -28,6 +28,9 @@ beforeEach(() => {
 	mkdirSync(fakeHome, {recursive: true});
 	origHome = process.env.HOME;
 	process.env.HOME = fakeHome;
+	// On Linux, XDG_CONFIG_HOME controls where Claude Desktop config lives.
+	// Redirect it to fakeHome so harness tests don't touch the real config.
+	process.env.XDG_CONFIG_HOME = path.join(fakeHome, '.config');
 });
 
 afterEach(() => {
@@ -37,6 +40,8 @@ afterEach(() => {
 	} else {
 		process.env.HOME = origHome;
 	}
+
+	delete process.env.XDG_CONFIG_HOME;
 });
 
 // ─── ensureProject ────────────────────────────────────────────────────────────
