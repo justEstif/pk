@@ -16,40 +16,35 @@
 		</p>
 	</div>
 
-	<div class="not-prose rounded-xl border border-base-300 bg-base-200 px-5 py-4">
-		<p class="mb-2 font-mono text-xs tracking-widest text-base-content/30 uppercase">Location</p>
-		<p class="text-sm text-base-content/70">
-			pk stores global config at <code class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-xs"
-				>~/.pk/config.json</code
-			>.
-		</p>
-	</div>
-
 	<div class="space-y-4">
-		<h2>Project config — .pk.json</h2>
+		<h2>Project config — .pk/config.json</h2>
 		<p>
-			<code>pk init</code> writes a <code>.pk.json</code> file to your project root. pk commands
+			<code>pk init</code> writes <code>.pk/config.json</code> to your project root. pk commands
 			find the knowledge directory by walking up from the current directory — no environment
-			variables needed.
+			variables needed. <code>.pk/</code> is automatically added to your <code>.gitignore</code>.
 		</p>
 		<div class="not-prose overflow-hidden rounded-xl border border-base-300">
 			<table class="table w-full table-sm font-mono text-sm">
 				<tbody class="text-base-content/70">
-					<tr><td class="w-36">location</td><td>&lt;project-root&gt;/.pk.json</td></tr>
-					<tr><td>contents</td><td>&#123;&quot;knowledgeDir&quot;: &quot;/abs/path&quot;&#125;</td></tr>
-					<tr><td>gitignore</td><td>yes — contains machine-local absolute paths</td></tr>
+					<tr><td class="w-36">location</td><td>&lt;project-root&gt;/.pk/config.json</td></tr>
+					<tr><td>mode: local</td><td>knowledge store at .pk/ (default)</td></tr>
+					<tr><td>mode: global</td><td>knowledge store at ~/.pk/&lt;name&gt;/ (--global)</td></tr>
+					<tr><td>gitignore</td><td>yes — .pk/ added automatically</td></tr>
 				</tbody>
 			</table>
 		</div>
 		<p>
 			To switch projects temporarily, set <code>PK_KNOWLEDGE_DIR</code> in your shell.
-			The env var takes precedence over <code>.pk.json</code>.
+			The env var takes precedence over <code>.pk/config.json</code>.
 		</p>
 	</div>
 
 	<div class="space-y-4">
 		<h2>Global config — ~/.pk/config.json</h2>
 		<p>Settings that apply across all pk projects on your machine.</p>
+		<div class="not-prose rounded-xl border border-base-300 bg-base-200 px-5 py-4">
+			<p class="font-mono text-xs text-base-content/50">~/.pk/config.json</p>
+		</div>
 	</div>
 
 	<div class="space-y-4">
