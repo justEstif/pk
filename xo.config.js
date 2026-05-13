@@ -29,6 +29,14 @@ const xoConfig = [
 			'@stylistic/curly-newline': 'off',
 		},
 	},
+	// MCP SDK callback params come through as `any` due to Zod inference limits
+	{
+		files: ['**/mcp.ts'],
+		rules: {
+			'@typescript-eslint/no-unsafe-argument': 'off',
+			'@typescript-eslint/no-unsafe-assignment': 'off',
+		},
+	},
 ];
 
 export default xoConfig;

@@ -36,6 +36,14 @@ Requires:
 pk init
 ```
 
+> **Tip:** You can override the knowledge directory at any time by setting `PK_KNOWLEDGE_DIR` in your shell or a `.env` file your shell loads:
+>
+> ```bash
+> export PK_KNOWLEDGE_DIR=~/.pk/my-project
+> ```
+>
+> All pk commands read this variable directly — no re-init needed. This is also how you switch between projects without changing harness config.
+
 Interactive: picks a project name and one or more harnesses (space to toggle, enter to confirm).
 
 Non-interactive:
