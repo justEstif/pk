@@ -24,7 +24,8 @@ export function registerSearch(program: Command): void {
 		.option('--limit <n>', 'Max results', '10')
 		.option('--context', 'Include full note body in output')
 		.option('--pretty', 'Human-readable output')
-		.action(runDir('search', async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; pretty?: boolean; context: boolean}) => { const limit = Number.parseInt(opts.limit, 10);
+		.action(runDir('search', async (dir, query: string, opts: {status: string; tag: string; type: string; limit: string; pretty?: boolean; context: boolean}) => {
+			const limit = Number.parseInt(opts.limit, 10);
 			const provider = await resolveProvider();
 			let execution: SearchExecutionResult;
 			try {
@@ -46,7 +47,8 @@ export function registerSearch(program: Command): void {
 				results: String(execution.results.length),
 			}).catch(() => {/* best-effort */});
 
-			await printResults(execution.results, opts); }));
+			await printResults(execution.results, opts);
+		}));
 }
 
 type PrintableResult = {path: string; type: string; status: string; id: string; title: string; tags: string[]; snippet?: string};
