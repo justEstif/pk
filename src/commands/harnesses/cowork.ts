@@ -20,14 +20,17 @@ export function coworkPluginDir(home: string): string {
  *   ~/.pk/cowork-plugin/
  *     .claude-plugin/plugin.json   — manifest (project-agnostic)
  *     .mcp.json                    — MCP server; PK_KNOWLEDGE_DIR=${CLAUDE_PROJECT_DIR}/.pk
- *     hooks/hooks.json             — SessionStart: prime knowledge context via mcp_tool
  *     skills/pk/                   — pk skill (SKILL.md + references/)
  *
  * The plugin is installed once and works across all Cowork projects.
  * When the user opens a Cowork project, ${CLAUDE_PROJECT_DIR} resolves to
  * that project's folder, so knowledge is always co-located at <project>/.pk/.
  *
- * Idempotent: re-running pk init updates plugin.json, .mcp.json, and hooks.json.
+ * Session priming: pk mcp writes ${CLAUDE_PROJECT_DIR}/.claude/rules/pk.md
+ * after every mutation and at startup. Cowork reads it natively via
+ * InstructionsLoaded — no SessionStart hook needed.
+ *
+ * Idempotent: re-running pk init updates plugin.json and .mcp.json.
  * The skills directory is only written on first install.
  *
  * Installation: claude --plugin-dir ~/.pk/cowork-plugin  (or Cowork UI upload)
@@ -70,28 +73,7 @@ export async function writeCoworkPlugin(ctx: HarnessContext, pkBin?: string): Pr
 	};
 	await Bun.write(path.join(pluginDir, '.mcp.json'), JSON.stringify(mcpConfig, null, 2) + '\n');
 
-	// Hooks/hooks.json — at SessionStart, call pk_synthesize via the MCP tool
-	// so the server (which already has PK_KNOWLEDGE_DIR set) primes context.
-	const hooksDir = path.join(pluginDir, 'hooks');
-	mkdirSync(hooksDir, {recursive: true});
-	const hooksConfig = {
-		hooks: {
-			SessionStart: [
-				{
-					hooks: [
-						{
-							tool: 'pk.pk_synthesize',
-							params: {sessionStart: true},
-							type: 'mcp_tool',
-						},
-					],
-				},
-			],
-		},
-	};
-	await Bun.write(path.join(hooksDir, 'hooks.json'), JSON.stringify(hooksConfig, null, 2) + '\n');
-
-	// Skills/pk/ — copy skill bundle if not already present
+	// Skills/pk/
 	const skillTarget = path.join(pluginDir, 'skills', 'pk');
 	const skillSrc = skillSourceDir();
 	if (!existsSync(skillTarget) && existsSync(skillSrc)) {
