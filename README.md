@@ -4,6 +4,19 @@ Structured project memory for AI agents. Decisions, questions, notes, and source
 
 ## Install
 
+### Claude Code Marketplace (easiest)
+
+If you use Claude Code, install directly from the marketplace — no terminal setup needed:
+
+```
+/plugin marketplace add justEstif/pk
+/plugin install pk@justestif-pk
+```
+
+That's it. pk is now active in every Claude Code session. The SessionStart hook auto-installs the pk CLI the first time if it isn't already present.
+
+### CLI (all other tools)
+
 **One-liner (macOS / Linux):**
 
 ```bash
@@ -57,6 +70,8 @@ pk init my-project --harness cowork --global          # Cowork (Claude's agentic
 
 Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi), `cowork` (Cowork).
 
+> **Claude Code Marketplace users:** skip `pk init` entirely — the marketplace plugin handles setup automatically.
+
 `pk init` does five things:
 
 1. Creates the knowledge store — in `.pk/` (local, default) or `~/.pk/<name>/` (with `--global`)
@@ -71,6 +86,7 @@ Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi), `
 | `opencode`        | `.opencode/plugins/pk-eval.ts`                                                 |
 | `pi`              | `.pi/extensions/pk-eval.ts`                                                    |
 | `cowork`          | `~/.pk/<name>-cowork/` (Cowork plugin dir — `claude --plugin-dir`)             |
+| marketplace       | No local files — installed via `/plugin install pk@justestif-pk`               |
 
 > **Cowork harness** (`cowork`) creates a plugin directory at `~/.pk/<name>-cowork/` and bundles the pk skill inside it. Use `--global` since Cowork doesn't run inside a project folder. Install with `claude --plugin-dir ~/.pk/<name>-cowork` or upload via the Cowork UI.
 

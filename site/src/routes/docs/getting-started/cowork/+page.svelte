@@ -16,12 +16,27 @@
 		</p>
 	</div>
 
+	<!-- Marketplace shortcut -->
+	<div class="not-prose rounded-xl border border-primary/30 bg-primary/5 px-5 py-5 space-y-3">
+		<p class="font-semibold text-sm">Easiest: install from the Claude Code Marketplace</p>
+		<p class="text-sm text-base-content/60">
+			Run two commands inside Claude Code — no terminal needed:
+		</p>
+		<CodeBlock label="Claude Code" lines={[
+			'/plugin marketplace add justEstif/pk',
+			'/plugin install pk@justestif-pk'
+		]} />
+		<p class="text-sm text-base-content/60">
+			pk is now active in every session. The plugin installs the pk CLI automatically on first run.
+		</p>
+	</div>
+
 	<!-- Section 1: One-time setup -->
 	<section class="space-y-4">
-		<h2>Set up once</h2>
+		<h2>Manual setup (terminal)</h2>
 		<p>
-			You'll need a terminal for about two minutes. After that, you're done — pk works automatically
-			in every Cowork project you create.
+			Prefer more control, or not yet on Claude Code? You'll need a terminal for about two minutes.
+			After that, you're done — pk works automatically in every Cowork project you create.
 		</p>
 
 		<div class="space-y-6">
