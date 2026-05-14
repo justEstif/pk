@@ -4,17 +4,35 @@ set -euo pipefail
 # pk installer — installs Git, Bun, and pk CLI
 # Usage: curl -fsSL https://justestif.github.io/pk/install.sh | bash
 
+# ── Colours ───────────────────────────────────────────────────────────────────
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 BOLD='\033[1m'
+DIM='\033[2m'
 RESET='\033[0m'
 
-info()    { echo -e "${BOLD}$*${RESET}"; }
-success() { echo -e "${GREEN}✓${RESET} $*"; }
-warn()    { echo -e "${YELLOW}!${RESET} $*"; }
-error()   { echo -e "${RED}✗${RESET} $*" >&2; }
-die()     { error "$*"; exit 1; }
+TOTAL_STEPS=4
+step=0
+
+step() {
+  step=$((step + 1))
+  echo ""
+  echo -e "${CYAN}[${step}/${TOTAL_STEPS}]${RESET} ${BOLD}$*${RESET}"
+}
+ok()   { echo -e "  ${GREEN}✓${RESET} $*"; }
+skip() { echo -e "  ${DIM}–${RESET} $*"; }
+warn() { echo -e "  ${YELLOW}!${RESET} $*"; }
+die()  { echo -e "\n  ${RED}✗${RESET} $*" >&2; echo -e "  ${DIM}Log: ${LOG}${RESET}" >&2; exit 1; }
+
+# ── Log file ──────────────────────────────────────────────────────────────────
+
+LOG="$(mktemp /tmp/pk-install.XXXXXX.log)"
+# Redirect all sub-installer noise to log; keep our own output clean
+exec 3>&1          # save original stdout
+run() { "$@" >>"$LOG" 2>&1 || { echo -e "\n  ${RED}✗${RESET} Command failed: $*" >&2; die "See log for details."; }; }
 
 # ── OS detection ──────────────────────────────────────────────────────────────
 
@@ -22,84 +40,130 @@ OS="$(uname -s)"
 case "$OS" in
   Darwin) PLATFORM="macOS" ;;
   Linux)  PLATFORM="Linux" ;;
-  *)      die "Unsupported OS: $OS. pk installer supports macOS and Linux." ;;
+  *)      die "Unsupported OS: $OS. pk supports macOS and Linux." ;;
 esac
 
-info "pk installer"
-echo "Platform: $PLATFORM"
 echo ""
+echo -e "${BOLD}pk installer${RESET}  ${DIM}(${PLATFORM})${RESET}"
+echo -e "${DIM}Log: ${LOG}${RESET}"
 
-# ── Git ───────────────────────────────────────────────────────────────────────
+# ── Step 1: Git ───────────────────────────────────────────────────────────────
+
+step "Git"
 
 if command -v git &>/dev/null; then
-  success "Git already installed ($(git --version))"
+  skip "already installed — $(git --version)"
 else
-  info "Installing Git..."
   case "$PLATFORM" in
     macOS)
-      warn "Git not found. macOS will prompt you to install Xcode Command Line Tools."
-      xcode-select --install || true
-      echo "After installation completes, rerun this installer."
-      exit 0
+      warn "Git not found. Installing Xcode Command Line Tools..."
+      warn "A system dialog may appear — click Install, then rerun this script."
+      xcode-select --install 2>/dev/null || true
+      # Wait for the install to finish (xcode-select --install is async)
+      until command -v git &>/dev/null; do
+        sleep 5
+        echo -ne "  ${DIM}waiting...${RESET}\r"
+      done
+      ok "Git installed — $(git --version)"
       ;;
     Linux)
       if command -v apt-get &>/dev/null; then
-        sudo apt-get update
-        sudo apt-get install -y git
+        run sudo apt-get update -q
+        run sudo apt-get install -y git
       elif command -v dnf &>/dev/null; then
-        sudo dnf install -y git
+        run sudo dnf install -y git
       elif command -v yum &>/dev/null; then
-        sudo yum install -y git
+        run sudo yum install -y git
       elif command -v pacman &>/dev/null; then
-        sudo pacman -Sy --noconfirm git
+        run sudo pacman -Sy --noconfirm git
       else
-        die "Could not find a supported package manager. Install Git manually: https://git-scm.com"
+        die "No supported package manager found. Install Git manually: https://git-scm.com"
       fi
+      ok "Git installed — $(git --version)"
       ;;
   esac
-  success "Git installed"
 fi
 
-# ── Bun ───────────────────────────────────────────────────────────────────────
+# ── Step 2: Bun ───────────────────────────────────────────────────────────────
+
+step "Bun"
 
 if command -v bun &>/dev/null; then
-  success "Bun already installed ($(bun --version))"
+  skip "already installed — bun $(bun --version)"
 else
-  info "Installing Bun..."
-  curl -fsSL https://bun.sh/install | bash
+  run curl -fsSL https://bun.sh/install | bash
 
+  # Source into current session
   export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
   export PATH="$BUN_INSTALL/bin:$PATH"
 
   if ! command -v bun &>/dev/null; then
-    die "Bun installed but is not on PATH. Open a new terminal or add $BUN_INSTALL/bin to PATH, then rerun."
+    die "Bun installed but not found on PATH. Try opening a new terminal and running: bun install -g @justestif/pk"
   fi
-  success "Bun installed ($(bun --version))"
+  ok "Bun installed — bun $(bun --version)"
+
+  # Persist to shell config
+  SHELL_NAME="$(basename "${SHELL:-bash}")"
+  case "$SHELL_NAME" in
+    zsh)   SHELL_RC="$HOME/.zshrc" ;;
+    fish)  SHELL_RC="$HOME/.config/fish/config.fish" ;;
+    *)     SHELL_RC="$HOME/.bashrc" ;;
+  esac
+
+  BUN_LINE='export PATH="$HOME/.bun/bin:$PATH"'
+  if [[ "$SHELL_NAME" == "fish" ]]; then
+    BUN_LINE='fish_add_path $HOME/.bun/bin'
+  fi
+
+  if ! grep -qF '.bun/bin' "$SHELL_RC" 2>/dev/null; then
+    echo "" >> "$SHELL_RC"
+    echo "# Added by pk installer" >> "$SHELL_RC"
+    echo "$BUN_LINE" >> "$SHELL_RC"
+    ok "Added Bun to ${SHELL_RC}"
+  else
+    skip "Bun PATH already in ${SHELL_RC}"
+  fi
 fi
 
-# ── pk ────────────────────────────────────────────────────────────────────────
+# ── Step 3: pk ────────────────────────────────────────────────────────────────
 
+step "pk"
+
+INSTALLED_VERSION=""
 if command -v pk &>/dev/null; then
-  success "pk already installed ($(pk --version))"
-else
-  info "Installing pk..."
-  bun install -g @justestif/pk
-  success "pk installed ($(pk --version))"
+  INSTALLED_VERSION="$(pk --version 2>/dev/null || true)"
 fi
 
-# ── Ollama (optional — for semantic search) ───────────────────────────────────
+LATEST_VERSION="$(curl -fsSL https://registry.npmjs.org/@justestif/pk/latest 2>/dev/null | grep '"version"' | head -1 | sed 's/.*"version": *"\([^"]*\)".*/\1/' || true)"
+
+if [[ -n "$INSTALLED_VERSION" && "$INSTALLED_VERSION" == "$LATEST_VERSION" ]]; then
+  skip "already up to date — pk ${INSTALLED_VERSION}"
+elif [[ -n "$INSTALLED_VERSION" && -n "$LATEST_VERSION" ]]; then
+  run bun install -g @justestif/pk
+  ok "Updated pk ${INSTALLED_VERSION} → ${LATEST_VERSION}"
+else
+  run bun install -g @justestif/pk
+  ok "pk installed — $(pk --version 2>/dev/null || echo 'installed')"
+fi
+
+# ── Step 4: Ollama (optional) ─────────────────────────────────────────────────
+
+step "Ollama (optional — semantic search)"
 
 if command -v ollama &>/dev/null; then
-  success "Ollama already installed"
+  skip "already installed"
 else
-  echo ""
-  info "Ollama (optional)"
-  echo "  Ollama enables semantic search in pk — find notes by meaning, not just keywords."
-  echo "  Install: https://ollama.com"
-  echo "  Then run: ollama pull nomic-embed-text && pk config --embedding nomic-embed-text"
+  warn "Not installed. Keyword search works without it."
+  warn "To enable semantic search later: https://ollama.com"
+  warn "Then run: ollama pull nomic-embed-text && pk config --embedding nomic-embed-text"
 fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 
 echo ""
-success "All done! Run ${BOLD}pk init${RESET} inside any project to get started."
+echo -e "${GREEN}${BOLD}All done!${RESET}"
+echo ""
+echo -e "  Next: open a new terminal tab so PATH changes take effect."
+echo -e "  Then run ${BOLD}pk init${RESET} inside any project to get started."
+echo ""
+echo -e "${DIM}Full log saved to: ${LOG}${RESET}"
