@@ -1,5 +1,5 @@
+import {unlink} from 'node:fs/promises';
 import path from 'node:path';
-import {$} from 'bun';
 import matter from 'gray-matter';
 import {commitKnowledgeFile, commitDelete} from './git.ts';
 import {createNote} from './notes.ts';
@@ -62,8 +62,8 @@ export async function updateKnowledgeNote(
 		throw new Error(`Note not found: ${notePath}. Use 'pk new' to create.`);
 	}
 
-	const sep = knowledgeDir.endsWith(path.sep) ? knowledgeDir : knowledgeDir + path.sep;
-	if (!notePath.startsWith(sep)) {
+	const rel = path.relative(path.resolve(knowledgeDir), path.resolve(notePath));
+	if (rel.startsWith('..') || path.isAbsolute(rel)) {
 		throw new Error(`Path must be within knowledge directory: ${knowledgeDir}`);
 	}
 
@@ -86,7 +86,7 @@ export async function deleteKnowledgeNote(
 		throw new Error(`Note not found: ${fullPath}`);
 	}
 
-	await $`rm ${fullPath}`;
+	await unlink(fullPath);
 	await commitDelete(knowledgeDir, fullPath);
 	return fullPath;
 }

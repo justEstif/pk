@@ -13,8 +13,7 @@ import {
 import {writeClaudeHook} from './harnesses/claude.ts';
 import {writeOpenCodePlugin} from './harnesses/opencode.ts';
 import {writePiPlugin} from './harnesses/pi.ts';
-import {writeClaudeDesktopConfig} from './harnesses/claude-desktop.ts';
-import {writeCodexConfig} from './harnesses/codex.ts';
+import {coworkPluginDir, writeCoworkPlugin} from './harnesses/cowork.ts';
 
 let tmpDir: string;
 let fakeHome: string;
@@ -244,11 +243,10 @@ describe('writeOpenCodePlugin', () => {
 });
 
 describe('parseHarnesses', () => {
-	test('accepts all harness values including claude-desktop and codex', () => {
-		const result = parseHarnesses('claude,opencode,pi,claude-desktop,codex');
+	test('accepts all harness values including cowork', () => {
+		const result = parseHarnesses('claude,opencode,pi,cowork');
 		expect(Array.isArray(result)).toBe(true);
-		expect(result).toContain('claude-desktop');
-		expect(result).toContain('codex');
+		expect(result).toContain('cowork');
 	});
 
 	test('rejects unknown harness', () => {
@@ -258,125 +256,68 @@ describe('parseHarnesses', () => {
 	});
 });
 
-// ─── Claude Desktop config writer ────────────────────────────────────────────
+// ─── Cowork plugin writer ─────────────────────────────────────────────────────
 
-describe('writeClaudeDesktopConfig', () => {
+describe('writeCoworkPlugin', () => {
 	const FAKE_BIN = '/usr/local/bin/pk';
-
-	test('creates claude_desktop_config.json with mcpServers entry', async () => {
-		const ctx = {
-			home: fakeHome, knowledgeDir: path.join(fakeHome, '.pk', 'myproject'), name: 'myproject', projectRoot: tmpDir,
-		};
-		await writeClaudeDesktopConfig(ctx, FAKE_BIN);
-		const p = process.platform === 'darwin'
-			? path.join(fakeHome, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
-			: path.join(fakeHome, '.config', 'Claude', 'claude_desktop_config.json');
-		const cfg = JSON.parse(await Bun.file(p).text()) as {mcpServers: Record<string, unknown>};
-		expect(cfg.mcpServers['pk-myproject']).toBeDefined();
-		const entry = cfg.mcpServers['pk-myproject'] as {command: string; args: string[]; env: Record<string, string>};
-		expect(entry.command).toBe(FAKE_BIN);
-		expect(entry.args).toEqual(['mcp']);
-		expect(entry.env.PK_KNOWLEDGE_DIR).toBe(ctx.knowledgeDir);
+	const ctx = () => ({
+		home: fakeHome,
+		knowledgeDir: path.join(fakeHome, '.pk', 'myproject'),
+		name: 'myproject',
+		projectRoot: tmpDir,
 	});
 
-	test('merges into existing mcpServers without overwriting other servers', async () => {
-		const p = process.platform === 'darwin'
-			? path.join(fakeHome, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
-			: path.join(fakeHome, '.config', 'Claude', 'claude_desktop_config.json');
-		const {mkdirSync: mk} = await import('node:fs');
-		mk(path.dirname(p), {recursive: true});
-		await Bun.write(p, JSON.stringify({mcpServers: {'other-server': {command: 'other', args: []}}}));
-
-		const ctx = {
-			home: fakeHome, knowledgeDir: path.join(fakeHome, '.pk', 'myproject'), name: 'myproject', projectRoot: tmpDir,
-		};
-		await writeClaudeDesktopConfig(ctx, FAKE_BIN);
-
-		const cfg = JSON.parse(await Bun.file(p).text()) as {mcpServers: Record<string, unknown>};
-		expect(cfg.mcpServers['other-server']).toBeDefined();
-		expect(cfg.mcpServers['pk-myproject']).toBeDefined();
+	test('creates global plugin dir with plugin.json and .mcp.json', async () => {
+		const c = ctx();
+		await writeCoworkPlugin(c, FAKE_BIN);
+		const pluginDir = coworkPluginDir(fakeHome);
+		const manifest = JSON.parse(await Bun.file(path.join(pluginDir, '.claude-plugin', 'plugin.json')).text()) as {name: string};
+		// Plugin is project-agnostic — name is just 'pk', not 'pk-<project>'
+		expect(manifest.name).toBe('pk');
+		type McpEntry = {command: string; args: string[]; env: Record<string, string>};
+		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, McpEntry>};
+		const entry = mcp.mcpServers.pk;
+		expect(entry).toBeDefined();
+		expect(entry?.command).toBe(FAKE_BIN);
+		expect(entry?.args).toEqual(['mcp']);
+		// Uses ${CLAUDE_PROJECT_DIR} — not a hardcoded knowledge dir
+		// eslint-disable-next-line no-template-curly-in-string
+		expect(entry?.env.PK_KNOWLEDGE_DIR).toBe('${CLAUDE_PROJECT_DIR}/.pk');
 	});
 
-	test('is idempotent — re-run updates entry without duplicating', async () => {
-		const ctx = {
-			home: fakeHome, knowledgeDir: path.join(fakeHome, '.pk', 'myproject'), name: 'myproject', projectRoot: tmpDir,
-		};
-		await writeClaudeDesktopConfig(ctx, FAKE_BIN);
-		await writeClaudeDesktopConfig(ctx, FAKE_BIN);
-		const p = process.platform === 'darwin'
-			? path.join(fakeHome, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
-			: path.join(fakeHome, '.config', 'Claude', 'claude_desktop_config.json');
-		const cfg = JSON.parse(await Bun.file(p).text()) as {mcpServers: Record<string, unknown>};
-		expect(Object.keys(cfg.mcpServers).filter(k => k === 'pk-myproject')).toHaveLength(1);
+	test('plugin dir is at ~/.pk/cowork-plugin regardless of project name', async () => {
+		const c = ctx();
+		await writeCoworkPlugin(c, FAKE_BIN);
+		expect(coworkPluginDir(fakeHome)).toBe(path.join(fakeHome, '.pk', 'cowork-plugin'));
 	});
 
-	test('uses provided pkBin path verbatim — no Bun.which fallback when non-empty', async () => {
-		const ctx = {
-			home: fakeHome, knowledgeDir: path.join(fakeHome, '.pk', 'myproject'), name: 'myproject', projectRoot: tmpDir,
-		};
-		const customBin = '/custom/path/to/pk';
-		await writeClaudeDesktopConfig(ctx, customBin);
-		const p = process.platform === 'darwin'
-			? path.join(fakeHome, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
-			: path.join(fakeHome, '.config', 'Claude', 'claude_desktop_config.json');
-		const cfg = JSON.parse(await Bun.file(p).text()) as {mcpServers: Record<string, {command: string}>};
-		expect(cfg.mcpServers['pk-myproject']?.command).toBe(customBin);
-	});
-});
-
-// ─── Codex config writer ──────────────────────────────────────────────────────
-
-describe('writeCodexConfig', () => {
-	const FAKE_BIN = '/usr/local/bin/pk';
-
-	test('creates ~/.codex/config.toml with mcp_servers entry', async () => {
-		const ctx = {
-			home: fakeHome, knowledgeDir: path.join(fakeHome, '.pk', 'myproject'), name: 'myproject', projectRoot: tmpDir,
-		};
-		await writeCodexConfig(ctx, FAKE_BIN);
-		const p = path.join(fakeHome, '.codex', 'config.toml');
-		expect(existsSync(p)).toBe(true);
-		const text = await Bun.file(p).text();
-		expect(text).toContain('pk-myproject');
-		expect(text).toContain(FAKE_BIN);
-		expect(text).toContain(ctx.knowledgeDir);
+	test('bundles skill into skills/pk/', async () => {
+		const c = ctx();
+		await writeCoworkPlugin(c, FAKE_BIN);
+		const pluginDir = coworkPluginDir(fakeHome);
+		expect(existsSync(path.join(pluginDir, 'skills', 'pk', 'SKILL.md'))).toBe(true);
 	});
 
-	test('merges without overwriting other servers', async () => {
-		const {mkdirSync: mk} = await import('node:fs');
-		const p = path.join(fakeHome, '.codex', 'config.toml');
-		mk(path.dirname(p), {recursive: true});
-		await Bun.write(p, '[mcp_servers.other-server]\ncommand = "other"\n');
-		const ctx = {
-			home: fakeHome, knowledgeDir: path.join(fakeHome, '.pk', 'myproject'), name: 'myproject', projectRoot: tmpDir,
-		};
-		await writeCodexConfig(ctx, FAKE_BIN);
-		const text = await Bun.file(p).text();
-		expect(text).toContain('other-server');
-		expect(text).toContain('pk-myproject');
+	test('is idempotent — re-run updates plugin.json and .mcp.json', async () => {
+		const c = ctx();
+		await writeCoworkPlugin(c, FAKE_BIN);
+		const altBin = '/alt/bin/pk';
+		await writeCoworkPlugin(c, altBin);
+		const pluginDir = coworkPluginDir(fakeHome);
+		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, {command: string}>};
+		expect(mcp.mcpServers.pk?.command).toBe(altBin);
 	});
 
-	test('is idempotent — re-run updates entry without duplicating', async () => {
-		const {parse} = await import('smol-toml');
-		const ctx = {
-			home: fakeHome, knowledgeDir: path.join(fakeHome, '.pk', 'myproject'), name: 'myproject', projectRoot: tmpDir,
-		};
-		await writeCodexConfig(ctx, FAKE_BIN);
-		await writeCodexConfig(ctx, FAKE_BIN);
-		const p = path.join(fakeHome, '.codex', 'config.toml');
-		const cfg = parse(await Bun.file(p).text()) as {mcp_servers: Record<string, unknown>};
-		expect(Object.keys(cfg.mcp_servers).filter(k => k === 'pk-myproject')).toHaveLength(1);
-	});
+	test('throws when pk binary not found', async () => {
+		const c = ctx();
+		let threw = false;
+		try {
+			await writeCoworkPlugin(c, '');
+		} catch (error) {
+			threw = true;
+			expect(String(error)).toContain('pk binary not found');
+		}
 
-	test('handles project name with dots correctly (no nested TOML tables)', async () => {
-		const {parse} = await import('smol-toml');
-		const ctx = {
-			home: fakeHome, knowledgeDir: path.join(fakeHome, '.pk', 'my.project'), name: 'my.project', projectRoot: tmpDir,
-		};
-		await writeCodexConfig(ctx, FAKE_BIN);
-		const p = path.join(fakeHome, '.codex', 'config.toml');
-		const cfg = parse(await Bun.file(p).text()) as {mcp_servers: Record<string, unknown>};
-		// Key must be "pk-my.project" (flat), not nested as {pk-my: {project: ...}}
-		expect(cfg.mcp_servers['pk-my.project']).toBeDefined();
+		expect(threw).toBe(true);
 	});
 });

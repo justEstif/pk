@@ -64,19 +64,28 @@ function decodeVector(buf: Uint8Array): number[] {
 
 export async function rebuild(knowledgeDir: string, provider?: EmbeddingProvider): Promise<number> {
 	const db = openDb(knowledgeDir);
-	db.run('DELETE FROM notes_fts');
-	const insert = db.prepare('INSERT INTO notes_fts(id,path,type,status,title,tags,body) VALUES(?,?,?,?,?,?,?)');
 	const notes = await validNotes(knowledgeDir, ['index']);
-	for (const n of notes) {
-		insert.run(
-			n.meta.id ?? '',
-			n.path,
-			n.meta.type ?? '',
-			n.meta.status ?? '',
-			n.meta.title ?? '',
-			(n.meta.tags ?? []).join(' '),
-			n.body,
-		);
+
+	db.run('BEGIN');
+	try {
+		db.run('DELETE FROM notes_fts');
+		const insert = db.prepare('INSERT INTO notes_fts(id,path,type,status,title,tags,body) VALUES(?,?,?,?,?,?,?)');
+		for (const n of notes) {
+			insert.run(
+				n.meta.id ?? '',
+				n.path,
+				n.meta.type ?? '',
+				n.meta.status ?? '',
+				n.meta.title ?? '',
+				(n.meta.tags ?? []).join(' '),
+				n.body,
+			);
+		}
+
+		db.run('COMMIT');
+	} catch (error) {
+		db.run('ROLLBACK');
+		throw error;
 	}
 
 	if (provider) {

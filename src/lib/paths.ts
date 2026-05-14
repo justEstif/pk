@@ -4,9 +4,26 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 
+/**
+ * Returns the directory containing the pk skill bundle shipped with this package.
+ *
+ * In production the whole package bundles to dist/index.js, so import.meta.dir
+ * is dist/ and skill/ is one level up. In development import.meta.dir is
+ * src/lib/ so skill/ is two levels up. We probe both so the same binary works
+ * in both contexts.
+ */
+export function skillSourceDir(): string {
+	const fromDist = path.resolve(import.meta.dir, '..', 'skill');
+	if (existsSync(fromDist)) {
+		return fromDist;
+	}
+
+	return path.resolve(import.meta.dir, '..', '..', 'skill');
+}
+
 /** Returns the ~/.pk home directory for all pk knowledge bases. */
-export function pkHome(): string {
-	return path.join(process.env.HOME ?? os.homedir(), '.pk');
+export function pkHome(home?: string): string {
+	return path.join(home ?? process.env.HOME ?? os.homedir(), '.pk');
 }
 
 /** Returns the directory for a named global project: ~/.pk/<name> */

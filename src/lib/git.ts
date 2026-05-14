@@ -117,7 +117,7 @@ export async function commitDelete(
 	const message = `knowledge: delete ${noteType} ${title}`;
 
 	try {
-		await $`git -C ${knowledgeDir} add ${notePath}`.quiet();
+		await $`git -C ${knowledgeDir} rm --cached ${notePath}`.quiet();
 		await $`git -C ${knowledgeDir} -c commit.gpgsign=false commit -m ${message}`.quiet();
 	} catch (error) {
 		console.warn(`[pk] Git commit failed: ${String(error)}`);
