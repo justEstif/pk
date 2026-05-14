@@ -1,7 +1,7 @@
 {
    "name": "@justestif/pk",
    "type": "module",
-   "version": "0.9.1",
+   "version": "0.10.0",
    "description": "Project knowledge — structured intake, search, and recall",
    "bin": {
       "pk": "dist/index.js"
