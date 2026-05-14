@@ -1,5 +1,7 @@
 import path from 'node:path';
-import {cpSync, existsSync, mkdirSync} from 'node:fs';
+import {
+	chmodSync, cpSync, existsSync, mkdirSync, writeFileSync,
+} from 'node:fs';
 import {skillSourceDir, pkHome} from '../../lib/paths.ts';
 import type {HarnessContext} from '../../lib/project.ts';
 
@@ -19,38 +21,36 @@ export function coworkPluginDir(home: string): string {
  * Plugin structure:
  *   ~/.pk/cowork-plugin/
  *     .claude-plugin/plugin.json   — manifest (project-agnostic)
- *     .mcp.json                    — MCP server; PK_KNOWLEDGE_DIR=${CLAUDE_PROJECT_DIR}/.pk
+ *     .mcp.json                    — MCP server using bin/pk launcher
+ *     bin/pk                       — launcher script; finds pk on PATH or ~/.bun/bin/pk
+ *     hooks/hooks.json             — SessionStart: bootstraps pk install if missing
  *     skills/pk/                   — pk skill (SKILL.md + references/)
  *
  * The plugin is installed once and works across all Cowork projects.
  * When the user opens a Cowork project, ${CLAUDE_PROJECT_DIR} resolves to
  * that project's folder, so knowledge is always co-located at <project>/.pk/.
  *
+ * Self-bootstrapping: the SessionStart hook checks whether pk is installed and
+ * runs the install script if not. The user approves Cowork's permission prompt
+ * once; every subsequent session the check is instant.
+ *
  * Session priming: pk mcp writes ${CLAUDE_PROJECT_DIR}/.claude/rules/pk.md
  * after every mutation and at startup. Cowork reads it natively via
- * InstructionsLoaded — no SessionStart hook needed.
+ * InstructionsLoaded — no separate priming call needed.
  *
- * Idempotent: re-running pk init updates plugin.json and .mcp.json.
- * The skills directory is only written on first install.
+ * Idempotent: re-running pk init updates all files except skills/ (first-install only).
  *
  * Installation: claude --plugin-dir ~/.pk/cowork-plugin  (or Cowork UI upload)
  *
  * @param ctx    Harness context (home used for plugin dir location)
  * @param pkBin  Absolute path to the pk binary (injectable for testing)
  */
-export async function writeCoworkPlugin(ctx: HarnessContext, pkBin?: string): Promise<string> {
-	const resolvedBin = pkBin ?? Bun.which('pk');
-	if (!resolvedBin) {
-		throw new Error('pk binary not found on PATH. Install pk globally first:\n'
-			+ '  npm install -g @justestif/pk\n'
-			+ '  # or: brew install justEstif/tap/pk');
-	}
-
+export async function writeCoworkPlugin(ctx: HarnessContext): Promise<string> {
 	const pluginDir = coworkPluginDir(ctx.home);
+
+	// ── .claude-plugin/plugin.json ─────────────────────────────────────────────
 	const manifestDir = path.join(pluginDir, '.claude-plugin');
 	mkdirSync(manifestDir, {recursive: true});
-
-	// .claude-plugin/plugin.json — single global plugin, no project name in id
 	const manifest = {
 		author: {name: 'justEstif'},
 		description: 'pk — structured knowledge for every Cowork project',
@@ -59,13 +59,37 @@ export async function writeCoworkPlugin(ctx: HarnessContext, pkBin?: string): Pr
 	};
 	await Bun.write(path.join(manifestDir, 'plugin.json'), JSON.stringify(manifest, null, 2) + '\n');
 
-	// .mcp.json — ${CLAUDE_PROJECT_DIR} is substituted by Cowork with the
-	// current project folder path, so knowledge lives at <project>/.pk/
+	// ── bin/pk — launcher script ───────────────────────────────────────────────
+	// Uses ${CLAUDE_PLUGIN_ROOT} so the path is always correct regardless of
+	// where the plugin is installed. No hardcoded absolute paths.
+	const binDir = path.join(pluginDir, 'bin');
+	mkdirSync(binDir, {recursive: true});
+	const launcher = [
+		'#!/usr/bin/env bash',
+		'# pk launcher — finds the pk binary without a hardcoded path.',
+		'# Checks PATH first, then Bun\'s default install location.',
+		'PK=$(command -v pk 2>/dev/null || echo "")',
+		'if [[ -z "$PK" ]]; then',
+		'  PK="$HOME/.bun/bin/pk"',
+		'fi',
+		'if [[ ! -x "$PK" ]]; then',
+		'  echo "pk not found. Run the installer: curl -fsSL https://justestif.github.io/pk/install.sh | bash" >&2',
+		'  exit 1',
+		'fi',
+		'exec "$PK" "$@"',
+	].join('\n') + '\n';
+	writeFileSync(path.join(binDir, 'pk'), launcher);
+	chmodSync(path.join(binDir, 'pk'), 0o755);
+
+	// ── .mcp.json ──────────────────────────────────────────────────────────────
+	// command uses ${CLAUDE_PLUGIN_ROOT}/bin/pk — no hardcoded user path.
+	// PK_KNOWLEDGE_DIR uses ${CLAUDE_PROJECT_DIR} — resolves per project at runtime.
 	const mcpConfig = {
 		mcpServers: {
 			pk: {
 				args: ['mcp'],
-				command: resolvedBin,
+				// eslint-disable-next-line no-template-curly-in-string
+				command: '${CLAUDE_PLUGIN_ROOT}/bin/pk',
 				// eslint-disable-next-line no-template-curly-in-string
 				env: {PK_KNOWLEDGE_DIR: '${CLAUDE_PROJECT_DIR}/.pk'},
 			},
@@ -73,7 +97,30 @@ export async function writeCoworkPlugin(ctx: HarnessContext, pkBin?: string): Pr
 	};
 	await Bun.write(path.join(pluginDir, '.mcp.json'), JSON.stringify(mcpConfig, null, 2) + '\n');
 
-	// Skills/pk/
+	// ── hooks/hooks.json — SessionStart bootstrap ──────────────────────────────
+	// If pk is not installed, runs the install script. The user sees a single
+	// Cowork permission prompt the first time; every subsequent session the
+	// check completes in milliseconds.
+	const hooksDir = path.join(pluginDir, 'hooks');
+	mkdirSync(hooksDir, {recursive: true});
+	const installUrl = 'https://justestif.github.io/pk/install.sh';
+	const hooksConfig = {
+		hooks: {
+			SessionStart: [
+				{
+					hooks: [
+						{
+							command: `command -v pk >/dev/null 2>&1 || ($HOME/.bun/bin/pk --version >/dev/null 2>&1) || curl -fsSL ${installUrl} | bash --non-interactive`,
+							type: 'command',
+						},
+					],
+				},
+			],
+		},
+	};
+	await Bun.write(path.join(hooksDir, 'hooks.json'), JSON.stringify(hooksConfig, null, 2) + '\n');
+
+	// ── skills/pk/ ─────────────────────────────────────────────────────────────
 	const skillTarget = path.join(pluginDir, 'skills', 'pk');
 	const skillSrc = skillSourceDir();
 	if (!existsSync(skillTarget) && existsSync(skillSrc)) {

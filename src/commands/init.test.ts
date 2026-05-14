@@ -259,7 +259,6 @@ describe('parseHarnesses', () => {
 // ─── Cowork plugin writer ─────────────────────────────────────────────────────
 
 describe('writeCoworkPlugin', () => {
-	const FAKE_BIN = '/usr/local/bin/pk';
 	const ctx = () => ({
 		home: fakeHome,
 		knowledgeDir: path.join(fakeHome, '.pk', 'myproject'),
@@ -267,57 +266,62 @@ describe('writeCoworkPlugin', () => {
 		projectRoot: tmpDir,
 	});
 
-	test('creates global plugin dir with plugin.json and .mcp.json', async () => {
+	test('creates global plugin dir with plugin.json, .mcp.json, launcher, and hooks', async () => {
 		const c = ctx();
-		await writeCoworkPlugin(c, FAKE_BIN);
+		await writeCoworkPlugin(c);
 		const pluginDir = coworkPluginDir(fakeHome);
 		const manifest = JSON.parse(await Bun.file(path.join(pluginDir, '.claude-plugin', 'plugin.json')).text()) as {name: string};
-		// Plugin is project-agnostic — name is just 'pk', not 'pk-<project>'
 		expect(manifest.name).toBe('pk');
 		type McpEntry = {command: string; args: string[]; env: Record<string, string>};
 		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, McpEntry>};
 		const entry = mcp.mcpServers.pk;
 		expect(entry).toBeDefined();
-		expect(entry?.command).toBe(FAKE_BIN);
+		// Uses ${CLAUDE_PLUGIN_ROOT}/bin/pk
+		// eslint-disable-next-line no-template-curly-in-string
+		expect(entry?.command).toBe('${CLAUDE_PLUGIN_ROOT}/bin/pk');
 		expect(entry?.args).toEqual(['mcp']);
-		// Uses ${CLAUDE_PROJECT_DIR} — not a hardcoded knowledge dir
 		// eslint-disable-next-line no-template-curly-in-string
 		expect(entry?.env.PK_KNOWLEDGE_DIR).toBe('${CLAUDE_PROJECT_DIR}/.pk');
 	});
 
-	test('plugin dir is at ~/.pk/cowork-plugin regardless of project name', async () => {
+	test('writes executable launcher script at bin/pk', async () => {
 		const c = ctx();
-		await writeCoworkPlugin(c, FAKE_BIN);
+		await writeCoworkPlugin(c);
+		const pluginDir = coworkPluginDir(fakeHome);
+		const launcher = await Bun.file(path.join(pluginDir, 'bin', 'pk')).text();
+		expect(launcher).toContain('#!/usr/bin/env bash');
+		expect(launcher).toContain('command -v pk');
+		expect(launcher).toContain('.bun/bin/pk');
+	});
+
+	test('writes SessionStart bootstrap hook', async () => {
+		const c = ctx();
+		await writeCoworkPlugin(c);
+		const pluginDir = coworkPluginDir(fakeHome);
+		const hooks = JSON.parse(await Bun.file(path.join(pluginDir, 'hooks', 'hooks.json')).text()) as {hooks: {SessionStart: unknown[]}};
+		expect(hooks.hooks.SessionStart).toHaveLength(1);
+	});
+
+	test('plugin dir is at ~/.pk/cowork-plugin', async () => {
+		const c = ctx();
+		await writeCoworkPlugin(c);
 		expect(coworkPluginDir(fakeHome)).toBe(path.join(fakeHome, '.pk', 'cowork-plugin'));
 	});
 
 	test('bundles skill into skills/pk/', async () => {
 		const c = ctx();
-		await writeCoworkPlugin(c, FAKE_BIN);
+		await writeCoworkPlugin(c);
 		const pluginDir = coworkPluginDir(fakeHome);
 		expect(existsSync(path.join(pluginDir, 'skills', 'pk', 'SKILL.md'))).toBe(true);
 	});
 
-	test('is idempotent — re-run updates plugin.json and .mcp.json', async () => {
+	test('is idempotent — re-run does not break .mcp.json', async () => {
 		const c = ctx();
-		await writeCoworkPlugin(c, FAKE_BIN);
-		const altBin = '/alt/bin/pk';
-		await writeCoworkPlugin(c, altBin);
+		await writeCoworkPlugin(c);
+		await writeCoworkPlugin(c);
 		const pluginDir = coworkPluginDir(fakeHome);
 		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, {command: string}>};
-		expect(mcp.mcpServers.pk?.command).toBe(altBin);
-	});
-
-	test('throws when pk binary not found', async () => {
-		const c = ctx();
-		let threw = false;
-		try {
-			await writeCoworkPlugin(c, '');
-		} catch (error) {
-			threw = true;
-			expect(String(error)).toContain('pk binary not found');
-		}
-
-		expect(threw).toBe(true);
+		// eslint-disable-next-line no-template-curly-in-string
+		expect(mcp.mcpServers.pk?.command).toBe('${CLAUDE_PLUGIN_ROOT}/bin/pk');
 	});
 });
