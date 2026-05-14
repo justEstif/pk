@@ -22,8 +22,8 @@ export function skillSourceDir(): string {
 }
 
 /** Returns the ~/.pk home directory for all pk knowledge bases. */
-export function pkHome(): string {
-	return path.join(process.env.HOME ?? os.homedir(), '.pk');
+export function pkHome(home?: string): string {
+	return path.join(home ?? process.env.HOME ?? os.homedir(), '.pk');
 }
 
 /** Returns the directory for a named global project: ~/.pk/<name> */

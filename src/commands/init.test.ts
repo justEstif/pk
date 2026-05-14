@@ -267,22 +267,31 @@ describe('writeCoworkPlugin', () => {
 		projectRoot: tmpDir,
 	});
 
-	test('creates plugin dir with plugin.json and .mcp.json', async () => {
+	test('creates global plugin dir with plugin.json and .mcp.json', async () => {
 		const c = ctx();
 		await writeCoworkPlugin(c, FAKE_BIN);
-		const pluginDir = coworkPluginDir(c);
+		const pluginDir = coworkPluginDir(fakeHome);
 		const manifest = JSON.parse(await Bun.file(path.join(pluginDir, '.claude-plugin', 'plugin.json')).text()) as {name: string};
-		expect(manifest.name).toBe('pk-myproject');
+		// Plugin is project-agnostic — name is just 'pk', not 'pk-<project>'
+		expect(manifest.name).toBe('pk');
 		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, {command: string; args: string[]; env: Record<string, string>}>};
 		expect(mcp.mcpServers.pk.command).toBe(FAKE_BIN);
 		expect(mcp.mcpServers.pk.args).toEqual(['mcp']);
-		expect(mcp.mcpServers.pk.env.PK_KNOWLEDGE_DIR).toBe(c.knowledgeDir);
+		// Uses ${CLAUDE_PROJECT_DIR} — not a hardcoded knowledge dir
+		// eslint-disable-next-line no-template-curly-in-string
+		expect(mcp.mcpServers.pk.env.PK_KNOWLEDGE_DIR).toBe('${CLAUDE_PROJECT_DIR}/.pk');
+	});
+
+	test('plugin dir is at ~/.pk/cowork-plugin regardless of project name', async () => {
+		const c = ctx();
+		await writeCoworkPlugin(c, FAKE_BIN);
+		expect(coworkPluginDir(fakeHome)).toBe(path.join(fakeHome, '.pk', 'cowork-plugin'));
 	});
 
 	test('bundles skill into skills/pk/', async () => {
 		const c = ctx();
 		await writeCoworkPlugin(c, FAKE_BIN);
-		const pluginDir = coworkPluginDir(c);
+		const pluginDir = coworkPluginDir(fakeHome);
 		expect(existsSync(path.join(pluginDir, 'skills', 'pk', 'SKILL.md'))).toBe(true);
 	});
 
@@ -291,7 +300,7 @@ describe('writeCoworkPlugin', () => {
 		await writeCoworkPlugin(c, FAKE_BIN);
 		const altBin = '/alt/bin/pk';
 		await writeCoworkPlugin(c, altBin);
-		const pluginDir = coworkPluginDir(c);
+		const pluginDir = coworkPluginDir(fakeHome);
 		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, {command: string}>};
 		expect(mcp.mcpServers.pk.command).toBe(altBin);
 	});
