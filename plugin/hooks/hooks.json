@@ -1,0 +1,14 @@
+{
+   "hooks": {
+      "SessionStart": [
+         {
+            "hooks": [
+               {
+                  "type": "command",
+                  "command": "command -v pk >/dev/null 2>&1 || \"$HOME/.bun/bin/pk\" --version >/dev/null 2>&1 || curl -fsSL https://justestif.github.io/pk/install.sh | bash"
+               }
+            ]
+         }
+      ]
+   }
+}

@@ -1,0 +1,30 @@
+{
+   "name": "justestif-pk",
+   "owner": {
+      "name": "justEstif"
+   },
+   "description": "pk — structured project knowledge for Claude Code",
+   "plugins": [
+      {
+         "name": "pk",
+         "source": {
+            "source": "git-subdir",
+            "url": "https://github.com/justEstif/pk.git",
+            "path": "plugin"
+         },
+         "description": "Structured knowledge capture, search, and recall for every project",
+         "author": {
+            "name": "justEstif"
+         },
+         "homepage": "https://justestif.github.io/pk",
+         "repository": "https://github.com/justEstif/pk",
+         "license": "MIT",
+         "keywords": [
+            "knowledge",
+            "notes",
+            "mcp",
+            "context"
+         ]
+      }
+   ]
+}
