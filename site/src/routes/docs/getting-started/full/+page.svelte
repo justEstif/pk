@@ -1,5 +1,5 @@
 <script lang="ts">
-	type AITool = 'claude-code' | 'opencode' | 'pi' | 'claude-desktop' | 'codex';
+	type AITool = 'claude-code' | 'opencode' | 'pi' | 'cowork';
 	type OS = 'mac' | 'linux' | 'windows';
 
 	let aiTool = $state<AITool | null>(null);
@@ -57,27 +57,16 @@
 			cmd: 'npm install -g @earendil-works/pi-coding-agent',
 			docs: 'https://pi.dev'
 		},
-		'claude-desktop': {
-			label: 'Claude Desktop',
+			cowork: {
+			label: 'Claude Cowork',
 			cmd: null,
 			platformCmds: {
-				mac: '# Already a desktop app — download from claude.ai/download if needed',
-				linux: '# Already a desktop app — download from claude.ai/download if needed',
-				windows: '# Already a desktop app — download from claude.ai/download if needed'
+				mac: '# Cowork is the agentic tab in Claude — download from claude.ai/download',
+				linux: '# Cowork is the agentic tab in Claude — download from claude.ai/download',
+				windows: '# Cowork is the agentic tab in Claude — download from claude.ai/download'
 			},
-			note: 'Claude Desktop is a desktop app — no terminal install needed.',
+			note: 'Cowork is part of the Claude desktop app — no separate install needed.',
 			docs: 'https://claude.ai/download'
-		},
-		codex: {
-			label: 'Codex',
-			cmd: null,
-			platformCmds: {
-				mac: '# Already a desktop app — download from openai.com/codex if needed',
-				linux: '# Already a desktop app — download from openai.com/codex if needed',
-				windows: '# Already a desktop app — download from openai.com/codex if needed'
-			},
-			note: 'Codex is a desktop app — no terminal install needed.',
-			docs: 'https://openai.com/codex'
 		}
 	};
 
@@ -190,10 +179,10 @@
 					</div>
 					<h2 class="mb-1 text-lg font-semibold">Which AI assistant do you want to use?</h2>
 					<p class="mb-4 text-sm text-base-content/60">
-						pk works with all of these. Use Claude Code, OpenCode, or Pi for terminal workflows. Use Claude Desktop or Codex if you prefer a desktop app.
+						pk works with all of these. Use Claude Code, OpenCode, or Pi for terminal workflows. Use Claude Cowork if you prefer the agentic tab in the Claude desktop app.
 					</p>
 					<div class="flex flex-wrap gap-3">
-						{#each [['claude-code', 'Claude Code'], ['opencode', 'OpenCode'], ['pi', 'Pi'], ['claude-desktop', 'Claude Desktop'], ['codex', 'Codex']] as const as [val, label]}
+						{#each [['claude-code', 'Claude Code'], ['opencode', 'OpenCode'], ['pi', 'Pi'], ['cowork', 'Claude Cowork']] as const as [val, label]}
 							<button
 								class="btn px-6 py-2.5 text-sm {aiTool === val
 									? 'btn-primary'
@@ -369,9 +358,9 @@
 							Step 6
 						</div>
 					<h2 class="mb-1 text-lg font-semibold">Install {harnessInstall[selectedTool].label}</h2>
-					{#if aiTool === 'claude-desktop' || aiTool === 'codex'}
+					{#if aiTool === 'cowork'}
 						<p class="mb-4 text-sm text-base-content/60">
-							This is a desktop app — no terminal install needed. Download it if you don't have it already.
+							Cowork is the agentic tab in the Claude desktop app — no terminal install needed. Download it if you don't have it already.
 						</p>
 					{:else}
 						<p class="mb-4 text-sm text-base-content/60">
@@ -450,9 +439,9 @@
 					<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.gitignore</code>, and wires up your AI tool.
 					Use <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">--global</code> to store in <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">~/.pk/&lt;name&gt;/</code> instead.
 				</p>
-				{#if aiTool === 'claude-desktop' || aiTool === 'codex'}
+				{#if aiTool === 'cowork'}
 					<p class="mb-4 text-sm text-base-content/60">
-						Desktop apps don't run inside a project folder, so use <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">--global</code> and give your project a name.
+						Cowork doesn't run inside a project folder, so use <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">--global</code> and give your project a name.
 					</p>
 				{/if}
 						<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
@@ -465,16 +454,16 @@
 									class="font-mono text-xs {copiedMap['init']
 										? 'text-success'
 										: 'text-base-content/40'}"
-									onclick={() => copy('init', (aiTool === 'claude-desktop' || aiTool === 'codex') ? `pk init my-project --harness ${aiTool} --global` : 'cd your-project\npk init')}
+									onclick={() => copy('init', aiTool === 'cowork' ? 'pk init my-project --harness cowork --global' : 'cd your-project\npk init')}
 									>{copiedMap['init'] ? 'copied!' : 'copy'}</button
 								>
 							</div>
-{#if aiTool === 'claude-desktop' || aiTool === 'codex'}
-							<div class="px-4 py-3 font-mono text-sm leading-loose">
-								<div>
-									<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init my-project --harness {aiTool} --global</span>
-								</div>
+{#if aiTool === 'cowork'}
+						<div class="px-4 py-3 font-mono text-sm leading-loose">
+							<div>
+								<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init my-project --harness cowork --global</span>
 							</div>
+						</div>
 						{:else}
 							<div class="px-4 py-3 font-mono text-sm leading-loose">
 								<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">cd your-project</span></div>
@@ -484,8 +473,8 @@
 						</div>
 						<label class="flex cursor-pointer items-center gap-3">
 							<input type="checkbox" class="checkbox checkbox-primary" bind:checked={doneInit} />
-							{#if aiTool === 'claude-desktop' || aiTool === 'codex'}
-						<span class="text-sm">Done — now restart {harnessInstall[aiTool].label}. The pk tools will appear in your next conversation.</span>
+							{#if aiTool === 'cowork'}
+						<span class="text-sm">Done — run: <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">claude --plugin-dir ~/.pk/my-project-cowork</code> (or upload via Cowork UI)</span>
 					{:else}
 						<span class="text-sm">Done — pk initialized successfully</span>
 					{/if}

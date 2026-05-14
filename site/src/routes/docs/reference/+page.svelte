@@ -104,7 +104,7 @@
 				{
 					href: `${base}/docs/reference/mcp`,
 					label: 'MCP',
-					desc: 'Claude Desktop and Codex setup, available tools, and log file.'
+					desc: 'Cowork plugin setup, available tools, and log file.'
 				}
 			] as card}
 				<a

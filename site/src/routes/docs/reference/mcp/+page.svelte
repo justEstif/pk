@@ -5,14 +5,14 @@
 
 <svelte:head>
 	<title>MCP — pk</title>
-	<meta name="description" content="Use pk from Claude Desktop and Codex via the MCP protocol." />
+	<meta name="description" content="Use pk from Claude Cowork — Claude's agentic tab — via the MCP protocol." />
 </svelte:head>
 
 <div class="space-y-10">
 	<div class="not-prose">
 		<h1 style="font-family:'Unbounded',sans-serif" class="mb-2 text-3xl font-black">MCP</h1>
 		<p class="text-lg text-base-content/60">
-			Use pk from Claude Desktop and Codex — no terminal required per session.
+			Use pk from Claude Cowork — Claude's agentic tab.
 		</p>
 	</div>
 
@@ -37,16 +37,19 @@
 
 		<div class="not-prose space-y-3">
 			<CodeBlock
-				label="Claude Desktop"
-				lines={['pk init my-project --harness claude-desktop --global']}
-			/>
-			<CodeBlock
-				label="Codex"
-				lines={['pk init my-project --harness codex --global']}
+				label="Claude Cowork"
+				lines={['pk init my-project --harness cowork --global']}
 			/>
 		</div>
 
-		<p>Then restart the app. The pk tools will appear in your next conversation.</p>
+		<p>This creates <code>~/.pk/my-project-cowork/</code> — a Cowork plugin directory containing <code>.mcp.json</code>, <code>plugin.json</code>, and the pk skill bundle. Install it with:</p>
+		<div class="not-prose">
+			<CodeBlock
+				label="install"
+				lines={['claude --plugin-dir ~/.pk/my-project-cowork']}
+			/>
+		</div>
+		<p>Or upload via Cowork → Customize → Upload plugin. The pk tools will appear in your next conversation.</p>
 
 		<p>Re-running <code>pk init</code> with the same name updates the config entry — it doesn't duplicate it.</p>
 	</section>
@@ -54,19 +57,14 @@
 	<!-- What gets written -->
 	<section class="space-y-4">
 		<h2>What gets written</h2>
-		<div class="not-prose grid gap-4 sm:grid-cols-2">
+		<div class="not-prose">
 			<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-2">
-				<p class="font-mono text-xs text-base-content/40">claude-desktop</p>
-				<p class="font-mono text-xs text-base-content/70">~/Library/Application Support/Claude/<br/>claude_desktop_config.json</p>
-				<p class="text-xs text-base-content/50">Linux: ~/.config/Claude/...</p>
-			</div>
-			<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-2">
-				<p class="font-mono text-xs text-base-content/40">codex</p>
-				<p class="font-mono text-xs text-base-content/70">~/.codex/config.toml</p>
-				<p class="text-xs text-base-content/50">Global Codex config</p>
+				<p class="font-mono text-xs text-base-content/40">cowork</p>
+				<p class="font-mono text-xs text-base-content/70">~/.pk/&lt;name&gt;-cowork/</p>
+				<p class="text-xs text-base-content/50">Plugin directory (plugin.json, .mcp.json, skill bundle)</p>
 			</div>
 		</div>
-		<p>Both configs set <code>PK_KNOWLEDGE_DIR</code> to your global knowledge store. The binary path is resolved at init time — desktop apps launch with a minimal PATH that won't find <code>pk</code> otherwise.</p>
+		<p>The plugin sets <code>PK_KNOWLEDGE_DIR</code> to your global knowledge store. The binary path is resolved at init time — Cowork launches with a minimal PATH that won't find <code>pk</code> otherwise.</p>
 	</section>
 
 	<!-- Tools -->
@@ -101,8 +99,8 @@
 			<CodeBlock
 				label="one per project"
 				lines={[
-					'pk init project-alpha --harness claude-desktop --global',
-					'pk init project-beta --harness claude-desktop --global',
+					'pk init project-alpha --harness cowork --global',
+					'pk init project-beta --harness cowork --global',
 				]}
 			/>
 		</div>

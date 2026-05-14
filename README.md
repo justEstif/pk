@@ -52,11 +52,10 @@ Non-interactive:
 pk init --harness claude                        # local: knowledge in .pk/ (default)
 pk init my-project --harness claude --global   # global: knowledge in ~/.pk/my-project/
 pk init my-project --harness claude,opencode --global   # multiple harnesses
-pk init my-project --harness claude-desktop --global   # Claude Desktop app
-pk init my-project --harness codex --global            # Codex desktop app
+pk init my-project --harness cowork --global          # Cowork (Claude's agentic tab)
 ```
 
-Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi), `claude-desktop` (Claude Desktop), `codex` (Codex Desktop).
+Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi), `cowork` (Cowork).
 
 `pk init` does five things:
 
@@ -71,10 +70,9 @@ Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi), `
 | `claude`          | `.claude/hooks/pk-eval.ts`, `.claude/settings.json`                            |
 | `opencode`        | `.opencode/plugins/pk-eval.ts`                                                 |
 | `pi`              | `.pi/extensions/pk-eval.ts`                                                    |
-| `claude-desktop`  | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)      |
-| `codex`           | `~/.codex/config.toml`                                                         |
+| `cowork`          | `~/.pk/<name>-cowork/` (Cowork plugin dir — `claude --plugin-dir`)             |
 
-> **Desktop harnesses** (`claude-desktop`, `codex`) configure an MCP server entry in the app's config rather than installing a hook. They require `--global` since desktop apps don't run inside a project folder. Restart the app after `pk init`.
+> **Cowork harness** (`cowork`) creates a plugin directory at `~/.pk/<name>-cowork/` and bundles the pk skill inside it. Use `--global` since Cowork doesn't run inside a project folder. Install with `claude --plugin-dir ~/.pk/<name>-cowork` or upload via the Cowork UI.
 
 > **Override:** `PK_KNOWLEDGE_DIR` env var takes precedence over `.pk/config.json` if you need to point at a different project temporarily.
 
@@ -94,7 +92,7 @@ pk vocab
 pk index                               # rebuild FTS5 + markdown indexes
 pk lint [paths...]
 pk prime                               # output priming context for hooks
-pk mcp                                 # start MCP server (used by Desktop harnesses)
+pk mcp                                 # start MCP server (used by Cowork harness)
 pk instructions <command>
 pk config [--embedding <model>] [--no-embedding] [--base-url <url>]
 ```
