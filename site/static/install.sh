@@ -15,6 +15,7 @@ DIM='\033[2m'
 RESET='\033[0m'
 
 TOTAL_STEPS=4
+INSTALL_OLLAMA=false  # resolved during step 4
 step=0
 
 step() {
@@ -146,16 +147,77 @@ else
   ok "pk installed — $(pk --version 2>/dev/null || echo 'installed')"
 fi
 
-# ── Step 4: Ollama (optional) ─────────────────────────────────────────────────
+# ── Step 4: Ollama (semantic search) ────────────────────────────────────────
 
-step "Ollama (optional — semantic search)"
+step "Semantic search"
 
 if command -v ollama &>/dev/null; then
-  skip "already installed"
+  skip "Ollama already installed"
+  INSTALL_OLLAMA=false
+
+  # Ensure model + config are set even on re-runs
+  if ! ollama list 2>/dev/null | grep -q 'nomic-embed-text'; then
+    echo -e "  ${DIM}Pulling nomic-embed-text model...${RESET}"
+    ollama pull nomic-embed-text
+  fi
+  run pk config --embedding nomic-embed-text
+  ok "Semantic search enabled"
 else
-  warn "Not installed. Keyword search works without it."
-  warn "To enable semantic search later: https://ollama.com"
-  warn "Then run: ollama pull nomic-embed-text && pk config --embedding nomic-embed-text"
+  echo -e "  Finds notes by ${BOLD}meaning${RESET}, not just keywords. Needs ~270 MB download."
+  echo ""
+
+  # curl | bash swallows stdin; read from /dev/tty if available
+  if [[ -t 0 ]] || [[ -e /dev/tty ]]; then
+    TTY="/dev/tty"
+    [[ ! -t 0 ]] || TTY="/dev/stdin"
+    echo -ne "  Install Ollama for semantic search? [Y/n] "
+    read -r REPLY <"$TTY" || REPLY="y"
+  else
+    warn "Non-interactive shell — skipping Ollama. Run the installer manually to enable semantic search."
+    REPLY="n"
+  fi
+
+  case "${REPLY:-y}" in
+    [nN]*)
+      skip "Skipped. To enable later:"
+      echo -e "  ${DIM}  https://ollama.com  →  ollama pull nomic-embed-text  →  pk config --embedding nomic-embed-text${RESET}"
+      INSTALL_OLLAMA=false
+      ;;
+    *)
+      INSTALL_OLLAMA=true
+      case "$PLATFORM" in
+        macOS)
+          if command -v brew &>/dev/null; then
+            echo -e "  ${DIM}Installing via Homebrew...${RESET}"
+            run brew install ollama
+          else
+            warn "Homebrew not found."
+            die "Install Homebrew first (https://brew.sh), then rerun this script."
+          fi
+          ;;
+        Linux)
+          echo -e "  ${DIM}Installing Ollama...${RESET}"
+          run curl -fsSL https://ollama.com/install.sh | sh
+          ;;
+      esac
+      ok "Ollama installed"
+
+      # Start server in the background
+      echo -e "  ${DIM}Starting Ollama server...${RESET}"
+      ollama serve >"$LOG" 2>&1 &
+      OLLAMA_PID=$!
+      sleep 3  # give server time to bind
+
+      # Pull model — let ollama's own progress bar show
+      echo -e "  ${DIM}Pulling nomic-embed-text (~270 MB)...${RESET}"
+      ollama pull nomic-embed-text
+
+      kill "$OLLAMA_PID" 2>/dev/null || true
+
+      run pk config --embedding nomic-embed-text
+      ok "Semantic search enabled"
+      ;;
+  esac
 fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────
