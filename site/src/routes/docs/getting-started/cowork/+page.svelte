@@ -27,10 +27,13 @@
 		<div class="space-y-6">
 			<!-- Step 1 -->
 			<div class="space-y-2">
-				<p class="font-semibold">1. Install pk globally</p>
+				<p class="font-semibold">1. Install pk</p>
 				<div class="not-prose">
-					<CodeBlock label="terminal" lines={['npm install -g @justestif/pk']} />
+					<CodeBlock label="terminal" lines={['curl -fsSL https://justestif.github.io/pk/install.sh | bash']} />
 				</div>
+				<p class="text-sm text-base-content/60">
+					Installs Bun (required), Git, and pk in one shot.
+				</p>
 			</div>
 
 			<!-- Step 2 -->
