@@ -21,6 +21,20 @@ export function skillSourceDir(): string {
 	return path.resolve(import.meta.dir, '..', '..', 'skill');
 }
 
+/**
+ * Returns the directory containing the static plugin bundle shipped with this package.
+ *
+ * Same resolution strategy as skillSourceDir: dist/ → one level up; src/lib/ → two up.
+ */
+export function pluginSourceDir(): string {
+	const fromDist = path.resolve(import.meta.dir, '..', 'plugin');
+	if (existsSync(fromDist)) {
+		return fromDist;
+	}
+
+	return path.resolve(import.meta.dir, '..', '..', 'plugin');
+}
+
 /** Returns the ~/.pk home directory for all pk knowledge bases. */
 export function pkHome(home?: string): string {
 	return path.join(home ?? process.env.HOME ?? os.homedir(), '.pk');
