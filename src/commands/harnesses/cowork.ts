@@ -37,7 +37,7 @@ export function coworkPluginDir(home: string): string {
  *
  * @param ctx  Harness context (home used for plugin dir location)
  */
-export async function writeCoworkPlugin(ctx: HarnessContext): Promise<string> {
+export function writeCoworkPlugin(ctx: HarnessContext): Promise<string> {
    const pluginDir = coworkPluginDir(ctx.home);
    const src = pluginSourceDir();
 
@@ -74,5 +74,5 @@ export async function writeCoworkPlugin(ctx: HarnessContext): Promise<string> {
       cpSync(skillSrc, skillTarget, { recursive: true });
    }
 
-   return pluginDir;
+   return Promise.resolve(pluginDir);
 }
