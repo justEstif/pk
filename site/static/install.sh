@@ -15,11 +15,7 @@ DIM='\033[2m'
 RESET='\033[0m'
 
 TOTAL_STEPS=4
-# Parse flags
-NON_INTERACTIVE=false
-for arg in "$@"; do
-  [[ "$arg" == "--non-interactive" ]] && NON_INTERACTIVE=true
-done
+
 step=0
 
 step() {
@@ -96,7 +92,8 @@ step "Bun"
 if command -v bun &>/dev/null; then
   skip "already installed — bun $(bun --version)"
 else
-  run curl -fsSL https://bun.sh/install | bash
+  # Bun installer needs its stdout intact — don't use run() here
+  curl -fsSL https://bun.sh/install | bash >>"$LOG" 2>&1
 
   # Source into current session
   export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
@@ -172,7 +169,7 @@ else
       ;;
     Linux)
       echo -e "  ${DIM}Installing Ollama...${RESET}"
-      run curl -fsSL https://ollama.com/install.sh | sh
+      curl -fsSL https://ollama.com/install.sh | sh >>"$LOG" 2>&1
       ;;
   esac
   ok "Ollama installed"

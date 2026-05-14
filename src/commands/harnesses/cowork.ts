@@ -110,7 +110,7 @@ export async function writeCoworkPlugin(ctx: HarnessContext): Promise<string> {
 				{
 					hooks: [
 						{
-							command: `command -v pk >/dev/null 2>&1 || ($HOME/.bun/bin/pk --version >/dev/null 2>&1) || curl -fsSL ${installUrl} | bash --non-interactive`,
+							command: `command -v pk >/dev/null 2>&1 || "$HOME/.bun/bin/pk" --version >/dev/null 2>&1 || curl -fsSL ${installUrl} | bash`,
 							type: 'command',
 						},
 					],
