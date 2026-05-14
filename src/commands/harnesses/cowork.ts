@@ -1,9 +1,10 @@
 import path from 'node:path';
 import {
-   chmodSync, cpSync, existsSync, mkdirSync,
-} from 'node:fs';
-import { pluginSourceDir, pkHome } from '../../lib/paths.ts';
-import type { HarnessContext } from '../../lib/project.ts';
+	chmod, cp, mkdir,
+} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
+import {pluginSourceDir, pkHome} from '../../lib/paths.ts';
+import type {HarnessContext} from '../../lib/project.ts';
 
 /**
  * Returns the path to the global Cowork plugin directory: ~/.pk/cowork-plugin/
@@ -12,7 +13,7 @@ import type { HarnessContext } from '../../lib/project.ts';
  * pk root at runtime via ${CLAUDE_PROJECT_DIR} — no per-project install needed.
  */
 export function coworkPluginDir(home: string): string {
-   return path.join(pkHome(home), 'cowork-plugin');
+	return path.join(pkHome(home), 'cowork-plugin');
 }
 
 /**
@@ -37,42 +38,34 @@ export function coworkPluginDir(home: string): string {
  *
  * @param ctx  Harness context (home used for plugin dir location)
  */
-export function writeCoworkPlugin(ctx: HarnessContext): Promise<string> {
-   const pluginDir = coworkPluginDir(ctx.home);
-   const src = pluginSourceDir();
+export async function writeCoworkPlugin(ctx: HarnessContext): Promise<string> {
+	const pluginDir = coworkPluginDir(ctx.home);
+	const src = pluginSourceDir();
 
-   // Copy everything from plugin/ except skills/ — skills only written once.
-   // Order: create dest root, copy non-skill files, handle skills separately.
-   mkdirSync(pluginDir, { recursive: true });
+	await mkdir(pluginDir, {recursive: true});
 
-   const filesToCopy = [
-      '.claude-plugin',
-      '.mcp.json',
-      'bin',
-      'hooks',
-   ];
+	for (const entry of ['.claude-plugin', '.mcp.json', 'bin', 'hooks']) {
+		const srcPath = path.join(src, entry);
+		const destPath = path.join(pluginDir, entry);
+		if (existsSync(srcPath)) {
+			// eslint-disable-next-line no-await-in-loop
+			await cp(srcPath, destPath, {recursive: true, force: true});
+		}
+	}
 
-   for (const entry of filesToCopy) {
-      const srcPath = path.join(src, entry);
-      const destPath = path.join(pluginDir, entry);
-      if (existsSync(srcPath)) {
-         cpSync(srcPath, destPath, { recursive: true, force: true });
-      }
-   }
+	// Ensure bin/pk is executable after copy.
+	const binPk = path.join(pluginDir, 'bin', 'pk');
+	if (existsSync(binPk)) {
+		await chmod(binPk, 0o755);
+	}
 
-   // Ensure bin/pk is executable after copy.
-   const binPk = path.join(pluginDir, 'bin', 'pk');
-   if (existsSync(binPk)) {
-      chmodSync(binPk, 0o755);
-   }
+	// Skills are only written on first install — preserve any user edits.
+	const skillTarget = path.join(pluginDir, 'skills', 'pk');
+	const skillSrc = path.join(src, 'skills', 'pk');
+	if (!existsSync(skillTarget) && existsSync(skillSrc)) {
+		await mkdir(path.dirname(skillTarget), {recursive: true});
+		await cp(skillSrc, skillTarget, {recursive: true});
+	}
 
-   // Skills are only written on first install — preserve any user edits.
-   const skillTarget = path.join(pluginDir, 'skills', 'pk');
-   const skillSrc = path.join(src, 'skills', 'pk');
-   if (!existsSync(skillTarget) && existsSync(skillSrc)) {
-      mkdirSync(path.dirname(skillTarget), { recursive: true });
-      cpSync(skillSrc, skillTarget, { recursive: true });
-   }
-
-   return Promise.resolve(pluginDir);
+	return pluginDir;
 }
