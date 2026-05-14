@@ -274,12 +274,15 @@ describe('writeCoworkPlugin', () => {
 		const manifest = JSON.parse(await Bun.file(path.join(pluginDir, '.claude-plugin', 'plugin.json')).text()) as {name: string};
 		// Plugin is project-agnostic — name is just 'pk', not 'pk-<project>'
 		expect(manifest.name).toBe('pk');
-		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, {command: string; args: string[]; env: Record<string, string>}>};
-		expect(mcp.mcpServers.pk.command).toBe(FAKE_BIN);
-		expect(mcp.mcpServers.pk.args).toEqual(['mcp']);
+		type McpEntry = {command: string; args: string[]; env: Record<string, string>};
+		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, McpEntry>};
+		const entry = mcp.mcpServers.pk;
+		expect(entry).toBeDefined();
+		expect(entry?.command).toBe(FAKE_BIN);
+		expect(entry?.args).toEqual(['mcp']);
 		// Uses ${CLAUDE_PROJECT_DIR} — not a hardcoded knowledge dir
 		// eslint-disable-next-line no-template-curly-in-string
-		expect(mcp.mcpServers.pk.env.PK_KNOWLEDGE_DIR).toBe('${CLAUDE_PROJECT_DIR}/.pk');
+		expect(entry?.env.PK_KNOWLEDGE_DIR).toBe('${CLAUDE_PROJECT_DIR}/.pk');
 	});
 
 	test('plugin dir is at ~/.pk/cowork-plugin regardless of project name', async () => {
@@ -302,7 +305,7 @@ describe('writeCoworkPlugin', () => {
 		await writeCoworkPlugin(c, altBin);
 		const pluginDir = coworkPluginDir(fakeHome);
 		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, {command: string}>};
-		expect(mcp.mcpServers.pk.command).toBe(altBin);
+		expect(mcp.mcpServers.pk?.command).toBe(altBin);
 	});
 
 	test('throws when pk binary not found', async () => {

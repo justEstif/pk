@@ -47,7 +47,7 @@ async function syncCoworkRules(dir: string): Promise<void> {
 	mkdirSync(rulesDir, {recursive: true});
 
 	try {
-		const notes = await selectNotes(dir, undefined, {sessionStart: true});
+		const notes = await selectNotes(dir, undefined, {limit: 20, sessionStart: true});
 		const body = notes.length === 0
 			? ''
 			: formatSynthesizeOutput(notes, 'session context');
