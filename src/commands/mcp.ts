@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-deprecated */
+/* eslint-disable @typescript-eslint/no-deprecated */
 /**
  * Pk mcp — stdio MCP server for Claude Desktop and Codex Desktop.
  *
