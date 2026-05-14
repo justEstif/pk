@@ -14,7 +14,10 @@
 		{
 			href: `${base}/docs/getting-started`,
 			label: 'Getting started',
-			children: [{ href: `${base}/docs/getting-started/full`, label: 'Full guide' }]
+			children: [
+				{ href: `${base}/docs/getting-started/full`, label: 'Full guide' },
+				{ href: `${base}/docs/getting-started/cowork`, label: 'Cowork' }
+			]
 		},
 		{ href: `${base}/docs/usage`, label: 'Usage' },
 		{

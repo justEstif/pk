@@ -428,7 +428,8 @@
 							Step 7
 						</div>
 						<h2 class="mb-1 text-lg font-semibold">Initialize pk in your project</h2>
-<p class="mb-4 text-sm text-base-content/60">
+{#if aiTool !== 'cowork'}
+				<p class="mb-4 text-sm text-base-content/60">
 					Open your terminal, navigate to your project folder, and run <code
 						class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">pk init</code
 					>. By default this creates the knowledge store at
@@ -439,46 +440,43 @@
 					<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.gitignore</code>, and wires up your AI tool.
 					Use <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">--global</code> to store in <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">~/.pk/&lt;name&gt;/</code> instead.
 				</p>
-				{#if aiTool === 'cowork'}
-					<p class="mb-4 text-sm text-base-content/60">
-						The plugin is installed once. Every Cowork project you create automatically gets its own knowledge base — no per-project setup needed.
-					</p>
-				{/if}
-						<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
-							<div
-								class="flex items-center justify-between px-4 py-2"
-								style="border-bottom:1px solid #292524"
-							>
-								<span class="font-mono text-xs" style="color:#57534E">initialize</span>
-								<button
-									class="font-mono text-xs {copiedMap['init']
-										? 'text-success'
-										: 'text-base-content/40'}"
-									onclick={() => copy('init', aiTool === 'cowork' ? 'pk init --harness cowork' : 'cd your-project\npk init')}
-									>{copiedMap['init'] ? 'copied!' : 'copy'}</button
-								>
-							</div>
-{#if aiTool === 'cowork'}
-					<div class="px-4 py-3 font-mono text-sm leading-loose">
-						<div>
-							<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init --harness cowork</span>
-						</div>
+			{/if}
+			{#if aiTool === 'cowork'}
+				<p class="mb-4 text-sm text-base-content/60">
+					The plugin is installed once. Every Cowork project you create automatically gets its own knowledge base — no per-project setup needed.
+					<a href="{base}/docs/getting-started/cowork" class="link">See the full Cowork guide →</a>
+				</p>
+				<div class="card bg-base-300 card-border">
+					<div class="card-body gap-3">
+						<p class="text-sm text-base-content/70">Cowork has its own step-by-step guide — easier than the wizard for desktop users.</p>
+						<a href="{base}/docs/getting-started/cowork" class="btn btn-primary btn-sm w-fit">→ Cowork setup guide</a>
 					</div>
-						{:else}
-							<div class="px-4 py-3 font-mono text-sm leading-loose">
-								<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">cd your-project</span></div>
-								<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init</span></div>
-							</div>
-						{/if}
-						</div>
-						<label class="flex cursor-pointer items-center gap-3">
-							<input type="checkbox" class="checkbox checkbox-primary" bind:checked={doneInit} />
-					{#if aiTool === 'cowork'}
-					<span class="text-sm">Done — run: <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">claude --plugin-dir ~/.pk/cowork-plugin</code> (or upload via Cowork UI)</span>
-					{:else}
-						<span class="text-sm">Done — pk initialized successfully</span>
-					{/if}
-						</label>
+				</div>
+			{:else}
+				<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
+					<div
+						class="flex items-center justify-between px-4 py-2"
+						style="border-bottom:1px solid #292524"
+					>
+						<span class="font-mono text-xs" style="color:#57534E">initialize</span>
+						<button
+							class="font-mono text-xs {copiedMap['init']
+								? 'text-success'
+								: 'text-base-content/40'}"
+							onclick={() => copy('init', 'cd your-project\npk init')}
+							>{copiedMap['init'] ? 'copied!' : 'copy'}</button
+						>
+					</div>
+					<div class="px-4 py-3 font-mono text-sm leading-loose">
+						<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">cd your-project</span></div>
+						<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init</span></div>
+					</div>
+				</div>
+				<label class="flex cursor-pointer items-center gap-3">
+					<input type="checkbox" class="checkbox checkbox-primary" bind:checked={doneInit} />
+					<span class="text-sm">Done — pk initialized successfully</span>
+				</label>
+			{/if}
 					</div>
 				</div>
 			{/if}
