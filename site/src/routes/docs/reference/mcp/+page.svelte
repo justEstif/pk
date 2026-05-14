@@ -70,7 +70,7 @@
 			</div>
 		</div>
 		<p>
-			The plugin sets <code>PK_KNOWLEDGE_DIR</code> to <code>{`${CLAUDE_PROJECT_DIR}/.pk`}</code>.
+			The plugin sets <code>PK_KNOWLEDGE_DIR</code> to <code>{'${CLAUDE_PROJECT_DIR}/.pk'}</code>.
 			Cowork substitutes the current project's folder path at runtime, so the knowledge base always
 			lives alongside the project — not at a hardcoded location. The binary path is resolved at init
 			time so Cowork can find <code>pk</code> regardless of its minimal launch PATH.
