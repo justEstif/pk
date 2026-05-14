@@ -441,7 +441,7 @@
 				</p>
 				{#if aiTool === 'cowork'}
 					<p class="mb-4 text-sm text-base-content/60">
-						Cowork doesn't run inside a project folder, so use <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">--global</code> and give your project a name.
+						The plugin is installed once. Every Cowork project you create automatically gets its own knowledge base — no per-project setup needed.
 					</p>
 				{/if}
 						<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
@@ -454,16 +454,16 @@
 									class="font-mono text-xs {copiedMap['init']
 										? 'text-success'
 										: 'text-base-content/40'}"
-									onclick={() => copy('init', aiTool === 'cowork' ? 'pk init my-project --harness cowork --global' : 'cd your-project\npk init')}
+									onclick={() => copy('init', aiTool === 'cowork' ? 'pk init --harness cowork' : 'cd your-project\npk init')}
 									>{copiedMap['init'] ? 'copied!' : 'copy'}</button
 								>
 							</div>
 {#if aiTool === 'cowork'}
-						<div class="px-4 py-3 font-mono text-sm leading-loose">
-							<div>
-								<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init my-project --harness cowork --global</span>
-							</div>
+					<div class="px-4 py-3 font-mono text-sm leading-loose">
+						<div>
+							<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init --harness cowork</span>
 						</div>
+					</div>
 						{:else}
 							<div class="px-4 py-3 font-mono text-sm leading-loose">
 								<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">cd your-project</span></div>
@@ -473,8 +473,8 @@
 						</div>
 						<label class="flex cursor-pointer items-center gap-3">
 							<input type="checkbox" class="checkbox checkbox-primary" bind:checked={doneInit} />
-							{#if aiTool === 'cowork'}
-						<span class="text-sm">Done — run: <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">claude --plugin-dir ~/.pk/my-project-cowork</code> (or upload via Cowork UI)</span>
+					{#if aiTool === 'cowork'}
+					<span class="text-sm">Done — run: <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">claude --plugin-dir ~/.pk/cowork-plugin</code> (or upload via Cowork UI)</span>
 					{:else}
 						<span class="text-sm">Done — pk initialized successfully</span>
 					{/if}

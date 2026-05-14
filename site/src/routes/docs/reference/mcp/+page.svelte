@@ -28,30 +28,35 @@
 			The tools are identical to the CLI commands. <code>pk_search</code> is <code>pk search</code>.
 			<code>pk_new</code> is <code>pk new</code>. Same logic, different transport.
 		</p>
+		<p>
+			In Cowork, each project has a folder on disk (<code>~/Documents/Claude/Projects/&lt;name&gt;/</code>).
+			That folder is the pk project root — knowledge lives at <code>&lt;project-folder&gt;/.pk/</code>,
+			co-located with the project rather than in a global store.
+		</p>
 	</section>
 
 	<!-- Setup -->
 	<section class="space-y-4">
 		<h2>Setup</h2>
-		<p>Run once from your terminal. Desktop apps launch with no project folder, so <code>--global</code> is required.</p>
+		<p>Run once from your terminal. A single global plugin serves every Cowork project — no per-project init required.</p>
 
 		<div class="not-prose space-y-3">
 			<CodeBlock
 				label="Claude Cowork"
-				lines={['pk init my-project --harness cowork --global']}
+				lines={['pk init --harness cowork']}
 			/>
 		</div>
 
-		<p>This creates <code>~/.pk/my-project-cowork/</code> — a Cowork plugin directory containing <code>.mcp.json</code>, <code>plugin.json</code>, and the pk skill bundle. Install it with:</p>
+		<p>This creates <code>~/.pk/cowork-plugin/</code> — a shared plugin directory containing <code>.mcp.json</code>, <code>plugin.json</code>, and the pk skill bundle. Install it with:</p>
 		<div class="not-prose">
 			<CodeBlock
 				label="install"
-				lines={['claude --plugin-dir ~/.pk/my-project-cowork']}
+				lines={['claude --plugin-dir ~/.pk/cowork-plugin']}
 			/>
 		</div>
 		<p>Or upload via Cowork → Customize → Upload plugin. The pk tools will appear in your next conversation.</p>
 
-		<p>Re-running <code>pk init</code> with the same name updates the config entry — it doesn't duplicate it.</p>
+		<p>Once installed, every Cowork project automatically gets its own <code>.pk/</code> knowledge base — created on the first session if it doesn't exist yet.</p>
 	</section>
 
 	<!-- What gets written -->
@@ -60,11 +65,28 @@
 		<div class="not-prose">
 			<div class="rounded-xl border border-base-300 bg-base-200 px-5 py-4 space-y-2">
 				<p class="font-mono text-xs text-base-content/40">cowork</p>
-				<p class="font-mono text-xs text-base-content/70">~/.pk/&lt;name&gt;-cowork/</p>
+				<p class="font-mono text-xs text-base-content/70">~/.pk/cowork-plugin/</p>
 				<p class="text-xs text-base-content/50">Plugin directory (plugin.json, .mcp.json, skill bundle)</p>
 			</div>
 		</div>
-		<p>The plugin sets <code>PK_KNOWLEDGE_DIR</code> to your global knowledge store. The binary path is resolved at init time — Cowork launches with a minimal PATH that won't find <code>pk</code> otherwise.</p>
+		<p>
+			The plugin sets <code>PK_KNOWLEDGE_DIR</code> to <code>{`${CLAUDE_PROJECT_DIR}/.pk`}</code>.
+			Cowork substitutes the current project's folder path at runtime, so the knowledge base always
+			lives alongside the project — not at a hardcoded location. The binary path is resolved at init
+			time so Cowork can find <code>pk</code> regardless of its minimal launch PATH.
+		</p>
+	</section>
+
+	<!-- Session priming -->
+	<section class="space-y-3">
+		<h2>Session priming</h2>
+		<p>
+			After every write operation — and at server startup — <code>pk mcp</code> writes a knowledge
+			summary to <code>&lt;project&gt;/.claude/rules/pk.md</code>. Cowork reads files in
+			<code>.claude/rules/</code> natively at the start of each session via InstructionsLoaded,
+			so your agent arrives pre-oriented with the project's current knowledge state. No manual
+			priming step needed.
+		</p>
 	</section>
 
 	<!-- Tools -->
@@ -91,22 +113,6 @@
 		<p>There is also a <code>pk-session-context</code> prompt — request it at the start of a conversation to orient your agent without calling a tool.</p>
 	</section>
 
-	<!-- Multiple projects -->
-	<section class="space-y-3">
-		<h2>Multiple projects</h2>
-		<p>Run <code>pk init</code> once per project. Each creates a separate named entry in the config:</p>
-		<div class="not-prose">
-			<CodeBlock
-				label="one per project"
-				lines={[
-					'pk init project-alpha --harness cowork --global',
-					'pk init project-beta --harness cowork --global',
-				]}
-			/>
-		</div>
-		<p>The agent uses the right server based on context — tell it which project you're discussing and it will use the matching tools.</p>
-	</section>
-
 	<!-- Log file -->
 	<section class="space-y-3">
 		<h2>Log file</h2>
@@ -116,8 +122,8 @@
 		<div class="not-prose overflow-hidden rounded-xl" style="background:#1C1917">
 			<div class="px-4 py-2 font-mono text-xs" style="color:#57534E;border-bottom:1px solid #292524">~/.pk/pk.jsonl</div>
 			<div class="px-4 py-3 font-mono text-xs leading-loose" style="color:#A8A29E">
-				<div>{'{"ts":"2026-05-13T18:00:00Z","source":"mcp","op":"pk_new","dir":"/Users/x/.pk/my-project","ms":1234,"status":"ok"}'}</div>
-				<div>{'{"ts":"2026-05-13T18:00:05Z","source":"cli","op":"search","dir":"/Users/x/.pk/my-project","ms":89,"status":"ok"}'}</div>
+				<div>{'{"ts":"2026-05-13T18:00:00Z","source":"mcp","op":"pk_new","dir":"/Users/x/Documents/Claude/Projects/my-project/.pk","ms":1234,"status":"ok"}'}</div>
+				<div>{'{"ts":"2026-05-13T18:00:05Z","source":"cli","op":"search","dir":"/Users/x/Documents/Claude/Projects/my-project/.pk","ms":89,"status":"ok"}'}</div>
 			</div>
 		</div>
 		<p class="text-sm text-base-content/50">Pruned to the last 2000 lines when the file exceeds 2 MB.</p>
