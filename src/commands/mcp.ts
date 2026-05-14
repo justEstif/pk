@@ -16,9 +16,10 @@ import {z} from 'zod';
 import type {Command} from 'commander';
 import {executeSearch, vocab} from '../lib/db.ts';
 import {lintNotes} from '../lib/lint.ts';
-import {getHistory} from '../lib/git.ts';
+import {getHistory, initRepo} from '../lib/git.ts';
 import {selectNotes, formatSynthesizeOutput} from '../lib/synthesize.ts';
 import {requireKnowledgeDir} from '../lib/paths.ts';
+import {ensureProject} from '../lib/project.ts';
 import {createKnowledgeNote, updateKnowledgeNote, deleteKnowledgeNote} from '../lib/operations.ts';
 import {loadConfig} from '../lib/config.ts';
 import {getProvider} from '../lib/embedding.ts';
@@ -261,6 +262,19 @@ export function registerMcp(program: Command): void {
 		.command('mcp')
 		.description('Start the pk MCP server (stdio transport) — used by Claude Desktop and Codex Desktop')
 		.action(async () => {
+			// Auto-initialise the knowledge dir on first run so Cowork users
+			// never need to run pk init separately — installing the plugin is enough.
+			try {
+				const dir = requireKnowledgeDir();
+				const {created} = await ensureProject(dir);
+				if (created) {
+					await initRepo(dir);
+				}
+			} catch {
+				// No PK_KNOWLEDGE_DIR and no config.json — server will still start;
+				// individual tool calls will surface the error when they try to resolve the dir.
+			}
+
 			const server = createPkMcpServer();
 			const transport = new StdioServerTransport();
 			await server.connect(transport);

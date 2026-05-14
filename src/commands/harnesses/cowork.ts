@@ -18,6 +18,7 @@ export function coworkPluginDir(ctx: HarnessContext): string {
  *   <pluginDir>/
  *     .claude-plugin/plugin.json   — manifest
  *     .mcp.json                    — MCP server config
+ *     hooks/hooks.json             — SessionStart hook (primes knowledge context)
  *     skills/pk/                   — pk skill (SKILL.md + references/)
  *
  * The plugin is idempotent: re-running `pk init --harness cowork` updates
@@ -61,6 +62,27 @@ export async function writeCoworkPlugin(ctx: HarnessContext, pkBin?: string): Pr
 		},
 	};
 	await Bun.write(path.join(pluginDir, '.mcp.json'), JSON.stringify(mcpConfig, null, 2) + '\n');
+
+	// Hooks/hooks.json — SessionStart hook that primes knowledge context,
+	// equivalent to the UserPromptSubmit hook used by terminal harnesses.
+	// PK_KNOWLEDGE_DIR is set explicitly so it works regardless of shell env.
+	const hooksDir = path.join(pluginDir, 'hooks');
+	mkdirSync(hooksDir, {recursive: true});
+	const hooksConfig = {
+		hooks: {
+			SessionStart: [
+				{
+					hooks: [
+						{
+							command: `PK_KNOWLEDGE_DIR=${ctx.knowledgeDir} ${resolvedBin} synthesize --session-start`,
+							type: 'command',
+						},
+					],
+				},
+			],
+		},
+	};
+	await Bun.write(path.join(hooksDir, 'hooks.json'), JSON.stringify(hooksConfig, null, 2) + '\n');
 
 	// Skills/pk/ — copy skill bundle if not already present
 	const skillTarget = path.join(pluginDir, 'skills', 'pk');
