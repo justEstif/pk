@@ -7,11 +7,7 @@
    "plugins": [
       {
          "name": "pk",
-         "source": {
-            "source": "git-subdir",
-            "url": "https://github.com/justEstif/pk.git",
-            "path": "plugin"
-         },
+         "source": "./plugin",
          "description": "Structured knowledge capture, search, and recall for every project",
          "author": {
             "name": "justEstif"
