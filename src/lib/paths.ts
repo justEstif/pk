@@ -50,6 +50,23 @@ export type PkProjectConfig = {
 	mode: 'local' | 'global';
 };
 
+export type PkGlobalConfig = {
+	currentProject?: string;
+};
+
+function readGlobalConfig(home?: string): PkGlobalConfig | null {
+	const configPath = path.join(pkHome(home), 'config.json');
+	if (!existsSync(configPath)) {
+		return null;
+	}
+
+	try {
+		return JSON.parse(readFileSync(configPath, 'utf8')) as PkGlobalConfig;
+	} catch {
+		return null;
+	}
+}
+
 /**
  * Walk up from startDir looking for .pk/config.json.
  * Returns the parsed config and the directory it was found in, or null if not found.
@@ -79,7 +96,7 @@ export function findPkProjectConfig(startDir: string): {config: PkProjectConfig;
 
 /**
  * Returns the knowledge directory for the current project.
- * Precedence: PK_KNOWLEDGE_DIR env var > .pk/config.json found by walking up from CWD.
+ * Precedence: PK_KNOWLEDGE_DIR env var > .pk/config.json (walk up CWD) > currentProject in ~/.pk/config.json > error
  */
 export function requireKnowledgeDir(): string {
 	if (process.env.PK_KNOWLEDGE_DIR) {
@@ -95,6 +112,15 @@ export function requireKnowledgeDir(): string {
 
 		if (found.config.knowledgeDir) {
 			return found.config.knowledgeDir;
+		}
+	}
+
+	// Global fallback: check currentProject in ~/.pk/config.json
+	const globalConfig = readGlobalConfig();
+	if (globalConfig?.currentProject) {
+		const dir = projectDir(globalConfig.currentProject);
+		if (existsSync(dir)) {
+			return dir;
 		}
 	}
 

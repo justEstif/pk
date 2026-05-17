@@ -14,6 +14,8 @@ import {registerVocab} from './commands/vocab.ts';
 import {registerPrime} from './commands/prime.ts';
 import {registerRead} from './commands/read.ts';
 import {registerWrite} from './commands/write.ts';
+import {registerUse} from './commands/use.ts';
+import {registerProjects} from './commands/projects.ts';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json') as {version: string};
@@ -37,4 +39,6 @@ registerVocab(program);
 registerPrime(program);
 registerRead(program);
 registerWrite(program);
+registerUse(program);
+registerProjects(program);
 program.parse();
