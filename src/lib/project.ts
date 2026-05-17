@@ -6,7 +6,7 @@ import path from 'node:path';
 import {writeOpenCodePlugin} from '../commands/harnesses/opencode.ts';
 import {writePiPlugin} from '../commands/harnesses/pi.ts';
 import {TYPE_DIRS} from './schema.ts';
-import {projectDir, skillSourceDir} from './paths.ts';
+import {pkHome, projectDir, skillSourceDir} from './paths.ts';
 
 export type Harness = 'opencode' | 'pi';
 
@@ -103,16 +103,25 @@ export async function initializeProject(options: InitializeProjectOptions): Prom
 	const {created} = await ensureProject(knowledgeDir);
 	await ensureGitRepo(created, knowledgeDir);
 
-	// Write .pk/config.json so pk commands can find knowledgeDir without env vars
-	const pkDir = path.join(options.projectRoot, '.pk');
-	mkdirSync(pkDir, {recursive: true});
-	await Bun.write(
-		path.join(pkDir, 'config.json'),
-		JSON.stringify({knowledgeDir, mode: isGlobal ? 'global' : 'local'}, null, 2) + '\n',
-	);
+	if (isGlobal) {
+		// Global mode: write currentProject to ~/.pk/config.json
+		const globalConfigPath = path.join(pkHome(options.home), 'config.json');
+		await Bun.write(
+			globalConfigPath,
+			JSON.stringify({currentProject: options.name}, null, 2) + '\n',
+		);
+	} else {
+		// Local mode: write .pk/config.json in project root
+		const pkDir = path.join(options.projectRoot, '.pk');
+		mkdirSync(pkDir, {recursive: true});
+		await Bun.write(
+			path.join(pkDir, 'config.json'),
+			JSON.stringify({knowledgeDir, mode: 'local'}, null, 2) + '\n',
+		);
 
-	// Ensure .pk/ is gitignored in the project
-	ensureGitignoreEntry(options.projectRoot, '.pk/');
+		// Ensure .pk/ is gitignored in the project
+		ensureGitignoreEntry(options.projectRoot, '.pk/');
+	}
 
 	const ctx = {
 		home: options.home ?? os.homedir(),
@@ -131,12 +140,12 @@ export async function initializeProject(options: InitializeProjectOptions): Prom
 
 // ─── Skill installation ───────────────────────────────────────────────────────
 
-function skillTargetDir(harness: Harness, projectRoot: string): string {
-	return path.join(projectRoot, '.agents', 'skills', 'pk');
+function skillTargetDir(home: string): string {
+	return path.join(home, '.agents', 'skills', 'pk');
 }
 
-export function installSkill(harness: Harness, projectRoot: string): string {
-	const target = skillTargetDir(harness, projectRoot);
+export function installSkill(home: string): string {
+	const target = skillTargetDir(home);
 	if (!target) {
 		return '';
 	}
@@ -159,15 +168,15 @@ export function installSkill(harness: Harness, projectRoot: string): string {
 export type HarnessContext = {name: string; knowledgeDir: string; projectRoot: string; home: string};
 
 async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void> {
-	const {projectRoot} = ctx;
+	const {home} = ctx;
 	switch (harness) {
 		case 'opencode': {
-			await writeOpenCodePlugin(projectRoot);
+			await writeOpenCodePlugin(home);
 			break;
 		}
 
 		case 'pi': {
-			await writePiPlugin(projectRoot);
+			await writePiPlugin(home);
 			break;
 		}
 	}
@@ -175,18 +184,8 @@ async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void
 
 export async function applyHarnesses(harnesses: Harness[], ctx: HarnessContext): Promise<string[]> {
 	await Promise.all(harnesses.map(async h => applyHarness(h, ctx)));
-
-	const seen = new Set<string>();
-	const installed: string[] = [];
-	for (const h of harnesses) {
-		const skillPath = installSkill(h, ctx.projectRoot);
-		if (skillPath && !seen.has(skillPath)) {
-			seen.add(skillPath);
-			installed.push(skillPath);
-		}
-	}
-
-	return installed;
+	const skillPath = installSkill(ctx.home);
+	return skillPath ? [skillPath] : [];
 }
 
 // ─── Outro / validation helpers ───────────────────────────────────────────────

@@ -61,9 +61,9 @@ describe('ensureProject', () => {
 
 describe('installSkill', () => {
 	test('skips reinstall if target already exists', () => {
-		const target = path.join(tmpDir, '.agents', 'skills', 'pk');
+		const target = path.join(fakeHome, '.agents', 'skills', 'pk');
 		mkdirSync(target, {recursive: true});
-		const result = installSkill('opencode', tmpDir);
+		const result = installSkill(fakeHome);
 		if (result) {
 			expect(result).toBe(target);
 		}
@@ -81,8 +81,8 @@ describe('applyHarnesses', () => {
 			projectRoot: tmpDir,
 		};
 		await applyHarnesses(['opencode', 'pi'], ctx);
-		expect(existsSync(path.join(tmpDir, '.opencode', 'plugins', 'pk-eval.ts'))).toBe(true);
-		expect(existsSync(path.join(tmpDir, '.pi', 'extensions', 'pk-eval.ts'))).toBe(true);
+		expect(existsSync(path.join(fakeHome, '.config', 'opencode', 'plugins', 'pk-eval.ts'))).toBe(true);
+		expect(existsSync(path.join(fakeHome, '.pi', 'agent', 'extensions', 'pk-eval.ts'))).toBe(true);
 	});
 });
 
@@ -100,7 +100,7 @@ describe('initializeProject (local)', () => {
 		expect(result.created).toBe(true);
 		expect(result.knowledgeDir).toBe(path.join(tmpDir, '.pk'));
 		expect(existsSync(path.join(result.knowledgeDir, '.git'))).toBe(true);
-		expect(existsSync(path.join(tmpDir, '.pi', 'extensions', 'pk-eval.ts'))).toBe(true);
+		expect(existsSync(path.join(fakeHome, '.pi', 'agent', 'extensions', 'pk-eval.ts'))).toBe(true);
 
 		const cfg = JSON.parse(await Bun.file(path.join(tmpDir, '.pk', 'config.json')).text()) as {knowledgeDir: string; mode: string};
 		expect(cfg.knowledgeDir).toBe(result.knowledgeDir);
@@ -147,18 +147,19 @@ describe('initializeProject (global)', () => {
 		expect(result.knowledgeDir).toBe(path.join(fakeHome, '.pk', 'myproject'));
 		expect(existsSync(path.join(result.knowledgeDir, '.git'))).toBe(true);
 
-		const cfg = JSON.parse(await Bun.file(path.join(tmpDir, '.pk', 'config.json')).text()) as {knowledgeDir: string; mode: string};
-		expect(cfg.knowledgeDir).toBe(result.knowledgeDir);
-		expect(cfg.mode).toBe('global');
+		const globalCfg = JSON.parse(await Bun.file(path.join(fakeHome, '.pk', 'config.json')).text()) as {currentProject: string};
+		expect(globalCfg.currentProject).toBe('myproject');
+
+		expect(existsSync(path.join(tmpDir, '.pk', 'config.json'))).toBe(false);
 	});
 });
 
 // ─── Pi extension ─────────────────────────────────────────────────────────────
 
 describe('writePiPlugin', () => {
-	test('creates .pi/extensions/pk-eval.ts that calls pk prime on before_agent_start', async () => {
-		await writePiPlugin(tmpDir);
-		const pluginPath = path.join(tmpDir, '.pi', 'extensions', 'pk-eval.ts');
+	test('creates .pi/agent/extensions/pk-eval.ts that calls pk prime on before_agent_start', async () => {
+		await writePiPlugin(fakeHome);
+		const pluginPath = path.join(fakeHome, '.pi', 'agent', 'extensions', 'pk-eval.ts');
 		expect(existsSync(pluginPath)).toBe(true);
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('before_agent_start');
@@ -171,18 +172,10 @@ describe('writePiPlugin', () => {
 // ─── Skill installation for harnesses ─────────────────────────────────────────
 
 describe('installSkill', () => {
-	test('opencode uses .agents/skills/pk', () => {
-		const result = installSkill('opencode', tmpDir);
+	test('installs skill to global .agents/skills/pk', () => {
+		const result = installSkill(fakeHome);
 		if (result) {
-			expect(result).toBe(path.join(tmpDir, '.agents', 'skills', 'pk'));
-			expect(existsSync(result)).toBe(true);
-		}
-	});
-
-	test('pi uses .agents/skills/pk', () => {
-		const result = installSkill('pi', tmpDir);
-		if (result) {
-			expect(result).toBe(path.join(tmpDir, '.agents', 'skills', 'pk'));
+			expect(result).toBe(path.join(fakeHome, '.agents', 'skills', 'pk'));
 			expect(existsSync(result)).toBe(true);
 		}
 	});
@@ -191,9 +184,9 @@ describe('installSkill', () => {
 // ─── OpenCode plugin ─────────────────────────────────────────────────────────
 
 describe('writeOpenCodePlugin', () => {
-	test('creates .opencode/plugins/pk-eval.ts that calls pk prime', async () => {
-		await writeOpenCodePlugin(tmpDir);
-		const pluginPath = path.join(tmpDir, '.opencode', 'plugins', 'pk-eval.ts');
+	test('creates .config/opencode/plugins/pk-eval.ts that calls pk prime', async () => {
+		await writeOpenCodePlugin(fakeHome);
+		const pluginPath = path.join(fakeHome, '.config', 'opencode', 'plugins', 'pk-eval.ts');
 		expect(existsSync(pluginPath)).toBe(true);
 		const plugin = await Bun.file(pluginPath).text();
 		expect(plugin).toContain('experimental.chat.system.transform');

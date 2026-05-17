@@ -19,8 +19,8 @@ export default function (pi: ExtensionAPI) {
 `;
 }
 
-export async function writePiPlugin(projectRoot: string): Promise<void> {
-	const pluginPath = path.join(projectRoot, '.pi', 'extensions', 'pk-eval.ts');
+export async function writePiPlugin(home: string): Promise<void> {
+	const pluginPath = path.join(home, '.pi', 'agent', 'extensions', 'pk-eval.ts');
 	mkdirSync(path.dirname(pluginPath), {recursive: true});
 	await Bun.write(pluginPath, piPluginScript());
 }

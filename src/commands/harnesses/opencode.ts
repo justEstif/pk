@@ -17,8 +17,8 @@ export const pkPlugin = async (_input: unknown) => ({
 `;
 }
 
-export async function writeOpenCodePlugin(projectRoot: string): Promise<void> {
-	const pluginPath = path.join(projectRoot, '.opencode', 'plugins', 'pk-eval.ts');
+export async function writeOpenCodePlugin(home: string): Promise<void> {
+	const pluginPath = path.join(home, '.config', 'opencode', 'plugins', 'pk-eval.ts');
 	mkdirSync(path.dirname(pluginPath), {recursive: true});
 	await Bun.write(pluginPath, openCodePluginScript());
 }

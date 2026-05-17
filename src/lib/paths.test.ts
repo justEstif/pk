@@ -105,15 +105,21 @@ describe('findPkProjectConfig', () => {
 
 describe('requireKnowledgeDir', () => {
 	let tmpDir: string;
+	let fakeHome: string;
 	let orig: string | undefined;
+	let origHome: string | undefined;
 	let origCwd: string;
 
 	beforeEach(() => {
 		tmpDir = path.join(os.tmpdir(), `pk-req-test-${Date.now()}`);
 		mkdirSync(tmpDir, {recursive: true});
+		fakeHome = path.join(tmpDir, 'home');
+		mkdirSync(fakeHome, {recursive: true});
 		orig = process.env.PK_KNOWLEDGE_DIR;
+		origHome = process.env.HOME;
 		origCwd = process.cwd();
 		delete process.env.PK_KNOWLEDGE_DIR;
+		process.env.HOME = fakeHome;
 	});
 
 	afterEach(() => {
@@ -123,6 +129,12 @@ describe('requireKnowledgeDir', () => {
 			delete process.env.PK_KNOWLEDGE_DIR;
 		} else {
 			process.env.PK_KNOWLEDGE_DIR = orig;
+		}
+
+		if (origHome === undefined) {
+			delete process.env.HOME;
+		} else {
+			process.env.HOME = origHome;
 		}
 	});
 
@@ -165,6 +177,21 @@ describe('requireKnowledgeDir', () => {
 	});
 
 	test('throws when neither env var nor config file', () => {
+		process.chdir(tmpDir);
+		expect(() => requireKnowledgeDir()).toThrow('No .pk/config.json found');
+	});
+
+	test('falls back to currentProject from ~/.pk/config.json', () => {
+		const projectPath = path.join(fakeHome, '.pk', 'myproject');
+		mkdirSync(projectPath, {recursive: true});
+		writeFileSync(path.join(fakeHome, '.pk', 'config.json'), JSON.stringify({currentProject: 'myproject'}));
+		process.chdir(tmpDir);
+		expect(requireKnowledgeDir()).toBe(projectPath);
+	});
+
+	test('ignores global fallback if currentProject dir does not exist', () => {
+		mkdirSync(path.join(fakeHome, '.pk'), {recursive: true});
+		writeFileSync(path.join(fakeHome, '.pk', 'config.json'), JSON.stringify({currentProject: 'nonexistent'}));
 		process.chdir(tmpDir);
 		expect(() => requireKnowledgeDir()).toThrow('No .pk/config.json found');
 	});
