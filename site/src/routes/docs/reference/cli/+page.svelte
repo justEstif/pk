@@ -27,7 +27,7 @@
 					</tr>
 				</thead>
 				<tbody class="text-base-content/70">
-					<tr><td>pk init</td><td>Create a knowledge project (local by default, --global for ~/.pk/), wire a harness.</td></tr>
+					<tr><td>pk init</td><td>Create a knowledge project (local by default, --global for ~/.pk/). Harness installs globally.</td></tr>
 					<tr><td>pk prime</td><td>Print session-start context for an agent.</td></tr>
 					<tr><td>pk search</td><td>Find notes by keyword or meaning.</td></tr>
 					<tr><td>pk new</td><td>Create a note, decision, question, or source.</td></tr>
@@ -47,6 +47,8 @@
 					>
 					<tr><td>pk vocab</td><td>List tags by frequency across all notes.</td></tr>
 					<tr><td>pk config</td><td>Show or update global configuration.</td></tr>
+					<tr><td>pk use</td><td>Set the current global project. Writes currentProject to ~/.pk/config.json.</td></tr>
+					<tr><td>pk projects</td><td>List all global projects under ~/.pk/. Shows which is current.</td></tr>
 				</tbody>
 			</table>
 		</div>
@@ -121,9 +123,52 @@
 			flags, pk runs interactively.
 		</p>
 		<p>
+			Harness configs are installed globally — not in the project directory:
+			<code>~/.config/opencode/plugins/</code>,
+			<code>~/.pi/agent/extensions/</code>,
+			<code>~/.agents/skills/pk/</code>.
+			The plugin calls <code>pk prime</code>, which resolves context from CWD,
+			so one install works everywhere.
+		</p>
+		<p>
 			Default: knowledge store in <code>.pk/</code> (local). Use <code>--global</code> to store in
-			<code>~/.pk/&lt;name&gt;/</code> instead. Either way, <code>.pk/config.json</code> is written
-			to the project root and <code>.pk/</code> is added to <code>.gitignore</code> automatically.
+			<code>~/.pk/&lt;name&gt;/</code> instead. Local mode writes <code>.pk/config.json</code> to the project root
+			and adds <code>.pk/</code> to <code>.gitignore</code>. Global mode sets <code>currentProject</code> in <code>~/.pk/config.json</code>.
+			Harness configs are installed globally once — they work from every directory.
+		</p>
+	</div>
+
+	<div class="space-y-3">
+		<h2>pk use</h2>
+		<div class="not-prose">
+			<CodeBlock
+				label="pk use"
+				lines={[
+					'pk use my-project',
+					'pk use journal --pretty'
+				]}
+			/>
+		</div>
+		<p>
+			Sets the current global project. Writes <code>currentProject</code> to
+			<code>~/.pk/config.json</code>. Used by <code>requireKnowledgeDir()</code> as a fallback
+			when no project-local config is found. Validates that the project exists.
+		</p>
+	</div>
+
+	<div class="space-y-3">
+		<h2>pk projects</h2>
+		<div class="not-prose">
+			<CodeBlock
+				label="pk projects"
+				lines={[
+					'pk projects',
+					'pk projects --pretty'
+				]}
+			/>
+		</div>
+		<p>
+			Lists all global projects under <code>~/.pk/</code>. Indicates which is current.
 		</p>
 	</div>
 

@@ -58,25 +58,27 @@ pk init my-project --harness opencode,pi --global   # multiple harnesses
 
 Available harnesses: `opencode` (OpenCode), `pi` (Pi).
 
-`pk init` does five things:
+`pk init` does four things:
 
 1. Creates the knowledge store — in `.pk/` (local, default) or `~/.pk/<name>/` (with `--global`)
-2. Writes `.pk/config.json` so pk commands find the knowledge directory by walking up from CWD
-3. Adds `.pk/` to your project's `.gitignore`
-4. Installs a hook or plugin that calls `pk prime` to inject context at session start
-5. Installs the pk skill so your agent knows how to use the CLI
+2. Writes config: local mode creates `.pk/config.json` in the project; global mode sets `currentProject` in `~/.pk/config.json`
+3. Adds `.pk/` to your project's `.gitignore` (local mode only)
+4. Installs plugin/extension and skill to global locations (`~/.config/opencode/plugins/`, `~/.pi/agent/extensions/`, `~/.agents/skills/pk/`)
 
-| Harness           | Files written                                                                  |
+| Harness           | Files written (global)                                                           |
 | ----------------- | ------------------------------------------------------------------------------ |
-| `opencode`        | `.opencode/plugins/pk-eval.ts`                                                 |
-| `pi`              | `.pi/extensions/pk-eval.ts`                                                    |
+| `opencode`        | `~/.config/opencode/plugins/pk-eval.ts`                                        |
+| `pi`              | `~/.pi/agent/extensions/pk-eval.ts`                                            |
+| both              | `~/.agents/skills/pk/`                                                         |
 
-> **Override:** `PK_KNOWLEDGE_DIR` env var takes precedence over `.pk/config.json` if you need to point at a different project temporarily.
+> **Override:** `PK_KNOWLEDGE_DIR` env var takes precedence over all resolution. For persistent switching, use `pk use <name>`.
 
 ## Commands
 
 ```bash
-pk init [name] [--harness h1,h2,...]   # set up project + hooks
+pk init [name] [--harness h1,h2,...]   # set up project + global harness
+pk use <name>                          # set current global project
+pk projects                            # list global projects
 
 pk new <type> <title> [--tags t1,t2]
 pk delete <path>                       # JSON output, non-interactive
@@ -139,6 +141,7 @@ your-project/
 
 ```
 ~/.pk/
+  config.json            ← currentProject: which global project is active
   <project-name>/
     notes/ decisions/ questions/ sources/ ...
 ```
