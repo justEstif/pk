@@ -163,6 +163,8 @@ export type SemanticResult = {
 	score: number;
 };
 
+const SEMANTIC_VECTOR_CAP = 500;
+
 export async function semanticSearch(
 	knowledgeDir: string,
 	queryVector: number[],
@@ -173,6 +175,14 @@ export async function semanticSearch(
 	}
 
 	const db = openDb(knowledgeDir);
+	const {count} = db.query<{count: number}, never[]>('SELECT COUNT(*) as count FROM note_vectors').get()!;
+
+	if (count > SEMANTIC_VECTOR_CAP) {
+		db.close();
+		console.warn(`[pk] ${count} vectors exceed cap (${SEMANTIC_VECTOR_CAP}) — skipping semantic search. Falling back to keyword-only.`);
+		return [];
+	}
+
 	const rows = db.query<{id: string; path: string; vec: Uint8Array}, never[]>('SELECT id, path, vec FROM note_vectors').all();
 	db.close();
 
