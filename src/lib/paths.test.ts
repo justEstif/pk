@@ -178,7 +178,7 @@ describe('requireKnowledgeDir', () => {
 
 	test('throws when neither env var nor config file', () => {
 		process.chdir(tmpDir);
-		expect(() => requireKnowledgeDir()).toThrow('No .pk/config.json found');
+		expect(() => requireKnowledgeDir()).toThrow('No pk project found');
 	});
 
 	test('falls back to currentProject from ~/.pk/config.json', () => {
@@ -193,7 +193,7 @@ describe('requireKnowledgeDir', () => {
 		mkdirSync(path.join(fakeHome, '.pk'), {recursive: true});
 		writeFileSync(path.join(fakeHome, '.pk', 'config.json'), JSON.stringify({currentProject: 'nonexistent'}));
 		process.chdir(tmpDir);
-		expect(() => requireKnowledgeDir()).toThrow('No .pk/config.json found');
+		expect(() => requireKnowledgeDir()).toThrow('No pk project found');
 	});
 });
 

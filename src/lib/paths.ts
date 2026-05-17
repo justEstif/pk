@@ -124,7 +124,7 @@ export function requireKnowledgeDir(): string {
 		}
 	}
 
-	throw new Error('No .pk/config.json found. Either run: pk init --harness <harness>, or prefix the command with: PK_KNOWLEDGE_DIR=<path> pk <command>');
+	throw new Error('No pk project found. Run: pk init --harness <harness>, or pk use <name> to switch to a global project.');
 }
 
 /** Returns sorted list of existing global project names under ~/.pk/ */
