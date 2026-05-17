@@ -21,7 +21,7 @@ import {pkHome} from './paths.ts';
 const MAX_BYTES = 2_000_000; // 2 MB
 const MAX_LINES = 2000;
 
-export type LogSource = 'cli' | 'mcp';
+export type LogSource = 'cli';
 
 export type LogEvent = {
 	ts: string;
@@ -77,7 +77,7 @@ function appendEvent(event: LogEvent): void {
 /**
  * Emit a completed operation log event.
  *
- * @param source  'cli' or 'mcp'
+ * @param source  'cli'
  * @param op      Command or tool name (e.g. 'search', 'pk_new')
  * @param dir     Knowledge directory path
  * @param startMs Date.now() captured before the operation started

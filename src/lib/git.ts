@@ -79,7 +79,7 @@ export async function commitKnowledgeFile(
 	try {
 		await $`git -C ${knowledgeDir} add ${filePath}`.quiet();
 		// -c commit.gpgsign=false: prevents gpg-agent passphrase prompts hanging
-		// in non-TTY contexts (MCP server, CI). The repo-level setting from
+		// in non-TTY contexts (CI). The repo-level setting from
 		// initRepo covers new repos; this covers pre-existing repos with global
 		// commit.gpgsign=true.
 		await $`git -C ${knowledgeDir} -c commit.gpgsign=false commit -m ${message}`.quiet();

@@ -18,17 +18,17 @@
 			lines: [
 				{ type: 'you', text: 'You: why did we push the v2 launch back?' },
 				{ type: 'lookup', text: 'searched decisions · v2-launch-delay.md' },
-				{ type: 'agent', text: 'Claude: You pushed v2 back 6 weeks to ship enterprise SSO first.' },
+				{ type: 'agent', text: 'Agent: You pushed v2 back 6 weeks to ship enterprise SSO first.' },
 				{ type: 'cont', text: 'Three customer calls in mid-October confirmed it as a blocker.' },
 				{ type: 'divider' },
 				{ type: 'you', text: 'You: any open questions on the enterprise tier?' },
 				{ type: 'lookup', text: 'searched questions · enterprise-pricing.md, enterprise-sla.md' },
-				{ type: 'agent', text: 'Claude: Two open questions — SSO pricing and the SLA commitment.' },
+				{ type: 'agent', text: 'Agent: Two open questions — SSO pricing and the SLA commitment.' },
 				{ type: 'cont', text: 'Both still unresolved.' },
 				{ type: 'divider' },
 				{ type: 'you', text: 'You: log that we decided SSO is included, not an add-on.' },
 				{ type: 'lookup', text: 'created decisions/sso-pricing.md' },
-				{ type: 'cont', text: 'Claude: Saved. Marked enterprise-pricing.md as answered.', cursor: true }
+				{ type: 'cont', text: 'Agent: Saved. Marked enterprise-pricing.md as answered.', cursor: true }
 			]
 		},
 		nova: {
@@ -36,18 +36,18 @@
 			lines: [
 				{ type: 'you', text: 'You: catch me up — what are we working on?' },
 				{ type: 'lookup', text: 'synthesized 5 notes · 2 open questions, 3 decisions' },
-				{ type: 'agent', text: "Claude: Nova is a clinical trials research tool. You're mid-way" },
+				{ type: 'agent', text: "Agent: Nova is a clinical trials research tool. You're mid-way" },
 				{ type: 'cont', text: 'through the data ingestion pipeline. Two open questions: the export' },
 				{ type: 'cont', text: 'format for regulators and whether to self-host the LLM.' },
 				{ type: 'divider' },
 				{ type: 'you', text: 'You: what did we decide about the LLM?' },
 				{ type: 'lookup', text: 'searched decisions · llm-hosting.md' },
-				{ type: 'agent', text: "Claude: Self-host on-prem. Patient data can't leave the hospital" },
+				{ type: 'agent', text: "Agent: Self-host on-prem. Patient data can't leave the hospital" },
 				{ type: 'cont', text: 'network — regulatory requirement, non-negotiable.' },
 				{ type: 'divider' },
 				{ type: 'you', text: 'You: what export format are regulators asking for?' },
 				{ type: 'lookup', text: 'searched questions · regulator-export-format.md' },
-				{ type: 'agent', text: 'Claude: Still open. Last note says FDA asked for HL7 FHIR but' },
+				{ type: 'agent', text: 'Agent: Still open. Last note says FDA asked for HL7 FHIR but' },
 				{ type: 'cont', text: "the team hasn't confirmed feasibility yet.", cursor: true }
 			]
 		},
@@ -56,18 +56,18 @@
 			lines: [
 				{ type: 'you', text: 'You: first day on atlas — what do I need to know?' },
 				{ type: 'lookup', text: 'synthesized 6 notes · 3 open questions, 4 decisions' },
-				{ type: 'agent', text: "Claude: Atlas is a logistics platform. They're mid-migration from" },
+				{ type: 'agent', text: "Agent: Atlas is a logistics platform. They're mid-migration from" },
 				{ type: 'cont', text: 'monolith to services. Postgres is source of truth. Mobile app' },
 				{ type: 'cont', text: 'is owned by a separate vendor team.' },
 				{ type: 'divider' },
 				{ type: 'you', text: 'You: why Postgres over MongoDB?' },
 				{ type: 'lookup', text: 'searched decisions · database-choice.md' },
-				{ type: 'agent', text: 'Claude: Shipment tracking is inherently relational — joins' },
+				{ type: 'agent', text: 'Agent: Shipment tracking is inherently relational — joins' },
 				{ type: 'cont', text: 'outperformed document lookups in load tests.' },
 				{ type: 'divider' },
 				{ type: 'you', text: 'You: is the vendor team aware of the migration timeline?' },
 				{ type: 'lookup', text: 'searched questions · vendor-migration-sync.md' },
-				{ type: 'agent', text: 'Claude: Open question — no record of them being looped in.' },
+				{ type: 'agent', text: 'Agent: Open question — no record of them being looped in.' },
 				{ type: 'cont', text: 'Flagged as a risk back in March. Still unresolved.', cursor: true }
 			]
 		}
@@ -155,7 +155,7 @@
 
 		<!-- Supported harnesses -->
 		<div class="flex flex-wrap gap-x-6 gap-y-1 mb-8">
-			{#each ['Claude Code', 'Claude Code Marketplace', 'OpenCode', 'Pi'] as harness}
+			{#each ['OpenCode', 'Pi'] as harness}
 				<span class="font-mono text-sm text-base-content/40 flex items-center gap-1.5">
 					<span class="text-[6px] text-primary/50">●</span>{harness}
 				</span>
@@ -194,7 +194,7 @@
 				<span style="width:10px;height:10px;border-radius:50%;background:#FEBC2E;display:inline-block"></span>
 				<span style="width:10px;height:10px;border-radius:50%;background:#28C840;display:inline-block"></span>
 				<span class="font-mono" style="font-size:11px;color:#57534E;margin-left:8px">
-					Claude Code · {scenarios[activeTab].label}
+					pk · {scenarios[activeTab].label}
 				</span>
 			</div>
 			<div class="font-mono text-sm leading-loose p-5 max-h-[400px] overflow-y-auto" style="color:#A8A29E">
@@ -213,8 +213,8 @@
 						</div>
 					{:else if line.type === 'agent'}
 						<div style="display:flex;gap:12px">
-							<span style="color:#57534E;font-weight:600;min-width:52px">Claude</span>
-							<span style="color:#A8A29E">{line.text?.replace('Claude: ', '')}</span>
+							<span style="color:#57534E;font-weight:600;min-width:52px">Agent</span>
+							<span style="color:#A8A29E">{line.text?.replace('Agent: ', '')}</span>
 						</div>
 					{:else if line.type === 'cont'}
 						<div style="display:flex;gap:12px">

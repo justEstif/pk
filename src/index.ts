@@ -14,7 +14,6 @@ import {registerVocab} from './commands/vocab.ts';
 import {registerPrime} from './commands/prime.ts';
 import {registerRead} from './commands/read.ts';
 import {registerWrite} from './commands/write.ts';
-import {registerMcp} from './commands/mcp.ts';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json') as {version: string};
@@ -38,6 +37,4 @@ registerVocab(program);
 registerPrime(program);
 registerRead(program);
 registerWrite(program);
-registerMcp(program);
-
 program.parse();

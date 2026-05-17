@@ -4,18 +4,7 @@ Structured project memory for AI agents. Decisions, questions, notes, and source
 
 ## Install
 
-### Claude Code Marketplace (easiest)
-
-If you use Claude Code, install directly from the marketplace — no terminal setup needed:
-
-```
-/plugin marketplace add justEstif/pk
-/plugin install pk@justestif-pk
-```
-
-That's it. pk is now active in every Claude Code session. The SessionStart hook auto-installs the pk CLI the first time if it isn't already present.
-
-### CLI (all other tools)
+### CLI
 
 **One-liner (macOS / Linux):**
 
@@ -62,15 +51,12 @@ Interactive: picks a project name and one or more harnesses (space to toggle, en
 Non-interactive:
 
 ```bash
-pk init --harness claude                        # local: knowledge in .pk/ (default)
-pk init my-project --harness claude --global   # global: knowledge in ~/.pk/my-project/
-pk init my-project --harness claude,opencode --global   # multiple harnesses
-pk init my-project --harness cowork --global          # Cowork (Claude's agentic tab)
+pk init --harness opencode                        # local: knowledge in .pk/ (default)
+pk init my-project --harness opencode --global   # global: knowledge in ~/.pk/my-project/
+pk init my-project --harness opencode,pi --global   # multiple harnesses
 ```
 
-Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi), `cowork` (Cowork).
-
-> **Claude Code Marketplace users:** skip `pk init` entirely — the marketplace plugin handles setup automatically.
+Available harnesses: `opencode` (OpenCode), `pi` (Pi).
 
 `pk init` does five things:
 
@@ -82,13 +68,8 @@ Available harnesses: `claude` (Claude Code), `opencode` (OpenCode), `pi` (Pi), `
 
 | Harness           | Files written                                                                  |
 | ----------------- | ------------------------------------------------------------------------------ |
-| `claude`          | `.claude/hooks/pk-eval.ts`, `.claude/settings.json`                            |
 | `opencode`        | `.opencode/plugins/pk-eval.ts`                                                 |
 | `pi`              | `.pi/extensions/pk-eval.ts`                                                    |
-| `cowork`          | `~/.pk/<name>-cowork/` (Cowork plugin dir — `claude --plugin-dir`)             |
-| marketplace       | No local files — installed via `/plugin install pk@justestif-pk`               |
-
-> **Cowork harness** (`cowork`) creates a plugin directory at `~/.pk/<name>-cowork/` and bundles the pk skill inside it. Use `--global` since Cowork doesn't run inside a project folder. Install with `claude --plugin-dir ~/.pk/<name>-cowork` or upload via the Cowork UI.
 
 > **Override:** `PK_KNOWLEDGE_DIR` env var takes precedence over `.pk/config.json` if you need to point at a different project temporarily.
 
@@ -108,7 +89,6 @@ pk vocab
 pk index                               # rebuild FTS5 + markdown indexes
 pk lint [paths...]
 pk prime                               # output priming context for hooks
-pk mcp                                 # start MCP server (used by Cowork harness)
 pk instructions <command>
 pk config [--embedding <model>] [--no-embedding] [--base-url <url>]
 ```
@@ -128,7 +108,7 @@ All commands output JSON by default. Use `--pretty` for human-readable output.
 ### Example
 
 ```bash
-pk init --harness claude
+pk init --harness opencode
 pk new decision "Use SQLite for search index" --tags search,architecture
 pk new question "Should we support multi-project mode?" --tags scope
 pk index

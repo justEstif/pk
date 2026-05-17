@@ -33,7 +33,6 @@ export async function tryEmbedNote(knowledgeDir: string, notePath: string): Prom
 
 /**
  * Create a new knowledge note, commit it, and optionally embed it.
- * Used by both the CLI command and the MCP tool.
  */
 export async function createKnowledgeNote(
 	knowledgeDir: string,
@@ -50,7 +49,6 @@ export async function createKnowledgeNote(
 /**
  * Write new content to an existing knowledge note and commit it.
  * Rejects if the note does not exist or is outside the knowledge directory.
- * Used by both the CLI command and the MCP tool.
  */
 export async function updateKnowledgeNote(
 	knowledgeDir: string,
@@ -74,7 +72,6 @@ export async function updateKnowledgeNote(
 /**
  * Delete a knowledge note and commit the deletion.
  * Resolves relative paths against the knowledge directory.
- * Used by both the CLI command and the MCP tool.
  */
 export async function deleteKnowledgeNote(
 	knowledgeDir: string,

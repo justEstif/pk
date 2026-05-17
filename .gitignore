@@ -4,5 +4,4 @@ dist/
 *.db
 .fallow/
 .fallow/
-.claude/
 .pk.json

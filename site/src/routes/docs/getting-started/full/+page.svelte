@@ -1,5 +1,5 @@
 <script lang="ts">
-	type AITool = 'claude-code' | 'opencode' | 'pi' | 'cowork';
+	type AITool = 'opencode' | 'pi';
 	type OS = 'mac' | 'linux' | 'windows';
 
 	let aiTool = $state<AITool | null>(null);
@@ -36,17 +36,6 @@
 			docs: string;
 		}
 	> = {
-		'claude-code': {
-			label: 'Claude Code',
-			cmd: null,
-			platformCmds: {
-				mac: 'curl -fsSL https://claude.ai/install.sh | bash',
-				linux: 'curl -fsSL https://claude.ai/install.sh | bash',
-				windows: 'irm https://claude.ai/install.ps1 | iex'
-			},
-			note: 'Then run `claude` to log in on first use.',
-			docs: 'https://code.claude.com/docs/en/quickstart'
-		},
 		opencode: {
 			label: 'OpenCode',
 			cmd: 'npm install -g opencode-ai',
@@ -56,18 +45,8 @@
 			label: 'Pi',
 			cmd: 'npm install -g @earendil-works/pi-coding-agent',
 			docs: 'https://pi.dev'
-		},
-			cowork: {
-			label: 'Claude Cowork',
-			cmd: null,
-			platformCmds: {
-				mac: '# Cowork is the agentic tab in Claude — download from claude.ai/download',
-				linux: '# Cowork is the agentic tab in Claude — download from claude.ai/download',
-				windows: '# Cowork is the agentic tab in Claude — download from claude.ai/download'
-			},
-			note: 'Cowork is part of the Claude desktop app — no separate install needed.',
-			docs: 'https://claude.ai/download'
 		}
+
 	};
 
 	let allDone = $derived(doneGit && doneBun && donePk && doneHarness && doneInit);
@@ -179,10 +158,10 @@
 					</div>
 					<h2 class="mb-1 text-lg font-semibold">Which AI assistant do you want to use?</h2>
 					<p class="mb-4 text-sm text-base-content/60">
-						pk works with all of these. Use Claude Code, OpenCode, or Pi for terminal workflows. Use Claude Cowork if you prefer the agentic tab in the Claude desktop app.
+						pk works with all of these. OpenCode and Pi both work as terminal-based coding agents.
 					</p>
 					<div class="flex flex-wrap gap-3">
-						{#each [['claude-code', 'Claude Code'], ['opencode', 'OpenCode'], ['pi', 'Pi'], ['cowork', 'Claude Cowork']] as const as [val, label]}
+						{#each [['opencode', 'OpenCode'], ['pi', 'Pi']] as const as [val, label]}
 							<button
 								class="btn px-6 py-2.5 text-sm {aiTool === val
 									? 'btn-primary'
@@ -358,15 +337,9 @@
 							Step 6
 						</div>
 					<h2 class="mb-1 text-lg font-semibold">Install {harnessInstall[selectedTool].label}</h2>
-					{#if aiTool === 'cowork'}
-						<p class="mb-4 text-sm text-base-content/60">
-							Cowork is the agentic tab in the Claude desktop app — no terminal install needed. Download it if you don't have it already.
-						</p>
-					{:else}
 						<p class="mb-4 text-sm text-base-content/60">
 							This is the AI assistant pk will work alongside. You'll chat with it in your terminal.
 						</p>
-					{/if}
 						<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
 							<div
 								class="flex items-center justify-between px-4 py-2"
@@ -384,20 +357,11 @@
 								>
 							</div>
 							<div class="px-4 py-3 font-mono text-sm">
-								{#if os === 'windows' && selectedTool === 'claude-code'}
-									<div class="mb-2 font-mono text-xs" style="color:#57534E">PowerShell:</div>
-									<div>
-										<span style="color:#44403C" class="mr-3">></span><span style="color:#A8A29E"
-											>irm https://claude.ai/install.ps1 | iex</span
-										>
-									</div>
-								{:else}
-									<div>
-										<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E"
-											>{harnessCommand(selectedTool, os)}</span
-										>
-									</div>
-								{/if}
+								<div>
+									<span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E"
+										>{harnessCommand(selectedTool, os)}</span
+									>
+								</div>
 							</div>
 						</div>
 						{#if harnessInstall[selectedTool].note}
@@ -428,55 +392,40 @@
 							Step 7
 						</div>
 						<h2 class="mb-1 text-lg font-semibold">Initialize pk in your project</h2>
-{#if aiTool !== 'cowork'}
-				<p class="mb-4 text-sm text-base-content/60">
-					Open your terminal, navigate to your project folder, and run <code
-						class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">pk init</code
-					>. By default this creates the knowledge store at
-					<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.pk/</code>
-					inside your project, writes
-					<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.pk/config.json</code>
-					so pk commands find it automatically, adds <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.pk/</code> to
-					<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.gitignore</code>, and wires up your AI tool.
-					Use <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">--global</code> to store in <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">~/.pk/&lt;name&gt;/</code> instead.
-				</p>
-			{/if}
-			{#if aiTool === 'cowork'}
-				<p class="mb-4 text-sm text-base-content/60">
-					The plugin is installed once. Every Cowork project you create automatically gets its own knowledge base — no per-project setup needed.
-					<a href="{base}/docs/getting-started/cowork" class="link">See the full Cowork guide →</a>
-				</p>
-				<div class="card bg-base-300 card-border">
-					<div class="card-body gap-3">
-						<p class="text-sm text-base-content/70">Cowork has its own step-by-step guide — easier than the wizard for desktop users.</p>
-						<a href="{base}/docs/getting-started/cowork" class="btn btn-primary btn-sm w-fit">→ Cowork setup guide</a>
-					</div>
-				</div>
-			{:else}
-				<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
-					<div
-						class="flex items-center justify-between px-4 py-2"
-						style="border-bottom:1px solid #292524"
-					>
-						<span class="font-mono text-xs" style="color:#57534E">initialize</span>
-						<button
-							class="font-mono text-xs {copiedMap['init']
-								? 'text-success'
-								: 'text-base-content/40'}"
-							onclick={() => copy('init', 'cd your-project\npk init')}
-							>{copiedMap['init'] ? 'copied!' : 'copy'}</button
-						>
-					</div>
-					<div class="px-4 py-3 font-mono text-sm leading-loose">
-						<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">cd your-project</span></div>
-						<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init</span></div>
-					</div>
-				</div>
-				<label class="flex cursor-pointer items-center gap-3">
-					<input type="checkbox" class="checkbox checkbox-primary" bind:checked={doneInit} />
-					<span class="text-sm">Done — pk initialized successfully</span>
-				</label>
-			{/if}
+						<p class="mb-4 text-sm text-base-content/60">
+							Open your terminal, navigate to your project folder, and run <code
+								class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">pk init</code
+							>. By default this creates the knowledge store at
+							<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.pk/</code>
+							inside your project, writes
+							<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.pk/config.json</code>
+							so pk commands find it automatically, adds <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.pk/</code> to
+							<code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">.gitignore</code>, and wires up your AI tool.
+							Use <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">--global</code> to store in <code class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-xs">~/.pk/&lt;name&gt;/</code> instead.
+						</p>
+						<div class="mb-4 overflow-hidden rounded-lg" style="background:#1C1917">
+							<div
+								class="flex items-center justify-between px-4 py-2"
+								style="border-bottom:1px solid #292524"
+							>
+								<span class="font-mono text-xs" style="color:#57534E">initialize</span>
+								<button
+									class="font-mono text-xs {copiedMap['init']
+										? 'text-success'
+										: 'text-base-content/40'}"
+									onclick={() => copy('init', 'cd your-project\npk init')}
+									>{copiedMap['init'] ? 'copied!' : 'copy'}</button
+								>
+							</div>
+							<div class="px-4 py-3 font-mono text-sm leading-loose">
+								<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">cd your-project</span></div>
+								<div><span style="color:#44403C" class="mr-3">$</span><span style="color:#A8A29E">pk init</span></div>
+							</div>
+						</div>
+						<label class="flex cursor-pointer items-center gap-3">
+							<input type="checkbox" class="checkbox checkbox-primary" bind:checked={doneInit} />
+							<span class="text-sm">Done — pk initialized successfully</span>
+						</label>
 					</div>
 				</div>
 			{/if}

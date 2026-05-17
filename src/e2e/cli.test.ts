@@ -55,7 +55,7 @@ describe('pk CLI e2e tests', () => {
 	describe('pk init', () => {
 		test('initializes a new project with git repository', async () => {
 			const result
-				= await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+				= await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 			expect(result.exitCode).toBe(0);
 			expect(existsSync(knowledgeDir)).toBe(true);
 			expect(existsSync(path.join(knowledgeDir, '.git'))).toBe(true);
@@ -63,19 +63,19 @@ describe('pk CLI e2e tests', () => {
 
 		test('fails with clear error when git is not installed', async () => {
 			const result
-				= await $`PATH=/usr/bin/nonexistent ${cliPath} init ${projectName} --harness claude --global`.nothrow();
+				= await $`PATH=/usr/bin/nonexistent ${cliPath} init ${projectName} --harness opencode --global`.nothrow();
 			expect(result.exitCode).toBe(1);
 			expect(result.stderr.toString()).toContain('git');
 		});
 
 		test('re-init on existing project preserves data', async () => {
-			await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+			await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 			const noteResult
 				= await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${cliPath} new note "Re-init test"`.quiet();
 			expect(noteResult.exitCode).toBe(0);
 			// Re-init same project
 			const reResult
-				= await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+				= await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 			expect(reResult.exitCode).toBe(0);
 			// Note should still exist
 			const {path: notePath} = parseJson<JsonNewOutput>(noteResult.stdout.toString().trim());
@@ -89,7 +89,7 @@ describe('pk CLI e2e tests', () => {
 			await $`chmod 000 ${readOnlyHome}`.quiet();
 			try {
 				const result
-					= await $`HOME=${readOnlyHome} ${cliPath} init ${projectName} --harness claude --global`.nothrow();
+					= await $`HOME=${readOnlyHome} ${cliPath} init ${projectName} --harness opencode --global`.nothrow();
 				expect(result.exitCode).toBe(1);
 				const stderr = result.stderr.toString();
 				expect(stderr).toContain('pk requires');
@@ -103,7 +103,7 @@ describe('pk CLI e2e tests', () => {
 
 	describe('pk new (with git integration)', () => {
 		beforeEach(async () => {
-			await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+			await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 		});
 
 		test('creates a note and commits to git', async () => {
@@ -128,7 +128,7 @@ describe('pk CLI e2e tests', () => {
 
 	describe('pk delete', () => {
 		beforeEach(async () => {
-			await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+			await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 		});
 
 		test('deletes a note and commits deletion', async () => {
@@ -148,7 +148,7 @@ describe('pk CLI e2e tests', () => {
 
 	describe('pk history', () => {
 		beforeEach(async () => {
-			await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+			await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 			await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${cliPath} new note "History Test 1" --tags history`.quiet();
 			await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${cliPath} new note "History Test 2" --tags history`.quiet();
 		});
@@ -199,7 +199,7 @@ describe('pk CLI e2e tests', () => {
 
 	describe('integration workflow', () => {
 		test('full CRUD workflow creates correct git history', async () => {
-			await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+			await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 			expect(existsSync(path.join(knowledgeDir, '.git'))).toBe(true);
 			await $`PK_KNOWLEDGE_DIR=${knowledgeDir} ${cliPath} new note "Workflow Test" --tags workflow`.quiet();
 			const createLog
@@ -226,7 +226,7 @@ describe('pk CLI e2e tests', () => {
 
 	describe('pk lint', () => {
 		beforeEach(async () => {
-			await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+			await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 		});
 
 		test('passes for valid notes', async () => {
@@ -317,7 +317,7 @@ describe('pk CLI e2e tests', () => {
 
 	describe('pk JSON output', () => {
 		beforeEach(async () => {
-			await $`${cliPath} init ${projectName} --harness claude --global`.quiet();
+			await $`${cliPath} init ${projectName} --harness opencode --global`.quiet();
 		});
 
 		test('pk new outputs valid JSON with path', async () => {

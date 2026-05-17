@@ -84,7 +84,7 @@
 
 	<section class="space-y-4">
 		<h2>Reference pages</h2>
-		<div class="not-prose grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+		<div class="not-prose grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{#each [
 				{
 					href: `${base}/docs/reference/cli`,
@@ -99,13 +99,8 @@
 				{
 					href: `${base}/docs/reference/embeddings`,
 					label: 'Embeddings',
-					desc: 'Ollama setup for semantic search.'
-				},
-				{
-					href: `${base}/docs/reference/mcp`,
-					label: 'MCP',
-					desc: 'Cowork plugin setup, available tools, and log file.'
-				}
+				desc: 'Ollama setup for semantic search.'
+			}
 			] as card}
 				<a
 					href={card.href}
