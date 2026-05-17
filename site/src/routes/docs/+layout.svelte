@@ -15,8 +15,7 @@
 			href: `${base}/docs/getting-started`,
 			label: 'Getting started',
 			children: [
-				{ href: `${base}/docs/getting-started/full`, label: 'Full guide' },
-				{ href: `${base}/docs/getting-started/cowork`, label: 'Cowork' }
+				{ href: `${base}/docs/getting-started/full`, label: 'Full guide' }
 			]
 		},
 		{ href: `${base}/docs/usage`, label: 'Usage' },
@@ -26,8 +25,7 @@
 			children: [
 				{ href: `${base}/docs/reference/cli`, label: 'CLI' },
 				{ href: `${base}/docs/reference/config`, label: 'Config' },
-				{ href: `${base}/docs/reference/embeddings`, label: 'Embeddings' },
-				{ href: `${base}/docs/reference/mcp`, label: 'MCP' }
+				{ href: `${base}/docs/reference/embeddings`, label: 'Embeddings' }
 			]
 		}
 	];

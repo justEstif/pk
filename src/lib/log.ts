@@ -14,28 +14,28 @@
  */
 import path from 'node:path';
 import {
-	appendFileSync, statSync, readFileSync, writeFileSync,
+   appendFileSync, statSync, readFileSync, writeFileSync,
 } from 'node:fs';
-import {pkHome} from './paths.ts';
+import { pkHome } from './paths.ts';
 
 const MAX_BYTES = 2_000_000; // 2 MB
 const MAX_LINES = 2000;
 
-export type LogSource = 'cli' | 'mcp';
+export type LogSource = 'cli';
 
 export type LogEvent = {
-	ts: string;
-	source: LogSource;
-	op: string;
-	dir: string;
-	ms: number;
-	status: 'ok' | 'error';
-	params?: Record<string, unknown>;
-	error?: string;
+   ts: string;
+   source: LogSource;
+   op: string;
+   dir: string;
+   ms: number;
+   status: 'ok' | 'error';
+   params?: Record<string, unknown>;
+   error?: string;
 };
 
 function logPath(): string {
-	return path.join(pkHome(), 'pk.jsonl');
+   return path.join(pkHome(), 'pk.jsonl');
 }
 
 /**
@@ -44,20 +44,20 @@ function logPath(): string {
  * unboundedly.
  */
 function pruneIfNeeded(file: string): void {
-	try {
-		if (statSync(file).size <= MAX_BYTES) {
-			return;
-		}
+   try {
+      if (statSync(file).size <= MAX_BYTES) {
+         return;
+      }
 
-		const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean);
-		if (lines.length <= MAX_LINES) {
-			return;
-		}
+      const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean);
+      if (lines.length <= MAX_LINES) {
+         return;
+      }
 
-		writeFileSync(file, lines.slice(-MAX_LINES).join('\n') + '\n');
-	} catch {
-		// File may not exist yet or be unreadable — that's fine.
-	}
+      writeFileSync(file, lines.slice(-MAX_LINES).join('\n') + '\n');
+   } catch {
+      // File may not exist yet or be unreadable — that's fine.
+   }
 }
 
 /**
@@ -65,19 +65,19 @@ function pruneIfNeeded(file: string): void {
  * Never throws.
  */
 function appendEvent(event: LogEvent): void {
-	try {
-		const file = logPath();
-		pruneIfNeeded(file);
-		appendFileSync(file, JSON.stringify(event) + '\n');
-	} catch {
-		// Best-effort
-	}
+   try {
+      const file = logPath();
+      pruneIfNeeded(file);
+      appendFileSync(file, JSON.stringify(event) + '\n');
+   } catch {
+      // Best-effort
+   }
 }
 
 /**
  * Emit a completed operation log event.
  *
- * @param source  'cli' or 'mcp'
+ * @param source  'cli'
  * @param op      Command or tool name (e.g. 'search', 'pk_new')
  * @param dir     Knowledge directory path
  * @param startMs Date.now() captured before the operation started
@@ -85,29 +85,29 @@ function appendEvent(event: LogEvent): void {
  * @param params  Sanitized identifying params (no content bodies)
  */
 export function logOp(
-	source: LogSource,
-	op: string,
-	dir: string,
-	startMs: number,
-	error?: unknown,
-	params?: Record<string, unknown>,
+   source: LogSource,
+   op: string,
+   dir: string,
+   startMs: number,
+   error?: unknown,
+   params?: Record<string, unknown>,
 ): void {
-	const event: LogEvent = {
-		ts: new Date().toISOString(),
-		source,
-		op,
-		dir,
-		ms: Date.now() - startMs,
-		status: error === undefined ? 'ok' : 'error',
-	};
-	if (params && Object.keys(params).length > 0) {
-		event.params = params;
-	}
+   const event: LogEvent = {
+      ts: new Date().toISOString(),
+      source,
+      op,
+      dir,
+      ms: Date.now() - startMs,
+      status: error === undefined ? 'ok' : 'error',
+   };
+   if (params && Object.keys(params).length > 0) {
+      event.params = params;
+   }
 
-	if (error !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		event.error = error instanceof Error ? error.message : String(error);
-	}
+   if (error !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      event.error = error instanceof Error ? error.message : String(error);
+   }
 
-	appendEvent(event);
+   appendEvent(event);
 }

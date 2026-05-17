@@ -3,27 +3,21 @@ import {
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {writeClaudeHook} from '../commands/harnesses/claude.ts';
 import {writeOpenCodePlugin} from '../commands/harnesses/opencode.ts';
 import {writePiPlugin} from '../commands/harnesses/pi.ts';
-import {writeCoworkPlugin} from '../commands/harnesses/cowork.ts';
 import {TYPE_DIRS} from './schema.ts';
 import {projectDir, skillSourceDir} from './paths.ts';
 
-export type Harness = 'claude' | 'opencode' | 'pi' | 'cowork';
+export type Harness = 'opencode' | 'pi';
 
 export const HARNESSES: Array<{value: Harness; label: string; hint: string}> = [
-	{hint: 'UserPromptSubmit context', label: 'Claude Code', value: 'claude'},
 	{hint: 'chat.system.transform plugin', label: 'OpenCode', value: 'opencode'},
 	{hint: 'before_agent_start context', label: 'Pi', value: 'pi'},
-	{hint: 'Cowork plugin directory (claude --plugin-dir)', label: 'Claude Cowork', value: 'cowork'},
 ];
 
 const HARNESS_VALUES = new Set<string>(HARNESSES.map(h => h.value));
 
 const HARNESS_ACTIVATION: Record<Harness, string> = {
-	claude: 'start a new Claude Code session in this project',
-	cowork: 'run: claude --plugin-dir <pluginDir>  (path printed above)',
 	opencode: 'reload OpenCode or restart the app',
 	pi: 'start a new Pi session in this project',
 };
@@ -138,21 +132,7 @@ export async function initializeProject(options: InitializeProjectOptions): Prom
 // ─── Skill installation ───────────────────────────────────────────────────────
 
 function skillTargetDir(harness: Harness, projectRoot: string): string {
-	switch (harness) {
-		case 'claude': {
-			return path.join(projectRoot, '.claude', 'skills', 'pk');
-		}
-
-		case 'opencode':
-		case 'pi': {
-			return path.join(projectRoot, '.agents', 'skills', 'pk');
-		}
-
-		// Cowork skill is bundled inside the plugin dir by writeCoworkPlugin.
-		case 'cowork': {
-			return '';
-		}
-	}
+	return path.join(projectRoot, '.agents', 'skills', 'pk');
 }
 
 export function installSkill(harness: Harness, projectRoot: string): string {
@@ -181,11 +161,6 @@ export type HarnessContext = {name: string; knowledgeDir: string; projectRoot: s
 async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void> {
 	const {projectRoot} = ctx;
 	switch (harness) {
-		case 'claude': {
-			await writeClaudeHook(projectRoot);
-			break;
-		}
-
 		case 'opencode': {
 			await writeOpenCodePlugin(projectRoot);
 			break;
@@ -193,12 +168,6 @@ async function applyHarness(harness: Harness, ctx: HarnessContext): Promise<void
 
 		case 'pi': {
 			await writePiPlugin(projectRoot);
-			break;
-		}
-
-		case 'cowork': {
-			const pluginDir = await writeCoworkPlugin(ctx);
-			console.error(`[pk] Cowork plugin: ${pluginDir}`);
 			break;
 		}
 	}

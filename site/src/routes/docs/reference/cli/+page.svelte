@@ -110,14 +110,14 @@
 			<CodeBlock
 				label="pk init"
 				lines={[
-					'pk init --harness claude',
-					'pk init my-project --harness claude --global',
-					'pk init my-project --harness claude,opencode --global'
+					'pk init --harness opencode',
+					'pk init my-project --harness opencode --global',
+					'pk init my-project --harness opencode,pi --global'
 				]}
 			/>
 		</div>
 		<p>
-			Available harnesses: <code>claude</code>, <code>opencode</code>, <code>pi</code>. Without
+			Available harnesses: <code>opencode</code>, <code>pi</code>. Without
 			flags, pk runs interactively.
 		</p>
 		<p>

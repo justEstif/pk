@@ -10,10 +10,8 @@ import {
 	initializeProject,
 	installSkill, parseHarnesses,
 } from '../lib/project.ts';
-import {writeClaudeHook} from './harnesses/claude.ts';
 import {writeOpenCodePlugin} from './harnesses/opencode.ts';
 import {writePiPlugin} from './harnesses/pi.ts';
-import {coworkPluginDir, writeCoworkPlugin} from './harnesses/cowork.ts';
 
 let tmpDir: string;
 let fakeHome: string;
@@ -27,9 +25,6 @@ beforeEach(() => {
 	mkdirSync(fakeHome, {recursive: true});
 	origHome = process.env.HOME;
 	process.env.HOME = fakeHome;
-	// On Linux, XDG_CONFIG_HOME controls where Claude Desktop config lives.
-	// Redirect it to fakeHome so harness tests don't touch the real config.
-	process.env.XDG_CONFIG_HOME = path.join(fakeHome, '.config');
 });
 
 afterEach(() => {
@@ -39,8 +34,6 @@ afterEach(() => {
 	} else {
 		process.env.HOME = origHome;
 	}
-
-	delete process.env.XDG_CONFIG_HOME;
 });
 
 // ─── ensureProject ────────────────────────────────────────────────────────────
@@ -80,15 +73,15 @@ describe('installSkill', () => {
 // ─── applyHarnesses ────────────────────────────────────────────────────────
 
 describe('applyHarnesses', () => {
-	test('applies claude and pi harnesses', async () => {
+	test('applies opencode and pi harnesses', async () => {
 		const ctx = {
 			home: fakeHome,
 			knowledgeDir: path.join(tmpDir, '.pk'),
 			name: 'myproject',
 			projectRoot: tmpDir,
 		};
-		await applyHarnesses(['claude', 'pi'], ctx);
-		expect(existsSync(path.join(tmpDir, '.claude', 'hooks', 'pk-eval.ts'))).toBe(true);
+		await applyHarnesses(['opencode', 'pi'], ctx);
+		expect(existsSync(path.join(tmpDir, '.opencode', 'plugins', 'pk-eval.ts'))).toBe(true);
 		expect(existsSync(path.join(tmpDir, '.pi', 'extensions', 'pk-eval.ts'))).toBe(true);
 	});
 });
@@ -175,38 +168,6 @@ describe('writePiPlugin', () => {
 	});
 });
 
-// ─── Claude forced-eval hook ─────────────────────────────────────────────────
-
-describe('writeClaudeHook', () => {
-	test('creates eval hook and registers UserPromptSubmit in settings.json', async () => {
-		await writeClaudeHook(tmpDir);
-		expect(existsSync(path.join(tmpDir, '.claude', 'hooks', 'pk-eval.ts'))).toBe(true);
-
-		const eval_ = await Bun.file(path.join(tmpDir, '.claude', 'hooks', 'pk-eval.ts')).text();
-		expect(eval_).toContain('prime');
-
-		const settings = JSON.parse(await Bun.file(path.join(tmpDir, '.claude', 'settings.json')).text()) as {
-			hooks: Record<string, unknown[]>;
-		};
-		expect(settings.hooks.UserPromptSubmit?.length).toBe(1);
-		expect(settings.hooks.SessionStart).toBeUndefined();
-	});
-
-	test('does not create pk-session-start.sh', async () => {
-		await writeClaudeHook(tmpDir);
-		expect(existsSync(path.join(tmpDir, '.claude', 'hooks', 'pk-session-start.sh'))).toBe(false);
-	});
-
-	test('does not duplicate hook registration on re-run', async () => {
-		await writeClaudeHook(tmpDir);
-		await writeClaudeHook(tmpDir);
-		const settings = JSON.parse(await Bun.file(path.join(tmpDir, '.claude', 'settings.json')).text()) as {
-			hooks: {UserPromptSubmit: unknown[]};
-		};
-		expect(settings.hooks.UserPromptSubmit.length).toBe(1);
-	});
-});
-
 // ─── Skill installation for harnesses ─────────────────────────────────────────
 
 describe('installSkill', () => {
@@ -243,10 +204,9 @@ describe('writeOpenCodePlugin', () => {
 });
 
 describe('parseHarnesses', () => {
-	test('accepts all harness values including cowork', () => {
-		const result = parseHarnesses('claude,opencode,pi,cowork');
+	test('accepts valid harness values', () => {
+		const result = parseHarnesses('opencode,pi');
 		expect(Array.isArray(result)).toBe(true);
-		expect(result).toContain('cowork');
 	});
 
 	test('rejects unknown harness', () => {
@@ -256,72 +216,3 @@ describe('parseHarnesses', () => {
 	});
 });
 
-// ─── Cowork plugin writer ─────────────────────────────────────────────────────
-
-describe('writeCoworkPlugin', () => {
-	const ctx = () => ({
-		home: fakeHome,
-		knowledgeDir: path.join(fakeHome, '.pk', 'myproject'),
-		name: 'myproject',
-		projectRoot: tmpDir,
-	});
-
-	test('creates global plugin dir with plugin.json, .mcp.json, launcher, and hooks', async () => {
-		const c = ctx();
-		await writeCoworkPlugin(c);
-		const pluginDir = coworkPluginDir(fakeHome);
-		const manifest = JSON.parse(await Bun.file(path.join(pluginDir, '.claude-plugin', 'plugin.json')).text()) as {name: string};
-		expect(manifest.name).toBe('pk');
-		type McpEntry = {command: string; args: string[]; env: Record<string, string>};
-		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, McpEntry>};
-		const entry = mcp.mcpServers.pk;
-		expect(entry).toBeDefined();
-		// Uses ${CLAUDE_PLUGIN_ROOT}/bin/pk
-		// eslint-disable-next-line no-template-curly-in-string
-		expect(entry?.command).toBe('${CLAUDE_PLUGIN_ROOT}/bin/pk');
-		expect(entry?.args).toEqual(['mcp']);
-		// eslint-disable-next-line no-template-curly-in-string
-		expect(entry?.env.PK_KNOWLEDGE_DIR).toBe('${CLAUDE_PROJECT_DIR}/.pk');
-	});
-
-	test('writes executable launcher script at bin/pk', async () => {
-		const c = ctx();
-		await writeCoworkPlugin(c);
-		const pluginDir = coworkPluginDir(fakeHome);
-		const launcher = await Bun.file(path.join(pluginDir, 'bin', 'pk')).text();
-		expect(launcher).toContain('#!/usr/bin/env bash');
-		expect(launcher).toContain('command -v pk');
-		expect(launcher).toContain('.bun/bin/pk');
-	});
-
-	test('writes SessionStart bootstrap hook', async () => {
-		const c = ctx();
-		await writeCoworkPlugin(c);
-		const pluginDir = coworkPluginDir(fakeHome);
-		const hooks = JSON.parse(await Bun.file(path.join(pluginDir, 'hooks', 'hooks.json')).text()) as {hooks: {SessionStart: unknown[]}};
-		expect(hooks.hooks.SessionStart).toHaveLength(1);
-	});
-
-	test('plugin dir is at ~/.pk/cowork-plugin', async () => {
-		const c = ctx();
-		await writeCoworkPlugin(c);
-		expect(coworkPluginDir(fakeHome)).toBe(path.join(fakeHome, '.pk', 'cowork-plugin'));
-	});
-
-	test('bundles skill into skills/pk/', async () => {
-		const c = ctx();
-		await writeCoworkPlugin(c);
-		const pluginDir = coworkPluginDir(fakeHome);
-		expect(existsSync(path.join(pluginDir, 'skills', 'pk', 'SKILL.md'))).toBe(true);
-	});
-
-	test('is idempotent — re-run does not break .mcp.json', async () => {
-		const c = ctx();
-		await writeCoworkPlugin(c);
-		await writeCoworkPlugin(c);
-		const pluginDir = coworkPluginDir(fakeHome);
-		const mcp = JSON.parse(await Bun.file(path.join(pluginDir, '.mcp.json')).text()) as {mcpServers: Record<string, {command: string}>};
-		// eslint-disable-next-line no-template-curly-in-string
-		expect(mcp.mcpServers.pk?.command).toBe('${CLAUDE_PLUGIN_ROOT}/bin/pk');
-	});
-});
